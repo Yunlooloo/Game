@@ -1032,36 +1032,79 @@
         opacity: 1;
         transform: translate(-50%, 0);
       }
+      /* Thumb zones keep primary actions large even at 360 CSS pixels. */
+      #arena, .hud, .combat-footer, .combat-caption, .touch-controls,
+      .touch-controls * {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: none;
+      }
+      #room-code {
+        -webkit-user-select: text;
+        user-select: text;
+        -webkit-touch-callout: default;
+        touch-action: auto;
+      }
       .touch-controls {
+        --touch-main: 64px;
+        --touch-aux: 46px;
+        --touch-gap: 8px;
         display: none;
         position: absolute;
-        inset: auto 14px 70px;
+        left: max(12px, env(safe-area-inset-left));
+        right: max(12px, env(safe-area-inset-right));
+        bottom: calc(34px + env(safe-area-inset-bottom));
         z-index: 5;
         justify-content: space-between;
+        align-items: flex-end;
         pointer-events: none;
       }
-      .touch-group {
+      .touch-cluster {
         display: flex;
-        gap: 8px;
-        align-items: end;
+        flex-direction: column;
+        gap: var(--touch-gap);
+        align-items: flex-start;
       }
+      .touch-cluster.touch-combat { align-items: flex-end; }
+      .touch-primary, .touch-secondary {
+        display: grid;
+        grid-template-columns: repeat(2, auto);
+        gap: var(--touch-gap);
+      }
+      .touch-secondary { padding: 0 3px; }
       .touch-controls button {
         pointer-events: auto;
-        touch-action: none;
-        user-select: none;
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        background: #131d2399;
-        border: 1px solid #e4c8a459;
-        font-size: 15px;
-      }
-      .touch-controls .attack-touch {
-        width: 59px;
-        height: 59px;
-        background: #8e352ab3;
+        flex-shrink: 0;
+        padding: 0;
+        width: var(--touch-aux);
+        height: var(--touch-aux);
+        border-radius: 14px;
+        background: #142027db;
+        color: #e6dfce;
+        border: 1px solid #b7c3b567;
+        box-shadow: inset 0 1px 0 #f5e4bd16, 0 2px 8px #06101242;
         font-family: var(--serif);
-        font-size: 23px;
+        font-size: 17px;
+        line-height: 1;
+        transition: background-color .08s, border-color .08s;
+      }
+      .touch-controls .touch-primary button {
+        width: var(--touch-main);
+        height: var(--touch-main);
+        border-radius: 20px;
+        font-size: 25px;
+      }
+      .touch-controls .move-touch { background: #263837e8; color: #d3e4d4; }
+      .touch-controls .guard-touch { background: #31514fe3; border-color: #a4d9d078; }
+      .touch-controls .attack-touch { background: #91483ce8; border-color: #e5ad8382; }
+      .touch-controls .heal-touch { border-color: #9dad7699; color: #d7e3b7; }
+      .touch-controls .pause-touch { font-family: var(--sans); font-size: 13px; color: #bcbdb4; }
+      .touch-controls button:active, .touch-controls button.is-held {
+        background: #736247;
+        border-color: #f4d39b;
+        box-shadow: inset 0 0 0 2px #f4d39b55;
       }
       .mobile-hint {
         display: none;
@@ -1397,17 +1440,15 @@
         .combat-footer .combat-note { display: none; }
         .combat-footer .equipment-row { margin-top: 0; }
         .combat-footer .active-tool::before { content: "裝具 · "; color: #939c90; }
-        .touch-controls .touch-extra {
-          display: flex;
-          position: absolute;
-          right: 0;
-          bottom: 58px;
+        .combat-readout { flex-direction: row; flex-wrap: nowrap; justify-content: flex-end; max-width: none; }
+        .combat-readout span { white-space: nowrap; }
+        .combat-footer {
+          padding: 7px max(12px, env(safe-area-inset-right)) calc(9px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+          gap: 8px;
         }
-        .touch-controls .heal-touch { border-color: #9dad766e; color: #d7e3b7; }
-        .combat-readout { flex-wrap: wrap; justify-content: flex-end; row-gap: 5px; max-width: 150px; }
-        .touch-controls {
-          bottom: 65px;
-        }
+        .combat-readout { gap: 5px 9px; font-size: 7px; letter-spacing: .05em; }
+        .hud { padding-left: max(18px, env(safe-area-inset-left)); padding-right: max(18px, env(safe-area-inset-right)); padding-top: max(16px, env(safe-area-inset-top)); }
+        .toast { bottom: calc(222px + env(safe-area-inset-bottom)); }
       }
       @media (max-width: 460px) {
         h1 {
@@ -1430,23 +1471,6 @@
         .tool-list .tool:last-child {
           grid-column: auto;
         }
-        .touch-group {
-          gap: 4px;
-        }
-        .touch-controls button {
-          width: 40px;
-          height: 40px;
-          font-size: 12px;
-        }
-        .touch-controls .attack-touch {
-          width: 48px;
-          height: 48px;
-        }
-        .touch-controls {
-          inset: auto 8px 65px;
-        }
-        .touch-controls .touch-extra { bottom: 54px; gap: 5px; }
-        .touch-extra button { width: 40px; height: 40px; }
         .fighter-title small { display: none; }
         .life-status { gap: 6px; }
         .life-nodes { gap: 6px; }
@@ -1485,15 +1509,21 @@
         .hud {
           padding-top: 12px;
         }
-        .touch-controls {
-          bottom: 43px;
-        }
         .combat-footer {
           padding-bottom: 10px;
         }
         .combat-caption {
           top: 29%;
         }
+      }
+
+      @media (pointer: coarse) and (orientation: landscape) {
+        .touch-controls { --touch-main: 72px; --touch-aux: 46px; }
+        .combat-footer { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+        .combat-caption { top: 27%; }
+      }
+      @media (pointer: coarse) and (min-width: 900px) {
+        .touch-controls { --touch-main: 76px; --touch-aux: 48px; left: max(24px, env(safe-area-inset-left)); right: max(24px, env(safe-area-inset-right)); }
       }
 
 
@@ -1683,6 +1713,7 @@
 #start-tutorial{width:100%;margin-top:12px;padding:12px 14px;border:1px solid #71988d70;background:#1f353433;color:#c6e9df;display:flex;align-items:center;justify-content:space-between;text-align:left}#start-tutorial span{font-size:10px;color:#adbbb5}
 #training-panel{position:fixed;z-index:8;top:150px;left:24px;width:min(330px,calc(100vw - 48px));max-height:calc(100dvh - 270px);overflow:auto;padding:15px 17px 12px;border:1px solid #a4d9d048;border-left:3px solid #a4d9d0;background:linear-gradient(120deg,#101a1df2,#192326eb);box-shadow:0 12px 35px #0005;color:var(--paper);font-size:12px;line-height:1.6;scrollbar-width:thin;overscroll-behavior:contain}
 .training-head{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#aac8c2;font-size:10px;letter-spacing:.08em}
+.training-head #training-group{flex:1;min-width:0}.training-head button{flex-shrink:0}#training-panel.is-collapsed{overflow:visible;max-height:none}#training-panel.is-collapsed .training-head{min-height:32px}#training-fold{white-space:nowrap}
 #training-panel button{background:#283639;padding:6px 9px;border:1px solid #aecdc130;border-radius:3px;font-size:11px}
 #training-panel button:focus-visible,#training-select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 #training-exit{color:#c9c0b4}
@@ -1706,6 +1737,10 @@
 
 /* Keep interactive lesson controls touchable without hiding battle status. */
 @media(max-width:700px) and (pointer:coarse){#training-panel button,#training-select{min-height:40px}#training-panel button{min-width:40px}}
+
+/* Landscape phones leave the two thumb zones clear; this panel still scrolls. */
+@media(pointer:coarse){#training-panel{touch-action:pan-y;-webkit-overflow-scrolling:touch}#training-panel button,#training-select{min-height:44px}#training-panel button{min-width:44px}}
+@media(pointer:coarse) and (orientation:landscape) and (max-height:600px){#training-panel{top:max(105px,calc(env(safe-area-inset-top) + 80px));left:50%;transform:translateX(-50%);width:min(340px,calc(100vw - 360px - env(safe-area-inset-left) - env(safe-area-inset-right)));max-height:calc(100dvh - 151px - env(safe-area-inset-bottom));padding:9px 11px;font-size:11px}#training-panel h2{font-size:14px;margin:5px 0}#training-panel p{margin:5px 0}.training-navigation{flex-wrap:wrap}.training-navigation label{display:none}#training-panel .training-head{gap:6px;font-size:9px}.training-actions{gap:5px}#training-next{min-width:94px}}
 
     </style>
   </head>
@@ -1967,29 +2002,35 @@
         </div>
       </footer>
       <div id="touch-controls" class="touch-controls" aria-label="觸控操作">
-        <div class="touch-group">
-          <button data-touch="KeyA" aria-label="向左">◀</button
-          ><button data-touch="KeyD" aria-label="向右">▶</button
-          ><button data-touch="Space" aria-label="跳躍">跳</button
-          ><button data-touch="KeyF" aria-label="鉤繩">鉤</button>
-        </div>
-        <div class="touch-group">
-          <div class="touch-group touch-extra">
+        <div class="touch-cluster touch-movement" role="group" aria-label="移動與裝具">
+          <div class="touch-secondary">
             <button data-touch="KeyR" class="heal-touch" aria-label="飲用修復劑">藥</button>
-            <button data-touch="KeyE" aria-label="使用目前裝具">具</button
-            ><button data-touch="KeyQ" aria-label="切換裝具">換</button
-            ><button data-touch="KeyO" aria-label="戰技">奧</button>
+            <button data-touch="KeyQ" aria-label="切換裝具">換</button>
+            <button data-touch="KeyE" aria-label="使用目前裝具">具</button>
+            <button data-touch="KeyO" aria-label="使用戰技">技</button>
           </div>
-          <button data-touch="KeyL" aria-label="墊步">步</button
-          ><button data-touch="KeyK" aria-label="招架">架</button
-          ><button data-touch="KeyJ" class="attack-touch" aria-label="攻擊">
-            斬
-          </button>
+          <div class="touch-primary">
+            <button data-touch="KeyA" class="move-touch" aria-label="向左移動">◀</button>
+            <button data-touch="KeyD" class="move-touch" aria-label="向右移動">▶</button>
+          </div>
+        </div>
+        <div class="touch-cluster touch-combat" role="group" aria-label="跳躍與戰鬥">
+          <div class="touch-secondary">
+            <button data-touch="KeyF" aria-label="鉤繩">鉤</button>
+            <button id="touch-pause" class="pause-touch" aria-label="暫停及聲音設定">暫停</button>
+            <button data-touch="Space" aria-label="跳躍">跳</button>
+            <button data-touch="KeyL" aria-label="墊步">步</button>
+          </div>
+          <div class="touch-primary">
+            <button data-touch="KeyK" class="guard-touch" aria-label="招架，按住格擋">架</button>
+            <button data-touch="KeyJ" class="attack-touch" aria-label="攻擊，按住蓄力">斬</button>
+          </div>
         </div>
       </div>
 
 <section id="training-panel" aria-label="互動陪練課程" hidden>
-  <div class="training-head"><span id="training-group">陪練</span><button id="training-exit" type="button" aria-label="離開陪練返回大廳">返回大廳</button></div>
+  <div class="training-head"><span id="training-group">陪練</span><button id="training-fold" type="button" aria-controls="training-body" aria-expanded="true" aria-label="收合教學，露出戰場">收合</button><button id="training-exit" type="button" aria-label="離開陪練返回大廳">返回大廳</button></div>
+  <div id="training-body">
   <div class="training-progress-track" aria-hidden="true"><i id="training-progress"></i></div>
   <h2 id="training-title"></h2>
   <p id="training-keys" class="training-keys"></p>
@@ -1998,6 +2039,7 @@
   <p id="training-status" role="status" aria-live="polite" aria-atomic="true"></p>
   <div class="training-actions"><button id="training-retry" type="button">重試本課</button><button id="training-next" type="button" disabled>下一課 →</button></div>
   <div class="training-navigation"><label for="training-select">選課</label><select id="training-select" aria-label="選擇陪練課程"></select><button id="training-expand" type="button" aria-controls="training-details" aria-expanded="true">收起訣竅</button></div>
+  </div>
 </section>
 
       <section id="pause-panel" class="overlay" hidden>
@@ -5224,6 +5266,7 @@ window.RiftAI = class RiftAI {
       $('training-retry')?.addEventListener('click',()=>this.select(this.index));
       $('training-next')?.addEventListener('click',()=>{if(!this.completedCurrent)return;if(this.index===LESSONS.length-1){this.stop();this.game.lobby();this.game.toast('陪練課程完成。可從任一課重練，或挑戰精英試煉。');}else this.select(this.index+1);});
       $('training-exit')?.addEventListener('click',()=>{this.stop();this.game.lobby();});
+      $('training-fold')?.addEventListener('click',()=>{this.setCollapsed(!this.collapsed);this.game.focusArena();});
       const select=$('training-select');
       if(select){for(let i=0;i<LESSONS.length;i++){const option=document.createElement('option');option.value=String(i);option.textContent=LESSONS[i].title;select.appendChild(option);}select.addEventListener('change',()=>this.select(Number(select.value)));}
       $('training-expand')?.addEventListener('click',()=>{const detail=$('training-details'),button=$('training-expand');detail.hidden=!detail.hidden;button.setAttribute('aria-expanded',String(!detail.hidden));button.textContent=detail.hidden?'展開訣竅':'收起訣竅';this.game.focusArena();});
@@ -5249,8 +5292,18 @@ window.RiftAI = class RiftAI {
       $('training-panel').hidden=false;this.select(0);
     }
     stop() {this.active=false;if($('training-panel'))$('training-panel').hidden=true;}
+    setCollapsed(value) {
+      if(!this.active)return;
+      this.collapsed=!!value;
+      $('training-body').hidden=this.collapsed;
+      $('training-panel').classList.toggle('is-collapsed',this.collapsed);
+      const button=$('training-fold');button.textContent=this.collapsed?'展開':'收合';
+      button.setAttribute('aria-expanded',String(!this.collapsed));
+      button.setAttribute('aria-label',this.collapsed?'展開教學說明':'收合教學，露出戰場');
+    }
     select(index) {
       if(!this.active)return;
+      this.setCollapsed(false);
       this.index=Math.max(0,Math.min(LESSONS.length-1,index));this.completedCurrent=false;this.count=0;this.ticks=0;this.wait=100;this.flags={};this.lastDraw='';
       const game=this.game,w=game.world,l=this.lesson,[p,e]=w.players;
       w.phase='fighting';w.weather='dusk';w.projectiles=[];w.lightning=[];w.effects.hitstop=0;w.effects.execution=0;w.effects.revival=0;
@@ -5270,6 +5323,7 @@ window.RiftAI = class RiftAI {
     get lesson(){return LESSONS[this.index];}
     complete() {
       if(this.completedCurrent)return;this.completedCurrent=true;this.completed.add(this.lesson.id);this.count=this.lesson.total||1;
+      this.setCollapsed(false);
       try{localStorage.setItem('riftblade-tutorial-v1',JSON.stringify([...this.completed]));}catch(_){}
       this.game.caption('完成 · '+this.lesson.title.slice(5),75);this.render();
     }
@@ -5740,6 +5794,7 @@ window.RiftAI = class RiftAI {
       this.mousePressed = new Set();
       this.touchHeld = new Map();
       this.touchPressed = new Map();
+      this.touchTargets = new Map();
       this.mouseFaceTick = -1;
       this.mouseArtPending = null;
       this.mouseArtGesture = false;
@@ -5796,7 +5851,7 @@ window.RiftAI = class RiftAI {
         states: STATES,
         snapshot: () => this.snapshot(),
         reset: () => this.start("local"),
-        version: "4.0.1", fsm:RiftFSM,vitals:RiftVitals,
+        version: "4.0.2", fsm:RiftFSM,vitals:RiftVitals,
       };
     }
     canReceiveInput() {
@@ -5815,6 +5870,8 @@ window.RiftAI = class RiftAI {
       this.clearMouse();
       this.touchHeld.clear();
       this.touchPressed.clear();
+      for (const element of this.touchTargets.values()) element.classList.remove('is-held');
+      this.touchTargets.clear();
       this.buffered = [0, 0];
       this.rawPrev = [0, 0];
     }
@@ -5914,6 +5971,28 @@ window.RiftAI = class RiftAI {
     }
     bind() {
       this.bindMouse();
+      // Keep long presses and drags in the battlefield from becoming native
+      // selection/callout gestures. Menus, forms and scrollable lessons keep
+      // their normal browser behavior. Never stop touchend propagation: it is
+      // also the trusted Safari audio-unlock gesture.
+      const combatSurface = e => {
+        const target = e.target?.nodeType === 3 ? e.target.parentElement : e.target;
+        return this.canReceiveInput() && !target?.closest?.('input,textarea,select,[contenteditable="true"]') &&
+          target?.closest?.('#arena,#touch-controls,#hud,#combat-footer');
+      };
+      const preventSurfaceDefault = e => {
+        if (e.cancelable && combatSurface(e)) e.preventDefault();
+      };
+      for (const name of ['selectstart','contextmenu','dragstart']) {
+        document.addEventListener(name, preventSurfaceDefault);
+      }
+      for (const name of ['touchstart','touchmove']) {
+        $("arena").addEventListener(name, preventSurfaceDefault, {passive:false});
+        $("touch-controls").addEventListener(name, e => {
+          // Leave native clicks enabled for the separate Pause button.
+          if (e.target.closest?.('[data-touch]')) preventSurfaceDefault(e);
+        }, {passive:false});
+      }
       const controls = new Set([
         "KeyC", "KeyV", "KeyZ", "KeyX", "KeyG", "ControlLeft", "ShiftRight", "Backslash", "Minus", "KeyA",
         "KeyD",
@@ -6024,6 +6103,7 @@ window.RiftAI = class RiftAI {
       };
       $("help-open").onclick = () => this.toggleGuide();
       $("help-close").onclick = () => this.toggleGuide(false);
+      if ($("touch-pause")) $("touch-pause").onclick = () => this.togglePause();
       $("sound-button").onclick = () => {
         // The initial "enable" tap must not toggle the still-locked game off.
         this.muted = this.audioNeedsActivation() ? false : !this.muted;
@@ -6072,7 +6152,11 @@ window.RiftAI = class RiftAI {
         el.addEventListener("pointerdown", (e) => {
           e.preventDefault();
           if(!this.canReceiveInput()) return;
+          window.getSelection?.()?.removeAllRanges();
           el.setPointerCapture(e.pointerId);
+          this.touchTargets.set(e.pointerId, el);
+          el.classList.add('is-held');
+          if(e.pointerType !== 'mouse' && this.tutorial?.active)this.tutorial.setCollapsed(true);
           if(code === "KeyQ") this.cycleTool();
           else {
             const bits = code === "KeyE" ? (this.activeToolSlot ? B.TOOL2 : B.TOOL1) : touchBits[code];
@@ -6083,16 +6167,24 @@ window.RiftAI = class RiftAI {
           }
           this.audio.start();
         });
-        el.addEventListener("pointerup", e => this.touchHeld.delete(e.pointerId));
+        const releaseVisual = e => {
+          this.touchTargets.delete(e.pointerId);
+          el.classList.toggle('is-held', [...this.touchTargets.values()].includes(el));
+        };
+        el.addEventListener("pointerup", e => {
+          this.touchHeld.delete(e.pointerId);
+          releaseVisual(e);
+        });
         const cancel = e => {
           this.touchHeld.delete(e.pointerId);
           this.touchPressed.delete(e.pointerId);
+          releaseVisual(e);
         };
         el.addEventListener("pointercancel", cancel);
         // Normal pointerup releases capture too; retain its pending tap. An
         // unexpected capture loss cancels only that still-active finger.
         el.addEventListener("lostpointercapture", e => {
-          if (this.touchHeld.has(e.pointerId)) cancel(e);
+          if (this.touchTargets.has(e.pointerId)) cancel(e);
         });
       });
       this.updateLoadout();
@@ -6221,6 +6313,7 @@ window.RiftAI = class RiftAI {
       $("hud").hidden = false;
       $("combat-footer").hidden = false;
       $("touch-controls").classList.add("playing");
+      document.body.classList.add('combat-active');
       this.caption("共鳴接續・試刃開始", 130);
       this.renderHUD();
       this.focusArena();
@@ -6238,6 +6331,7 @@ window.RiftAI = class RiftAI {
       $("hud").hidden = true;
       $("combat-footer").hidden = true;
       $("touch-controls").classList.remove("playing");
+      document.body.classList.remove('combat-active');
       this.world.players.forEach((p) => {
         p.hp = 100;
         p.dead = false;
