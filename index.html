@@ -1880,7 +1880,7 @@
             ><span class="footer-quote">越過裂隙，仍有回聲。</span>
           </div>
           <div class="sound-controls">
-            <button id="sound-button" class="text-button">聲音 開</button
+            <button id="sound-button" class="text-button" aria-pressed="false">開啟聲音</button
             ><button id="weather-button" class="text-button">切換天候</button
             ><span>暮雨與刀鳴 · 原創刀劍對決</span>
           </div>
@@ -3091,7 +3091,7 @@ window.RiftAudio = class RiftAudio {
     this.beat = 0;
     this.nextBeat = 0;
     this.available = true;
-    this._starting = null;
+    this._unlockSource = null;
     this.musicVolume = 0.3;
     this.musicScene = 'ambient';
     this.musicTracks = new Map();
@@ -3103,9 +3103,15 @@ window.RiftAudio = class RiftAudio {
     this.duckLevel = 1;
   }
   async start() {
-    if (this._starting) return this._starting;
-    this._starting = (async () => {
+    // Safari can leave an unauthorized resume() pending until a later gesture.
+    // Never put that promise in front of the next touchend/click's resume/play.
       try {
+        // On supporting iOS versions, use the same playback audio session as
+        // media players instead of the default, silence-switch-sensitive mode.
+        try {
+          if (typeof navigator !== 'undefined' && navigator.audioSession &&
+              navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback';
+        } catch (_) { /* Optional API; older browsers still use normal Web Audio. */ }
         if (!this.context) {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
           if (!AudioContext) { this.available = false; return false; }
@@ -3141,20 +3147,46 @@ window.RiftAudio = class RiftAudio {
         }
         // Initiate both resume and play in the gesture's synchronous turn. Waiting
         // for resume first can lose media playback permission on mobile browsers.
-        const resume = this.context.state === 'suspended' ? this.context.resume() : null;
+        const c = this.context;
+        const resume = c.state !== 'running' && c.state !== 'closed' ? c.resume() : null;
+        if (!this.unlocked || c.state !== 'running') this._primeOutput();
         this._ensureMusic();
-        this._mixMusic();
-        if (resume) await resume;
-        this.available = this.context.state !== 'closed';
-        this.unlocked = this.context.state === 'running';
-        return this.available;
+        this._mixMusic(true);
+        // Report actual context state, not the settlement order of old requests.
+        const refresh = () => {
+          this.available = c.state !== 'closed';
+          this.unlocked = c.state === 'running';
+          return this.unlocked;
+        };
+        refresh();
+        if (resume) {
+          try { await resume; }
+          catch (error) { this.lastError = String(error && error.message || error); }
+        }
+        return refresh();
       } catch (error) {
         this.available = false;
         this.lastError = String(error && error.message || error);
         return false;
       }
-    })();
-    try { return await this._starting; } finally { this._starting = null; }
+  }
+  _primeOutput() {
+    // A one-sample silent buffer starts the output inside the same gesture.
+    // Repeated blocked gestures replace this node instead of leaking sources.
+    const c = this.context;
+    if (!c || c.state === 'closed') return;
+    if (this._unlockSource) {
+      try { this._unlockSource.stop(); this._unlockSource.disconnect(); } catch (_) {}
+    }
+    const source = c.createBufferSource();
+    source.buffer = c.createBuffer(1, 1, c.sampleRate);
+    source.connect(this.master);
+    source.onended = () => {
+      source.disconnect();
+      if (this._unlockSource === source) this._unlockSource = null;
+    };
+    this._unlockSource = source;
+    source.start(0);
   }
   setVolume(value) {
     if (Number.isFinite(Number(value))) this.volume = Math.max(0, Math.min(1, Number(value)));
@@ -3213,12 +3245,17 @@ window.RiftAudio = class RiftAudio {
         element.preload = 'metadata';
         element.loop = true;
         element.volume = 1;
+        element.playsInline = true;
+        if (element.setAttribute) {
+          element.setAttribute('playsinline', '');
+          element.setAttribute('webkit-playsinline', '');
+        }
         element.src = sourceURL;
         source = c.createMediaElementSource(element);
         level = c.createGain(); level.gain.value = 0;
         source.connect(level); level.connect(this.musicBus);
         const track = { scene, element, source, level, target: 0, pending: null,
-          retryAfterPending: false, pauseTimer: null, error: '' };
+          retryAfterPending: false, playAttempt: 0, pauseTimer: null, error: '' };
         element.addEventListener('error', () => {
           track.error = 'media-error-' + (element.error ? element.error.code : 'unknown');
         });
@@ -3255,24 +3292,28 @@ window.RiftAudio = class RiftAudio {
       track.level.gain.setValueAtTime(0, now);
     }
   }
-  _playMusicTrack(track) {
+  _playMusicTrack(track, retryBlocked = false) {
     this._clearMusicTimer(track);
-    if (track.pending) {
+    if (track.pending && !retryBlocked) {
       if (track.element.paused) track.retryAfterPending = true;
       return;
     }
-    if (!track.element.paused) return;
+    if (!track.element.paused && !track.pending) return;
+    const attempt = ++track.playAttempt;
     try {
       const result = track.element.play();
       if (result && typeof result.then === 'function') {
         track.pending = Promise.resolve(result).then(() => {
+          if (attempt !== track.playAttempt) return;
           track.error = '';
           if (this.suspended || (track.scene !== this.musicScene && track.pauseTimer === null)) this._pauseMusicTrack(track);
         }, error => {
+          if (attempt !== track.playAttempt) return;
           // Playback can be denied until another gesture, or cancelled by pause.
           // Keep the source reusable and never surface an unhandled rejection.
           track.error = error && error.name === 'AbortError' ? '' : (error && error.name || 'playback-blocked');
         }).finally(() => {
+          if (attempt !== track.playAttempt) return;
           track.pending = null;
           const retry = track.retryAfterPending;
           track.retryAfterPending = false;
@@ -3281,7 +3322,7 @@ window.RiftAudio = class RiftAudio {
       }
     } catch (error) { track.error = error && error.name || 'playback-blocked'; }
   }
-  _mixMusic() {
+  _mixMusic(retryBlocked = false) {
     if (!this.musicReady || !this.context || this.context.state === 'closed' || this.suspended) return;
     const now = this.context.currentTime;
     for (const [scene, track] of this.musicTracks) {
@@ -3292,7 +3333,7 @@ window.RiftAudio = class RiftAudio {
         track.level.gain.setTargetAtTime(target, now, selected ? 0.28 : 0.24);
         track.target = target;
       }
-      if (selected) this._playMusicTrack(track);
+      if (selected) this._playMusicTrack(track, retryBlocked);
       else if (!track.element.paused && track.pauseTimer === null && typeof window.setTimeout === 'function') {
         // Let the tail crossfade, then stop decoding the inaudible track. A rapid
         // scene change cancels this timer and preserves the track's play position.
@@ -3317,7 +3358,8 @@ window.RiftAudio = class RiftAudio {
     // Safe diagnostics: never expose the embedded data URLs or media elements.
     return {
       scene: this.musicScene, volume: this.musicVolume, ready: this.musicReady,
-      suspended: this.suspended, unlocked: this.unlocked, error: this.musicError,
+      suspended: this.suspended, unlocked: this.context?.state === 'running',
+      contextState: this.context?.state || 'uninitialized', error: this.musicError,
       tracks: Object.fromEntries([...this.musicTracks].map(([scene, track]) => [scene, {
         playing: !track.element.paused, readyState: track.element.readyState,
         seconds: Number(track.element.currentTime) || 0, error: track.error
@@ -5754,7 +5796,7 @@ window.RiftAI = class RiftAI {
         states: STATES,
         snapshot: () => this.snapshot(),
         reset: () => this.start("local"),
-        version: "4.0.0", fsm:RiftFSM,vitals:RiftVitals,
+        version: "4.0.1", fsm:RiftFSM,vitals:RiftVitals,
       };
     }
     canReceiveInput() {
@@ -5780,6 +5822,17 @@ window.RiftAI = class RiftAI {
       const fighting=this.world.phase==='fighting';
       this.audio.setScene?.(fighting?'battle':'ambient');
       this.audio.setSuspended?.(document.hidden || (fighting && this.paused));
+    }
+    audioNeedsActivation() {
+      const status = this.audio.getMusicStatus?.();
+      return !status?.unlocked || ['NotAllowedError', 'playback-blocked'].includes(status.tracks?.[status.scene]?.error);
+    }
+    refreshSoundButton() {
+      const button = $("sound-button");
+      const needsActivation = this.audioNeedsActivation();
+      const label = this.muted ? '聲音 關' : needsActivation ? '開啟聲音' : '聲音 開';
+      if (button.textContent !== label) button.textContent = label;
+      button.setAttribute('aria-pressed', String(!this.muted && !needsActivation));
     }
     focusArena() { $("arena").focus({preventScroll:true}); }
     cycleTool() {
@@ -5926,11 +5979,23 @@ window.RiftAI = class RiftAI {
         this.clearInputs();
         this.acc = 0;
         this.syncAudioState();
+        if (!document.hidden && this.audio.context) this.audio.start();
       });
-      // Browsers require a user gesture before music or synthesized audio can play.
-      const unlockAudio = e => {if(e.isTrusted){this.syncAudioState();this.audio.start();}};
-      document.addEventListener('pointerdown',unlockAudio,{passive:true});
-      document.addEventListener('keydown',unlockAudio,{passive:true});
+      addEventListener('pageshow', () => {
+        this.syncAudioState();
+        if (!document.hidden && this.audio.context) this.audio.start();
+      });
+      // A touch pointerdown may not authorize Safari audio; touchend still fires
+      // when the touch controls suppress the compatibility click. Keep all calls
+      // synchronous in these trusted events so resume/play retain activation.
+      const unlockAudio = e => {
+        if (!e.isTrusted || e.target.closest?.('#sound-button')) return;
+        if (e.type === 'pointerdown' && e.pointerType !== 'mouse') return;
+        this.syncAudioState(); this.audio.start();
+      };
+      for (const name of ['pointerdown','pointerup','touchend','click','keydown']) {
+        document.addEventListener(name,unlockAudio,{passive:true});
+      }
       $("start-ai").onclick = () => this.start("ai");
       $("start-local").onclick = () => this.start("local");
       $("online-tab").onclick = () => {
@@ -5960,9 +6025,12 @@ window.RiftAI = class RiftAI {
       $("help-open").onclick = () => this.toggleGuide();
       $("help-close").onclick = () => this.toggleGuide(false);
       $("sound-button").onclick = () => {
-        this.muted = !this.muted;
+        // The initial "enable" tap must not toggle the still-locked game off.
+        this.muted = this.audioNeedsActivation() ? false : !this.muted;
         this.audio.setMuted(this.muted);
-        $("sound-button").textContent = this.muted ? "聲音 關" : "聲音 開";
+        this.syncAudioState();
+        this.audio.start();
+        this.refreshSoundButton();
       };
       $("weather-button").onclick = () => this.toggleWeather();
       $("volume").oninput = (e) =>
@@ -6825,6 +6893,7 @@ window.RiftAI = class RiftAI {
       requestAnimationFrame((v) => this.frame(v));
     }
     renderHUD() {
+      this.refreshSoundButton();
       const w = this.world;
       for (let i = 0; i < 2; i++) {
         const p = w.players[i];
