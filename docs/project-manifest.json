@@ -1,0 +1,203 @@
+{
+  "manifestVersion": 1,
+  "project": {
+    "name": "斬境殘響",
+    "englishName": "Riftblade Echoes",
+    "repository": "https://github.com/Yunlooloo/Game",
+    "version": "4.0.2",
+    "language": "zh-Hant",
+    "status": "early prototype"
+  },
+  "entryPoints": {
+    "production": "index.html",
+    "source": "src/core.js",
+    "htmlTemplate": "src/shell.html"
+  },
+  "commands": {
+    "dev": "python3 -m http.server 8000 --bind 127.0.0.1",
+    "build": "python3 scripts/build.py",
+    "buildCheck": "python3 scripts/build.py --check",
+    "check": "python3 scripts/check.py",
+    "test": "python3 scripts/test.py",
+    "browserTest": "python3 scripts/test.py --browser"
+  },
+  "toolchain": {
+    "python": ">=3.11",
+    "node": ">=22",
+    "playwright": "1.62.0",
+    "runtimePeerJS": "1.5.5",
+    "networkProtocol": 3
+  },
+  "deployTarget": {
+    "provider": "GitHub Pages",
+    "branch": "main",
+    "path": "/",
+    "url": "https://yunlooloo.github.io/Game/",
+    "buildType": "legacy",
+    "ciIsDeployGate": false
+  },
+  "importantPaths": [
+    "AGENTS.md",
+    "src/core.js",
+    "src/fsm.js",
+    "src/vitals.js",
+    "src/ai.js",
+    "src/authority.js",
+    "src/net.js",
+    "src/audio.js",
+    "src/render.js",
+    "src/tutorial.js",
+    "src/shell.html",
+    "src/tutorial-ui.html",
+    "src/tutorial-ui.css",
+    "vendor/peerjs-1.5.5.js",
+    "assets/audio/music",
+    "scripts/build.py",
+    "scripts/check.py",
+    "scripts/test.py",
+    "tests",
+    ".github/workflows/ci.yml"
+  ],
+  "systems": {
+    "core": {
+      "status": "IMPLEMENTED",
+      "source": "src/core.js",
+      "documentation": "docs/GAME_SYSTEMS.md"
+    },
+    "combat": {
+      "status": "IMPLEMENTED",
+      "source": "src/core.js",
+      "documentation": "docs/COMBAT_SYSTEM.md"
+    },
+    "boss": {
+      "status": "IMPLEMENTED",
+      "source": "src/ai.js",
+      "documentation": "docs/BOSS_SYSTEM.md"
+    },
+    "abilityMoves": {
+      "status": "IMPLEMENTED",
+      "source": "src/core.js",
+      "documentation": "docs/ABILITY_SYSTEM.md"
+    },
+    "tutorial": {
+      "status": "IMPLEMENTED",
+      "source": "src/tutorial.js",
+      "documentation": "docs/GAME_SYSTEMS.md"
+    },
+    "network": {
+      "status": "IMPLEMENTED",
+      "source": "src/authority.js",
+      "documentation": "docs/COMBAT_SYSTEM.md"
+    },
+    "audio": {
+      "status": "IMPLEMENTED",
+      "source": "src/audio.js",
+      "documentation": "docs/ASSET_PIPELINE.md"
+    },
+    "bossRegistry": {
+      "status": "PLANNED",
+      "source": null,
+      "documentation": "docs/BOSS_SYSTEM.md"
+    },
+    "multiEnemy": {
+      "status": "PLANNED",
+      "source": null,
+      "documentation": "docs/ENEMY_SYSTEM.md"
+    },
+    "inventoryEquipment": {
+      "status": "PLANNED",
+      "source": null,
+      "documentation": "docs/ITEM_SYSTEM.md"
+    },
+    "stageEncounters": {
+      "status": "PLANNED",
+      "source": null,
+      "documentation": "docs/LEVEL_SYSTEM.md"
+    },
+    "storyDialogue": {
+      "status": "PLANNED",
+      "source": null,
+      "documentation": "docs/STORY_SYSTEM.md"
+    },
+    "versionedSave": {
+      "status": "PLANNED",
+      "source": null,
+      "documentation": "docs/SAVE_SYSTEM.md"
+    }
+  },
+  "persistence": {
+    "implementedKeys": [
+      "riftblade-tutorial-v1"
+    ],
+    "fullSaveImplemented": false,
+    "saveSchemaVersion": null
+  },
+  "documentation": {
+    "readme": "docs/README.md",
+    "ai_handoff": "docs/AI_HANDOFF.md",
+    "project_map": "docs/PROJECT_MAP.md",
+    "architecture": "docs/ARCHITECTURE.md",
+    "game_systems": "docs/GAME_SYSTEMS.md",
+    "combat_system": "docs/COMBAT_SYSTEM.md",
+    "boss_system": "docs/BOSS_SYSTEM.md",
+    "enemy_system": "docs/ENEMY_SYSTEM.md",
+    "ability_system": "docs/ABILITY_SYSTEM.md",
+    "item_system": "docs/ITEM_SYSTEM.md",
+    "level_system": "docs/LEVEL_SYSTEM.md",
+    "story_system": "docs/STORY_SYSTEM.md",
+    "save_system": "docs/SAVE_SYSTEM.md",
+    "asset_pipeline": "docs/ASSET_PIPELINE.md",
+    "platform": "docs/PLATFORM.md",
+    "security_dependencies": "docs/SECURITY_DEPENDENCIES.md",
+    "content_cookbook": "docs/CONTENT_COOKBOOK.md",
+    "development": "docs/DEVELOPMENT.md",
+    "testing": "docs/TESTING.md",
+    "regression_checklist": "docs/REGRESSION_CHECKLIST.md",
+    "deployment": "docs/DEPLOYMENT.md",
+    "troubleshooting": "docs/TROUBLESHOOTING.md",
+    "tech_debt": "docs/TECH_DEBT.md",
+    "roadmap": "docs/ROADMAP.md",
+    "ai_task_template": "docs/AI_TASK_TEMPLATE.md",
+    "repository_audit": "docs/REPOSITORY_AUDIT.md",
+    "validation": "docs/VALIDATION.md",
+    "ai_collaboration": "docs/AI_COLLABORATION.md",
+    "project_status": "docs/PROJECT_STATUS.md",
+    "current_handoff": "docs/CURRENT_HANDOFF.md",
+    "work_log": "docs/WORK_LOG.md"
+  },
+  "knownLimits": [
+    "two actors / normalized 100 HP",
+    "no boss registry yet",
+    "not server authoritative or complete rollback",
+    "physical iPhone audio unverified",
+    "cross-network WebRTC unverified in managed browser",
+    "resize listener missing"
+  ],
+  "policy": {
+    "sourceOfTruth": [
+      "src/",
+      "vendor/",
+      "assets/"
+    ],
+    "generatedArtifact": "index.html",
+    "requiresSecretsToPlay": false,
+    "plannedExamplesAreExecutable": false
+  },
+  "handoffReadOrder": [
+    "README.md",
+    "AGENTS.md",
+    "docs/AI_HANDOFF.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/CURRENT_HANDOFF.md",
+    "docs/WORK_LOG.md",
+    "docs/ARCHITECTURE.md"
+  ],
+  "collaboration": {
+    "protocol": "docs/AI_COLLABORATION.md",
+    "snapshot": "docs/PROJECT_STATUS.md",
+    "latestHandoff": "docs/CURRENT_HANDOFF.md",
+    "workLog": "docs/WORK_LOG.md",
+    "repositoryIsMemory": true,
+    "runtimeMigrationInProgress": false
+  }
+}

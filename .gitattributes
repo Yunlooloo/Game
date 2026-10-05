@@ -1,0 +1,10 @@
+# The generated HTML must reproduce the same bytes on Windows and Unix.
+* text=auto eol=lf
+*.mp3 binary
+*.png binary
+*.jpg binary
+*.webp binary
+# Preserve the original inline module bytes (including their final blank line).
+# Other whitespace checks stay enabled; this is not a generated-source formatter.
+src/render.js whitespace=-blank-at-eof
+vendor/peerjs-1.5.5.js whitespace=-blank-at-eof

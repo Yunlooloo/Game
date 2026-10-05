@@ -1,0 +1,2 @@
+# Optional browser smoke only; the game/build/unit tests need no Python packages.
+playwright==1.62.0

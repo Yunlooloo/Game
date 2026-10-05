@@ -1,0 +1,2218 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#15191b" />
+    <meta
+      name="description"
+      content="斬境殘響 Riftblade Echoes — 破碎共鳴爐與鹽沼之間，渡影與赤衡以雙核續燃，在刀刃交錯的餘響中決定去路。"
+    />
+    <title>斬境殘響 · Riftblade Echoes</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%2311191d'/%3E%3Cpath d='M28 8L8 32l17 23 4-17-9-6 15-15M40 9l-4 17 9 6-16 17 7 7 20-24Z' fill='%23a4d9d0'/%3E%3Cpath d='M37 7L27 57' stroke='%23d99761' stroke-width='3'/%3E%3C/svg%3E"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --ink: #111719;
+        --paper: #e7dcca;
+        --muted: #aaa598;
+        --red: #a83f34;
+        --gold: #c9ae83;
+        --resonance: #a4d9d0;
+        --line: rgba(226, 209, 175, 0.2);
+        --serif:
+          "Noto Serif TC", "Songti TC", "PMingLiU", Georgia, serif;
+        --sans:
+          ui-sans-serif, system-ui, -apple-system, "PingFang TC",
+          "Microsoft JhengHei", sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--ink);
+        color: var(--paper);
+        font-family: var(--sans);
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+        color: inherit;
+        border: 0;
+      }
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.38;
+      }
+      button:focus-visible,
+      input:focus-visible {
+        outline: 2px solid var(--gold);
+        outline-offset: 4px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      button {
+        touch-action: manipulation;
+      }
+      button:hover:not(:disabled) {
+        filter: brightness(1.18);
+      }
+      #stage {
+        position: fixed;
+        inset: 0;
+        background: #353c3b;
+      }
+      #arena {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .vignette {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        box-shadow: inset 0 0 180px 40px #080e115c;
+      }
+      .border-corner {
+        position: absolute;
+        width: 32px;
+        height: 32px;
+        border-color: #c2a7785c;
+        border-style: solid;
+        pointer-events: none;
+      }
+      .tl {
+        left: 25px;
+        top: 25px;
+        border-width: 1px 0 0 1px;
+      }
+      .br {
+        right: 25px;
+        bottom: 25px;
+        border-width: 0 1px 1px 0;
+      }
+      .lobby {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 38px 5.2% 24px;
+        background: linear-gradient(
+          90deg,
+          rgba(11, 17, 20, 0.93),
+          rgba(15, 21, 24, 0.64) 30%,
+          rgba(15, 21, 24, 0.05) 57%,
+          rgba(11, 16, 19, 0.68) 82%,
+          rgba(11, 16, 19, 0.85)
+        );
+      }
+      .masthead {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        font-size: 11px;
+        letter-spacing: 0.23em;
+      }
+      .seal {
+        display: inline-grid;
+        place-items: center;
+        width: 38px;
+        height: 42px;
+        color: var(--resonance);
+        background: #19282b;
+        border: 1px solid #9abfb54d;
+        clip-path: polygon(12% 0, 100% 0, 100% 83%, 82% 100%, 0 100%, 0 15%);
+      }
+      .seal svg { width: 34px; height: 34px; }
+      .build-label {
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        color: #c5c4b8;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .online-dot {
+        width: 5px;
+        height: 5px;
+        display: inline-block;
+        background: #b7b890;
+        border-radius: 50%;
+        box-shadow: 0 0 10px #bcc388;
+      }
+      .main-grid {
+        flex: 1;
+        display: grid;
+        grid-template-columns: minmax(350px, 1fr) 320px;
+        align-items: center;
+        gap: 55px;
+        min-height: 0;
+      }
+      .hero {
+        padding: 20px 0 14px;
+        max-width: 540px;
+      }
+      .eyebrow {
+        font-size: 10px;
+        letter-spacing: 0.45em;
+        color: var(--gold);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .eyebrow:before {
+        content: "";
+        width: 28px;
+        height: 1px;
+        background: var(--gold);
+      }
+      h1 {
+        font-family: var(--serif);
+        font-weight: 500;
+        font-size: clamp(62px, 6.6vw, 105px);
+        letter-spacing: 0.11em;
+        line-height: 1.13;
+        margin: 23px 0 8px;
+        white-space: nowrap;
+        text-shadow: 0 6px 30px #0c1215;
+      }
+      h1 span {
+        display: block;
+        margin-left: 0.04em;
+      }
+      .english-title {
+        font-family: Georgia, serif;
+        font-size: 12px;
+        letter-spacing: 0.39em;
+        color: #c2b59d;
+        padding-left: 5px;
+      }
+      .red-rule {
+        width: 39px;
+        height: 3px;
+        background: var(--red);
+        margin: 28px 0 21px;
+      }
+      .tagline {
+        font-family: var(--serif);
+        font-size: 19px;
+        letter-spacing: 0.21em;
+        margin: 0 0 12px;
+        line-height: 1.7;
+      }
+      .description {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 2;
+        letter-spacing: 0.065em;
+        max-width: 355px;
+        margin: 0 0 27px;
+      }
+      .first-blade {
+        margin: -10px 0 24px;
+        padding-left: 12px;
+        border-left: 2px solid #a88758;
+        color: #e3cfaa;
+        font-size: 12px;
+        line-height: 1.8;
+      }
+      .first-blade b { font-weight: 500; letter-spacing: .08em; }
+      .first-blade small { display: block; color: #aaa797; font-size: 10px; }
+      .mode-buttons {
+        display: grid;
+        grid-template-columns: 1.12fr 1fr;
+        gap: 10px;
+        max-width: 385px;
+      }
+      .mode-button {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        text-align: left;
+        border: 1px solid var(--line);
+        background: #101719a6;
+        padding: 15px 19px;
+        min-height: 59px;
+      }
+      .mode-button.primary {
+        background: #97382f;
+        border-color: #b6634f;
+      }
+      .mode-button b {
+        font-family: var(--serif);
+        font-weight: 500;
+        letter-spacing: 0.18em;
+        font-size: 17px;
+      }
+      .mode-button small {
+        display: block;
+        font-size: 9px;
+        color: #ccb9a9;
+        letter-spacing: 0.13em;
+        margin-top: 5px;
+      }
+      .arrow {
+        font-size: 23px;
+        color: #dbcab5;
+        font-weight: 200;
+      }
+      .network-toggle {
+        background: none;
+        padding: 15px 0;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        color: #c6b79d;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .link-icon {
+        width: 14px;
+        height: 10px;
+        border: 1px solid currentColor;
+        transform: rotate(-25deg);
+        display: inline-block;
+        border-radius: 4px;
+      }
+      .network-panel {
+        background: #11191ee8;
+        border: 1px solid var(--line);
+        padding: 15px;
+        max-width: 430px;
+        margin: 3px 0 0;
+      }
+      .network-panel p {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.6;
+        margin: 0 0 10px;
+      }
+      .network-row {
+        display: flex;
+        gap: 7px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+      }
+      .network-panel input {
+        background: #080d1066;
+        border: 1px solid #6a6b6266;
+        min-width: 100px;
+        flex: 1;
+        color: var(--paper);
+        padding: 9px 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-size: 12px;
+      }
+      .small-btn {
+        background: #2a302f;
+        border: 1px solid var(--line);
+        padding: 9px 12px;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+      }
+      .small-btn.red {
+        background: var(--red);
+      }
+      #network-status {
+        margin-top: 12px;
+        margin-bottom: 0;
+        color: #d7c297;
+        min-height: 16px;
+      }
+      .loadout {
+        position: relative;
+        background: linear-gradient(180deg, #151d20d6, #171e208f);
+        border-top: 1px solid #b5a17b69;
+        border-bottom: 1px solid #b5a17b3d;
+        padding: 23px 22px 18px;
+        backdrop-filter: blur(9px);
+      }
+      .panel-kicker {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 9px;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+        margin-bottom: 17px;
+      }
+      .panel-kicker span:first-child {
+        color: var(--gold);
+      }
+      .panel-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 17px;
+      }
+      .panel-heading h2 {
+        font-family: var(--serif);
+        font-weight: 400;
+        font-size: 22px;
+        letter-spacing: 0.17em;
+        margin: 0;
+      }
+      .panel-heading small {
+        color: var(--muted);
+        font-size: 10px;
+      }
+      .tool-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .tool {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        background: transparent;
+        border: 1px solid transparent;
+        min-height: 51px;
+        text-align: left;
+        padding: 7px 8px;
+        transition: background 0.2s;
+      }
+      .tool.selected {
+        background: #b9a4790b;
+        border-color: #c6a87650;
+      }
+      .tool:not(.selected) {
+        opacity: 0.62;
+      }
+      .tool:hover {
+        opacity: 1;
+      }
+      .tool-icon {
+        width: 30px;
+        height: 30px;
+        display: grid;
+        place-items: center;
+        border: 1px solid #9bbfb94d;
+        background: #17282b55;
+        color: #b4d1c8;
+      }
+      .tool-icon svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+      .tool-copy {
+        flex: 1;
+      }
+      .tool b {
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+      }
+      .tool small {
+        display: block;
+        color: #b4aa98;
+        font-size: 9px;
+        letter-spacing: 0.04em;
+        margin-top: 4px;
+      }
+      .slot {
+        font-size: 9px;
+        color: var(--gold);
+        letter-spacing: 0.03em;
+      }
+      .divider {
+        border: 0;
+        border-top: 1px solid var(--line);
+        margin: 18px 0 16px;
+      }
+      .field-label {
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 0.17em;
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+      .art-options,
+      .weather-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+      }
+      .art-option {
+        background: none;
+        border: 1px solid var(--line);
+        text-align: left;
+        padding: 10px;
+      }
+      .art-option b {
+        font-family: var(--serif);
+        font-size: 12px;
+        font-weight: 400;
+        letter-spacing: 0.08em;
+      }
+      .art-option small {
+        display: block;
+        font-size: 9px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+      .art-option.selected {
+        border-color: #bc9d69;
+        background: #b49b6411;
+      }
+      .weather-options {
+        margin-top: 13px;
+      }
+      .weather-option {
+        background: transparent;
+        border: none;
+        color: var(--muted);
+        font-size: 10px;
+        padding: 7px 0;
+        letter-spacing: 0.08em;
+      }
+      .weather-option.selected {
+        color: var(--gold);
+      }
+      .weather-option.selected:before {
+        content: "●";
+        font-size: 5px;
+        vertical-align: middle;
+        margin-right: 7px;
+      }
+      .menu-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        border-top: 1px solid var(--line);
+        padding-top: 15px;
+        font-size: 10px;
+        color: #bcb6a6;
+        letter-spacing: 0.08em;
+      }
+      .footer-left {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+      .text-button {
+        background: none;
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        padding: 0;
+        color: #c9c0af;
+      }
+      .footer-quote {
+        font-family: var(--serif);
+        color: #bfb399;
+        font-size: 11px;
+        letter-spacing: 0.18em;
+      }
+      .keyboard-key {
+        border: 1px solid #a99a7a5e;
+        display: inline-block;
+        min-width: 19px;
+        text-align: center;
+        font-size: 9px;
+        padding: 2px 4px;
+        margin-right: 6px;
+        color: #d3c4aa;
+      }
+      .hud {
+        position: absolute;
+        inset: 0 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 140px 1fr;
+        gap: 50px;
+        align-items: start;
+        padding: 29px 4.5% 60px;
+        background: linear-gradient(#0b1115d9, transparent);
+        pointer-events: none;
+      }
+      .fighter-hud {
+        max-width: 460px;
+      }
+      .fighter-hud.right {
+        justify-self: end;
+        width: 100%;
+        text-align: right;
+      }
+      .fighter-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 9px;
+        gap: 20px;
+      }
+      .fighter-title b {
+        font-family: var(--serif);
+        font-weight: 400;
+        font-size: 24px;
+        letter-spacing: 0.12em;
+      }
+      .fighter-title small {
+        color: #c7b696;
+        font-size: 9px;
+        letter-spacing: 0.16em;
+      }
+      .life-strip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 0 0 10px;
+        min-height: 18px;
+        color: #baaf95;
+        font-size: 9px;
+        letter-spacing: 0.13em;
+      }
+      .life-status { display: flex; align-items: center; gap: 13px; }
+      .life-nodes { display: inline-flex; gap: 9px; align-items: center; padding-left: 3px; }
+      .life-node {
+        position: relative;
+        display: block;
+        width: 12px;
+        height: 12px;
+        transform: rotate(45deg);
+        border: 1px solid #b5e3d6;
+        background: linear-gradient(135deg, #ddf7e3 0 48%, #649c9b 50% 100%);
+        box-shadow: 0 0 10px #8de8d542;
+        transition: opacity .35s, filter .35s;
+      }
+      .life-node::after {
+        content: '';
+        position: absolute;
+        inset: 2px;
+        border: 1px solid #f1fff78c;
+      }
+      .life-node.spent,
+      .life-nodes[data-remaining="1"] .life-node:last-child,
+      .life-nodes[data-remaining="0"] .life-node {
+        opacity: .23;
+        background: transparent;
+        box-shadow: none;
+        filter: grayscale(1);
+      }
+      .phase-label { color: #d5bc92; font-size: 8px; white-space: nowrap; }
+      .tonic-count { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+      .tonic-count b { color: #cbd9b7; font-weight: 500; }
+      .tonic-count small { color: #8e9380; font-size: 8px; }
+      .tonic-icon {
+        display: inline-block;
+        width: 8px;
+        height: 13px;
+        margin: 2px 3px 0 0;
+        border: 1px solid #a6d2c4;
+        border-radius: 1px 1px 2px 2px;
+        background: linear-gradient(0deg, #86baa77a 0 65%, transparent 65%);
+        position: relative;
+      }
+      .tonic-icon::before {
+        content: '';
+        position: absolute;
+        width: 8px;
+        height: 3px;
+        left: -1px;
+        top: -3px;
+        border: 1px solid #b8c7bb;
+        background: #758c84;
+      }
+      .right .life-strip { flex-direction: row-reverse; }
+      .right .life-status { flex-direction: row-reverse; }
+      #net-health { color: #aebe9a; letter-spacing: .08em; }
+      #net-health[data-state="degraded"] { color: #d7a266; }
+      #net-health[data-state="disconnected"] { color: #da7d70; }
+      .soul-principle { border-left: 2px solid #947953; padding: 0 0 0 13px; margin: 23px 0; }
+      .soul-principle b { color: #d7c49e; font-weight: 500; font-family: var(--serif); }
+      .soul-principle p { line-height: 1.8; color: #b4ae9e; font-size: 11px; margin: 7px 0; }
+      .hp-track {
+        height: 6px;
+        background: #080c0ca3;
+        border: 1px solid #c3af8c4d;
+        padding: 1px;
+      }
+      .hp-fill {
+        height: 100%;
+        background: #c9b597;
+        transition: width 0.1s;
+      }
+      .right .hp-fill {
+        background: #b95b4d;
+        margin-left: auto;
+      }
+      .posture-track {
+        height: 4px;
+        background: #080c0c99;
+        margin-top: 6px;
+        width: 74%;
+        margin-left: auto;
+      }
+      .posture-fill {
+        height: 100%;
+        background: #be975e;
+        transition: width 0.1s;
+      }
+      .left .posture-track {
+        margin-left: 0;
+      }
+      .right .posture-fill {
+        margin-left: auto;
+      }
+      .posture-fill.critical {
+        background: #dd4e42;
+        animation: critical 0.4s infinite alternate;
+      }
+      .fighter-meta {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 8px;
+        font-size: 10px;
+        letter-spacing: 0.05em;
+        color: #bfb6a6;
+        min-height: 20px;
+      }
+      .fighter-meta .spirit {
+        color: #ebdfc6;
+      }
+      .fighter-buff {
+        font-size: 11px;
+        color: #e8a061;
+        letter-spacing: 0.2em;
+        min-height: 16px;
+      }
+      .match-center {
+        text-align: center;
+        padding-top: 3px;
+      }
+      .match-center .round {
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        color: #c5b393;
+      }
+      .match-center .timer {
+        font-family: Georgia, serif;
+        font-size: 24px;
+        letter-spacing: 0.12em;
+        margin-top: 8px;
+      }
+      .match-center .match-mode {
+        font-size: 10px;
+        color: #9f9e90;
+        letter-spacing: 0.18em;
+        margin-top: 8px;
+      }
+      .combat-footer {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 35px 4.5% 23px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        background: linear-gradient(transparent, #0b1116dc);
+        pointer-events: none;
+      }
+      .quick-keys {
+        display: flex;
+        align-items: center;
+        gap: 19px;
+        font-size: 12px;
+        color: #e2d6bc;
+      }
+      .input-key {
+        display: inline-block;
+        min-width: 23px;
+        padding: 4px 7px;
+        border: 1px solid #c4ad7c66;
+        border-radius: 3px;
+        background: #182023a8;
+        color: #e3cca2;
+        font-family: var(--sans);
+        font-size: 10px;
+        font-weight: 500;
+        text-align: center;
+        white-space: nowrap;
+      }
+      .quick-keys .input-key { margin-right: 6px; }
+      .quick-keys .movement-note { color: #999f93; font-size: 9px; }
+      .equipment-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+        color: #b9b4a1;
+        font-size: 10px;
+        margin-top: 12px;
+      }
+      .equipment-row .input-key { padding: 1px 4px; min-width: 19px; font-size: 9px; }
+      .equipment-row b { font-weight: 400; }
+      .active-tool { color: #d9c69c; white-space: nowrap; }
+      #active-tool-slot { color: #999983; font-size: 8px; margin-left: 4px; }
+      .tool-swap { display: inline-flex; gap: 5px; align-items: center; }
+      .equipped-slot { color: #858c80; padding: 2px 4px; border-bottom: 1px solid transparent; }
+      .equipped-slot.is-active { color: #d7c392; border-bottom-color: #b99b64; }
+      .equipment-action { white-space: nowrap; }
+      .equipped-art { color: #939c90; }
+      .equipment-row .equipped-art .input-key { color: #b1ac97; border-color: #9d9a7840; }
+      .combat-controls { min-width: 0; }
+      .combat-footer { gap: 24px; }
+      .combat-readout { flex-shrink: 0; }
+      .combat-readout {
+        font-size: 9px;
+        color: #b8b49f;
+        letter-spacing: 0.15em;
+        text-align: right;
+        display: flex;
+        gap: 22px;
+      }
+      .combat-caption {
+        position: absolute;
+        top: 22%;
+        left: 0;
+        width: 100%;
+        text-align: center;
+        font-family: var(--serif);
+        font-size: 18px;
+        letter-spacing: 0.3em;
+        color: #e8d1a4;
+        pointer-events: none;
+        text-shadow: 0 2px 12px #000;
+      }
+      .combat-note {
+        font-size: 9px;
+        letter-spacing: 0.1em;
+        color: #a3a79e;
+        margin-top: 9px;
+      }
+      .overlay {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #080e13c9;
+        backdrop-filter: blur(8px);
+        z-index: 10;
+        padding: 26px;
+      }
+      .modal {
+        width: min(620px, 100%);
+        max-height: 90vh;
+        overflow: auto;
+        background: #171e20f5;
+        border: 1px solid #b9a1794f;
+        padding: 42px;
+        text-align: center;
+        box-shadow: 0 30px 100px #0008;
+      }
+      .modal .eyebrow {
+        justify-content: center;
+      }
+      .modal h2 {
+        font-family: var(--serif);
+        font-weight: 400;
+        font-size: 36px;
+        letter-spacing: 0.2em;
+        margin: 20px 0;
+      }
+      .modal p {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.8;
+        letter-spacing: 0.07em;
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 27px;
+      }
+      .modal-actions button {
+        padding: 13px 22px;
+        border: 1px solid var(--line);
+        background: #262d2e;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+      }
+      .modal-actions button.primary {
+        background: var(--red);
+      }
+      .result-seal {
+        font-family: var(--serif);
+        font-size: 72px;
+        letter-spacing: 0.16em;
+        color: #cf5445;
+        text-shadow: 3px 3px 0 #672018;
+        margin: 2px 0 12px;
+      }
+      .result-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        padding: 22px 0 4px;
+        border-top: 1px solid var(--line);
+        margin-top: 25px;
+      }
+      .result-stats b {
+        display: block;
+        font-family: Georgia, serif;
+        font-size: 31px;
+        font-weight: 400;
+        color: #e4c395;
+      }
+      .result-stats span {
+        font-size: 10px;
+        letter-spacing: 0.15em;
+        color: var(--muted);
+      }
+      .guide-modal {
+        width: min(1080px, 100%);
+        text-align: left;
+        padding: 30px 34px;
+      }
+      .guide-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .guide-top h2 {
+        font-size: 29px;
+        margin: 0;
+      }
+      .close-button {
+        background: none;
+        color: var(--gold);
+        font-size: 24px;
+      }
+      .guide-intro {
+        margin: 12px 0 20px;
+      }
+      .guide-basics td { padding: 10px 0; }
+      .guide-basics td:first-child { width: 43%; }
+      .guide-basics .input-key { min-width: 65px; }
+      .guide-essential-note { font-size: 10px !important; margin: 10px 0 15px; }
+      .guide-equipment {
+        font-size: 11px;
+        line-height: 2;
+        padding: 11px 13px;
+        border: 1px solid var(--line);
+        background: #bca16b06;
+      }
+      .guide-equipment p { font-size: 11px; margin: 3px 0; line-height: 1.8; }
+      .guide-equipment .input-key { padding: 1px 5px; margin-right: 4px; font-size: 9px; }
+      .guide-details { margin-top: 12px; border-bottom: 1px solid var(--line); padding-bottom: 11px; }
+      .guide-details summary { cursor: pointer; font-size: 11px; color: #bfb6a2; padding: 3px 0; }
+      .guide-details summary::marker { color: #a38d69; }
+      .guide-details summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+      .guide-details[open] summary { color: var(--gold); margin-bottom: 9px; }
+      .guide-details .controls-table { font-size: 10px; }
+      .guide-details p { font-size: 10px; }
+      .counter-input { float: right; font-size: 9px; padding: 1px 5px; margin-left: 5px; }
+      .guide-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+      .guide-section h3 {
+        font-size: 13px;
+        font-family: var(--serif);
+        font-weight: 400;
+        letter-spacing: 0.2em;
+        color: var(--gold);
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 12px;
+        margin: 0 0 12px;
+      }
+      .controls-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11px;
+      }
+      .controls-table th {
+        text-align: left;
+        font-size: 9px;
+        font-weight: 400;
+        color: var(--muted);
+        letter-spacing: 0.12em;
+      }
+      .controls-table td {
+        padding: 6px 0;
+        border-bottom: 1px solid #ad9e7f10;
+        color: #cfc7b7;
+      }
+      .controls-table td:nth-child(2),
+      .controls-table td:nth-child(3) {
+        font-family: ui-monospace, monospace;
+        color: #dcc8a1;
+      }
+      .counter-card {
+        margin-bottom: 12px;
+      }
+      .counter-card b {
+        font-size: 12px;
+        font-weight: 500;
+        color: #e1c99d;
+      }
+      .counter-card p {
+        font-size: 11px;
+        margin: 5px 0;
+        line-height: 1.8;
+      }
+      .frame-strip {
+        margin-top: 18px;
+        border: 1px solid var(--line);
+        padding: 12px;
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .frame-strip b {
+        color: var(--gold);
+        font-weight: 400;
+      }
+      .guide-fine {
+        border-top: 1px solid var(--line);
+        margin-top: 18px;
+        padding-top: 12px;
+        color: #a6a392 !important;
+        font-size: 10px !important;
+      }
+      .audio-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        justify-content: center;
+        margin: 22px 0 0;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .audio-row input {
+        accent-color: var(--gold);
+        width: 130px;
+      }
+      .toast {
+        position: absolute;
+        bottom: 80px;
+        left: 50%;
+        transform: translate(-50%, 15px);
+        opacity: 0;
+        transition:
+          opacity 0.2s,
+          transform 0.2s;
+        z-index: 30;
+        pointer-events: none;
+        background: #152024f2;
+        border: 1px solid #b6a27a66;
+        padding: 12px 20px;
+        font-size: 12px;
+        letter-spacing: 0.07em;
+        max-width: 90%;
+        text-align: center;
+        line-height: 1.7;
+        box-shadow: 0 8px 30px #0005;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      /* Thumb zones keep primary actions large even at 360 CSS pixels. */
+      #arena, .hud, .combat-footer, .combat-caption, .touch-controls,
+      .touch-controls * {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: none;
+      }
+      #room-code {
+        -webkit-user-select: text;
+        user-select: text;
+        -webkit-touch-callout: default;
+        touch-action: auto;
+      }
+      .touch-controls {
+        --touch-main: 64px;
+        --touch-aux: 46px;
+        --touch-gap: 8px;
+        display: none;
+        position: absolute;
+        left: max(12px, env(safe-area-inset-left));
+        right: max(12px, env(safe-area-inset-right));
+        bottom: calc(34px + env(safe-area-inset-bottom));
+        z-index: 5;
+        justify-content: space-between;
+        align-items: flex-end;
+        pointer-events: none;
+      }
+      .touch-cluster {
+        display: flex;
+        flex-direction: column;
+        gap: var(--touch-gap);
+        align-items: flex-start;
+      }
+      .touch-cluster.touch-combat { align-items: flex-end; }
+      .touch-primary, .touch-secondary {
+        display: grid;
+        grid-template-columns: repeat(2, auto);
+        gap: var(--touch-gap);
+      }
+      .touch-secondary { padding: 0 3px; }
+      .touch-controls button {
+        pointer-events: auto;
+        flex-shrink: 0;
+        padding: 0;
+        width: var(--touch-aux);
+        height: var(--touch-aux);
+        border-radius: 14px;
+        background: #142027db;
+        color: #e6dfce;
+        border: 1px solid #b7c3b567;
+        box-shadow: inset 0 1px 0 #f5e4bd16, 0 2px 8px #06101242;
+        font-family: var(--serif);
+        font-size: 17px;
+        line-height: 1;
+        transition: background-color .08s, border-color .08s;
+      }
+      .touch-controls .touch-primary button {
+        width: var(--touch-main);
+        height: var(--touch-main);
+        border-radius: 20px;
+        font-size: 25px;
+      }
+      .touch-controls .move-touch { background: #263837e8; color: #d3e4d4; }
+      .touch-controls .guard-touch { background: #31514fe3; border-color: #a4d9d078; }
+      .touch-controls .attack-touch { background: #91483ce8; border-color: #e5ad8382; }
+      .touch-controls .heal-touch { border-color: #9dad7699; color: #d7e3b7; }
+      .touch-controls .pause-touch { font-family: var(--sans); font-size: 13px; color: #bcbdb4; }
+      .touch-controls button:active, .touch-controls button.is-held {
+        background: #736247;
+        border-color: #f4d39b;
+        box-shadow: inset 0 0 0 2px #f4d39b55;
+      }
+      .mobile-hint {
+        display: none;
+      }
+      .sound-controls {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+      }
+      .sr-only {
+        position: absolute;
+        clip: rect(0, 0, 0, 0);
+        clip-path: inset(50%);
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+      @keyframes critical {
+        to {
+          opacity: 0.35;
+        }
+      }
+      @media (min-width: 1600px) {
+        .loadout {
+          width: 350px;
+          justify-self: end;
+        }
+        .main-grid {
+          grid-template-columns: 1fr 350px;
+        }
+        .hero {
+          margin-left: 2%;
+        }
+      }
+      @media (max-height: 780px) and (min-width: 761px) {
+        .lobby {
+          padding-top: 24px;
+          padding-bottom: 18px;
+        }
+        .loadout {
+          padding-top: 16px;
+          padding-bottom: 12px;
+        }
+        .tool {
+          min-height: 45px;
+        }
+        .panel-kicker {
+          margin-bottom: 11px;
+        }
+        .panel-heading {
+          margin-bottom: 12px;
+        }
+        .divider {
+          margin: 12px 0;
+        }
+        .hero {
+          padding: 8px 0;
+        }
+        h1 {
+          font-size: 73px;
+          margin-top: 20px;
+        }
+        .red-rule {
+          margin: 19px 0 16px;
+        }
+        .description {
+          margin-bottom: 21px;
+        }
+        .main-grid {
+          gap: 35px;
+        }
+        .network-panel {
+          position: absolute;
+          bottom: 78px;
+          left: 5.2%;
+          z-index: 3;
+          box-shadow: 0 20px 50px #000b;
+        }
+      }
+      @media (max-width: 1050px) {
+        .main-grid {
+          grid-template-columns: 1fr 285px;
+          gap: 25px;
+        }
+        .lobby {
+          padding-left: 4%;
+          padding-right: 4%;
+        }
+        h1 {
+          font-size: 76px;
+        }
+        .description {
+          font-size: 11px;
+          max-width: 300px;
+        }
+        .hero {
+          max-width: 400px;
+        }
+        .loadout {
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+        .hud {
+          gap: 23px;
+          grid-template-columns: 1fr 100px 1fr;
+        }
+        .quick-keys {
+          gap: 13px;
+        }
+        .equipment-row { gap: 7px 12px; }
+        .combat-readout { flex-direction: column; gap: 7px; }
+        .footer-quote {
+          display: none;
+        }
+      }
+      @media (max-width: 760px) {
+        .lobby {
+          overflow-y: auto;
+          padding: 22px 25px;
+          background: linear-gradient(90deg, #10191eef, #10191e90);
+        }
+        .main-grid {
+          display: block;
+          flex: none;
+        }
+        .masthead {
+          margin-bottom: 17px;
+        }
+        .brand {
+          font-size: 8px;
+          letter-spacing: 0.15em;
+        }
+        .build-label {
+          font-size: 8px;
+          letter-spacing: 0.1em;
+        }
+        .hero {
+          max-width: none;
+          padding-bottom: 15px;
+        }
+        .eyebrow {
+          font-size: 8px;
+        }
+        h1 {
+          font-size: 66px;
+          line-height: 1;
+          margin: 19px 0 12px;
+        }
+        h1 span {
+          display: inline;
+        }
+        .english-title {
+          font-size: 9px;
+          letter-spacing: 0.25em;
+        }
+        .red-rule {
+          margin: 21px 0 15px;
+        }
+        .tagline {
+          font-size: 16px;
+        }
+        .description {
+          max-width: 100%;
+          font-size: 11px;
+          margin-bottom: 20px;
+        }
+        .mode-buttons {
+          max-width: none;
+        }
+        .mode-button {
+          padding: 13px 12px;
+        }
+        .mode-button b {
+          font-size: 16px;
+        }
+        .loadout {
+          margin: 5px 0 22px;
+          padding: 20px;
+        }
+        .tool-list {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 5px;
+        }
+        .tool {
+          gap: 8px;
+          padding: 7px 5px;
+          min-height: 51px;
+        }
+        .tool-copy small {
+          font-size: 8px;
+        }
+        .tool-icon {
+          width: 24px;
+          height: 24px;
+          font-size: 13px;
+          flex-shrink: 0;
+        }
+        .tool .slot {
+          font-size: 8px;
+        }
+        .tool b {
+          font-size: 11px;
+        }
+        .panel-heading h2 {
+          font-size: 20px;
+        }
+        .slot {
+          margin-left: auto;
+        }
+        .menu-footer {
+          padding: 14px 0;
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+        .footer-left {
+          gap: 15px;
+        }
+        .sound-controls {
+          gap: 17px;
+        }
+        .border-corner {
+          display: none;
+        }
+        .hud {
+          padding: 20px 18px;
+          gap: 15px;
+          grid-template-columns: 1fr 55px 1fr;
+        }
+        .fighter-title {
+          gap: 4px;
+          margin-bottom: 8px;
+        }
+        .fighter-title b {
+          font-size: 17px;
+        }
+        .life-strip { font-size: 8px; gap: 5px; margin-bottom: 8px; }
+        .life-status { gap: 8px; }
+        .life-nodes { gap: 7px; }
+        .life-node { width: 9px; height: 9px; }
+        .life-node::after { inset: 1px; }
+        .phase-label { font-size: 7px; letter-spacing: .04em; }
+        .tonic-count { gap: 2px; font-size: 0; }
+        .tonic-count b { font-size: 9px; }
+        .tonic-count small { font-size: 7px; }
+        .fighter-title small {
+          font-size: 7px;
+        }
+        .fighter-meta {
+          font-size: 8px;
+          line-height: 1.6;
+          gap: 5px;
+        }
+        .fighter-buff {
+          font-size: 9px;
+        }
+        .match-center .timer {
+          font-size: 18px;
+        }
+        .match-center .round {
+          font-size: 8px;
+        }
+        .match-mode {
+          display: none;
+        }
+        .combat-footer {
+          padding: 25px 18px 15px;
+        }
+        .quick-keys {
+          gap: 10px;
+          font-size: 9px;
+        }
+        .quick-keys .input-key { font-size: 8px; padding: 3px 4px; margin-right: 3px; }
+        .quick-keys .movement-note { display: none; }
+        .equipment-row { margin-top: 8px; gap: 5px 10px; font-size: 9px; }
+        .equipment-row .equipped-slot,
+        .equipment-row .equipment-action { display: none; }
+        .combat-readout {
+          font-size: 8px;
+          gap: 12px;
+        }
+        .combat-note {
+          display: none;
+        }
+        .combat-caption {
+          font-size: 14px;
+          top: 24%;
+        }
+        .guide-grid {
+          grid-template-columns: 1fr;
+        }
+        .guide-modal {
+          padding: 24px;
+          max-height: 90vh;
+        }
+        .guide-top h2 {
+          font-size: 24px;
+        }
+        .modal {
+          padding: 26px;
+        }
+        .overlay {
+          padding: 16px;
+        }
+        .mobile-hint {
+          display: block !important;
+          color: #bba98c;
+          font-size: 9px;
+          line-height: 1.7;
+        }
+        .toast {
+          bottom: 133px;
+        }
+        .network-panel {
+          max-width: none;
+        }
+        .hero .mobile-hint {
+          margin-bottom: 0;
+        }
+      }
+      @media (pointer: coarse) {
+        .touch-controls.playing {
+          display: flex;
+        }
+        .mobile-hint {
+          display: block;
+        }
+        .combat-footer .quick-keys,
+        .combat-footer .tool-swap,
+        .combat-footer .equipment-action,
+        .combat-footer .active-tool .input-key,
+        .combat-footer .combat-note { display: none; }
+        .combat-footer .equipment-row { margin-top: 0; }
+        .combat-footer .active-tool::before { content: "裝具 · "; color: #939c90; }
+        .combat-readout { flex-direction: row; flex-wrap: nowrap; justify-content: flex-end; max-width: none; }
+        .combat-readout span { white-space: nowrap; }
+        .combat-footer {
+          padding: 7px max(12px, env(safe-area-inset-right)) calc(9px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+          gap: 8px;
+        }
+        .combat-readout { gap: 5px 9px; font-size: 7px; letter-spacing: .05em; }
+        .hud { padding-left: max(18px, env(safe-area-inset-left)); padding-right: max(18px, env(safe-area-inset-right)); padding-top: max(16px, env(safe-area-inset-top)); }
+        .toast { bottom: calc(222px + env(safe-area-inset-bottom)); }
+      }
+      @media (max-width: 460px) {
+        h1 {
+          font-size: 54px;
+          letter-spacing: 0.07em;
+        }
+        .tool-list {
+          grid-template-columns: 1fr;
+        }
+        .tool {
+          min-height: 44px;
+        }
+        .tool-copy small {
+          display: inline;
+          margin-left: 7px;
+        }
+        .tool b {
+          font-size: 12px;
+        }
+        .tool-list .tool:last-child {
+          grid-column: auto;
+        }
+        .fighter-title small { display: none; }
+        .life-status { gap: 6px; }
+        .life-nodes { gap: 6px; }
+        .tonic-icon { margin-right: 1px; }
+        #net-health { font-size: 7px; }
+      }
+      @media (max-height: 700px) and (min-width: 761px) {
+        .lobby { overflow-y: auto; }
+        .main-grid { flex: none; padding: 18px 0; }
+        .menu-footer { flex: none; }
+      }
+      @media (max-height: 520px) and (orientation: landscape) {
+        .lobby {
+          overflow: auto;
+        }
+        .main-grid {
+          padding: 24px 0;
+          display: grid;
+          grid-template-columns: 1fr 275px;
+        }
+        .hero {
+          padding: 0;
+        }
+        h1 {
+          font-size: 58px;
+        }
+        .hero .description {
+          margin-bottom: 15px;
+        }
+        .loadout {
+          margin: 0;
+        }
+        .menu-footer {
+          flex: none;
+        }
+        .hud {
+          padding-top: 12px;
+        }
+        .combat-footer {
+          padding-bottom: 10px;
+        }
+        .combat-caption {
+          top: 29%;
+        }
+      }
+
+      @media (pointer: coarse) and (orientation: landscape) {
+        .touch-controls { --touch-main: 72px; --touch-aux: 46px; }
+        .combat-footer { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+        .combat-caption { top: 27%; }
+      }
+      @media (pointer: coarse) and (min-width: 900px) {
+        .touch-controls { --touch-main: 76px; --touch-aux: 48px; left: max(24px, env(safe-area-inset-left)); right: max(24px, env(safe-area-inset-right)); }
+      }
+
+
+      /* Paper lobby: scope the palette so combat HUD and overlays retain contrast. */
+      #lobby {
+        --paper: #303a36; --muted: #78796f; --gold: #8c6a46;
+        --red: #984a40; --line: #68716930;
+        color-scheme: light; color: var(--paper);
+        padding: 29px clamp(24px, 4.2vw, 78px) 22px;
+        background: radial-gradient(ellipse at 56% 62%, #d9d8cd55, transparent 42%),
+          radial-gradient(ellipse at 89% 8%, #c7b8ae30, transparent 33%),
+          repeating-linear-gradient(0deg, #a4988010 0, #a4988010 1px, transparent 1px, transparent 5px),
+          #f4eee3;
+        overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
+        scrollbar-color: #b4aea0 #f4eee3; isolation: isolate;
+      }
+      #lobby::before { content: ''; position: fixed; inset: 12px; border: 1px solid #8b857726; pointer-events: none; z-index: -1; }
+      #lobby button { transition: background .18s, border-color .18s, color .18s; }
+      #lobby button:hover:not(:disabled) { filter: none; }
+      #lobby button:focus-visible, #lobby input:focus-visible { outline-color: #984a40; }
+      #lobby .masthead { flex: none; min-height: 45px; padding-bottom: 21px; border-bottom: 1px solid var(--line); }
+      #lobby .brand { font-size: 9px; letter-spacing: .22em; gap: 12px; color: #46564e; }
+      #lobby .seal { width: 32px; height: 36px; background: #9a4d43; color: #f4e8d5; border: 0; transform: rotate(-3deg); clip-path: polygon(3% 3%, 97% 0, 100% 98%, 0 96%); }
+      #lobby .seal svg { width: 29px; height: 29px; }
+      #lobby .build-label { color: #7c7b71; font-size: 9px; letter-spacing: .17em; }
+      #lobby .online-dot { width: 4px; height: 4px; background: #8c5c4f; box-shadow: none; }
+      #lobby .main-grid { flex: 1 0 auto; display: grid; grid-template-columns: minmax(250px, .95fr) minmax(250px, 1.2fr) minmax(260px, .86fr); gap: clamp(16px, 2vw, 36px); align-items: center; min-height: 580px; padding: 24px 0; }
+      #lobby .hero { position: relative; z-index: 1; margin: 0; padding: 8px 0; max-width: 360px; }
+      #lobby .eyebrow { color: #96745b; font-size: 8px; letter-spacing: .25em; gap: 10px; }
+      #lobby .eyebrow::before { width: 21px; background: #a07054; }
+      #lobby h1 { color: #2d3733; font-size: clamp(67px, 5.7vw, 94px); font-weight: 600; letter-spacing: .13em; line-height: 1.11; margin: 23px 0 15px; text-shadow: 1px 1px 0 #383d3412; }
+      #lobby h1 span { display: block; margin-left: 0; }
+      #lobby .english-title { font-size: 9px; letter-spacing: .23em; color: #8b8070; padding: 0; }
+      #lobby .red-rule { width: 26px; height: 2px; margin: 24px 0 17px; background: #a25848; }
+      #lobby .tagline { color: #4b564f; font-size: 17px; letter-spacing: .13em; margin-bottom: 9px; }
+      #lobby .description { max-width: 300px; color: #777a6f; font-size: 11px; line-height: 1.95; letter-spacing: .03em; margin-bottom: 22px; }
+      #lobby .first-blade { margin: 0 0 19px; border-left: 2px solid #9d6150; padding-left: 11px; color: #4f6054; font-size: 11px; }
+      #lobby .first-blade small { color: #7f8074; font-size: 9px; }
+      #lobby .mode-buttons { grid-template-columns: 1.08fr 1fr; gap: 8px; max-width: none; }
+      #lobby .mode-button { padding: 13px 12px; min-height: 65px; background: #e7e5d94d; border: 1px solid #6d786445; color: #47564c; }
+      #lobby .mode-button.primary { color: #f8f0e2; background: #425d54; border-color: #425d54; box-shadow: 0 3px 0 #33453e; }
+      #lobby .mode-button:hover { background: #dce0d3; border-color: #536d5f; }
+      #lobby .mode-button.primary:hover { background: #536e63; }
+      #lobby .mode-button b { font-size: 15px; letter-spacing: .1em; }
+      #lobby .mode-button small { color: #788476; font-size: 8px; letter-spacing: .03em; }
+      #lobby .mode-button.primary small { color: #d1d8c7; }
+      #lobby .arrow { color: currentColor; font-size: 19px; margin-left: 6px; }
+      #lobby #start-tutorial { width: 100%; margin-top: 11px; padding: 12px; color: #8d4d3f; background: #aa72540a; border: 1px solid #9e695d55; display: flex; gap: 8px; justify-content: space-between; font-size: 11px; letter-spacing: .1em; }
+      #lobby #start-tutorial span { font-size: 9px; color: #998170; letter-spacing: .03em; }
+      #lobby #start-tutorial:hover { background: #ac795019; border-color: #a96a54; }
+      #lobby .network-toggle { color: #6f7c70; font-size: 10px; padding: 14px 0 4px; letter-spacing: .04em; }
+      #lobby .network-toggle:hover { color: #914e43; }
+      #lobby .network-panel { position: absolute; top: calc(100% - 10px); bottom: auto; left: 0; z-index: 6; width: min(440px, 82vw); max-width: none; background: #f4eee5; border: 1px solid #9b98877d; padding: 16px; box-shadow: 0 15px 35px #4c433320; }
+      #lobby .network-panel input { background: #fffdf68c; border-color: #68756a55; color: #3f554a; }
+      #lobby .small-btn { background: #e3e5d8; border-color: #68756a40; color: #445b4e; }
+      #lobby .small-btn:hover { background: #d4dccb; }
+      #lobby .small-btn.red { background: #8f5549; color: #fff5e4; }
+      #lobby #network-status { color: #8d5949; }
+      #lobby .lobby-portrait { position: relative; align-self: stretch; min-width: 0; min-height: 520px; margin: -10px -14px 0; display: flex; flex-direction: column; justify-content: center; }
+      #lobby-art { display: block; width: 100%; height: min(65vh, 650px); min-height: 490px; }
+      #lobby .lobby-portrait figcaption { display: flex; align-items: center; justify-content: center; gap: 12px; color: #827b6d; font-family: var(--serif); font-size: 10px; letter-spacing: .22em; margin-top: -8px; }
+      #lobby .lobby-portrait figcaption::before, #lobby .lobby-portrait figcaption::after { content: ''; width: 25px; height: 1px; background: #847b6650; }
+      #lobby .loadout { justify-self: stretch; width: auto; margin: 0; background: #ece9df61; backdrop-filter: none; border: 0; border-left: 1px solid #9b9b8438; padding: 20px 0 17px 23px; }
+      #lobby .panel-kicker { color: #8c8b7f; font-size: 8px; letter-spacing: .13em; margin-bottom: 17px; }
+      #lobby .panel-kicker span:first-child { color: #917359; }
+      #lobby .panel-heading { margin-bottom: 15px; }
+      #lobby .panel-heading h2 { color: #46584f; font-size: 21px; letter-spacing: .12em; }
+      #lobby .panel-heading small { font-size: 9px; color: #8b8b7d; }
+      #lobby .tool-list { display: flex; flex-direction: column; gap: 4px; }
+      #lobby .tool { width: 100%; padding: 9px 8px; gap: 11px; min-height: 57px; color: #42544a; border: 1px solid transparent; opacity: 1; }
+      #lobby .tool:not(.selected) { color: #7c8376; }
+      #lobby .tool.selected { border-color: #8f9b7d66; background: #c2caba25; }
+      #lobby .tool:hover { background: #d5dbcc7d; }
+      #lobby .tool-icon { color: #6b7967; background: transparent; border: 0; width: 33px; height: 33px; flex-shrink: 0; }
+      #lobby .tool.selected .tool-icon { color: #446653; }
+      #lobby .tool-icon svg { width: 29px; height: 29px; stroke-width: 1.2; }
+      #lobby .tool b { font-family: var(--serif); font-size: 14px; font-weight: 500; letter-spacing: .13em; }
+      #lobby .tool small { color: #838574; font-size: 9px; margin-top: 4px; display: block; margin-left: 0; }
+      #lobby .slot { color: #916e55; font-family: var(--serif); font-size: 11px; margin-left: auto; }
+      #lobby .divider { border-top-color: #8c937d40; margin: 19px 0 17px; }
+      #lobby .field-label { font-size: 9px; color: #7d8172; letter-spacing: .1em; }
+      #lobby .art-option { border-color: #87927d40; padding: 11px 10px; color: #596354; }
+      #lobby .art-option b { font-size: 15px; letter-spacing: .12em; }
+      #lobby .art-option small { color: #8a8d7a; font-size: 8px; }
+      #lobby .art-option.selected { border-color: #9a725d91; background: #c3977512; color: #965f4d; }
+      #lobby .art-option:hover { border-color: #9a725d91; background: #baaa8517; }
+      #lobby .weather-options { margin-top: 15px; }
+      #lobby .weather-option { color: #8c8f80; font-size: 9px; }
+      #lobby .weather-option.selected { color: #7b6550; }
+      #lobby .menu-footer { flex: none; color: #858577; padding-top: 17px; border-top-color: #737c6238; font-size: 9px; gap: 15px; }
+      #lobby .text-button { color: #6f796b; font-size: 9px; }
+      #lobby .text-button:hover { color: #914e43; }
+      #lobby .footer-quote { color: #9a8975; font-size: 10px; letter-spacing: .12em; }
+      #lobby .keyboard-key { color: #7e7e69; border-color: #8e937b50; font-size: 8px; }
+      #lobby .sound-controls { gap: 18px; }
+      #lobby .mobile-hint { color: #8b8b7c; }
+      @media (min-width: 1600px) {
+        #lobby .main-grid { grid-template-columns: minmax(320px, 1fr) minmax(440px, 1.35fr) 310px; gap: 45px; }
+        #lobby .hero { margin-left: 5%; }
+        #lobby .loadout { padding-left: 28px; }
+      }
+      @media (min-width: 1001px) and (max-height: 800px) {
+        #lobby { padding-top: 20px; padding-bottom: 18px; }
+        #lobby .masthead { padding-bottom: 14px; }
+        #lobby .main-grid { min-height: 548px; padding: 16px 0; }
+        #lobby h1 { font-size: 69px; margin-top: 18px; margin-bottom: 13px; }
+        #lobby .red-rule { margin: 19px 0 13px; }
+        #lobby .description { margin-bottom: 17px; }
+        #lobby .first-blade { margin-bottom: 16px; }
+        #lobby .lobby-portrait { min-height: 510px; }
+        #lobby-art { height: 510px; min-height: 0; }
+        #lobby .loadout { padding-top: 12px; padding-bottom: 10px; }
+        #lobby .tool { min-height: 53px; padding-top: 7px; padding-bottom: 7px; }
+        #lobby .panel-kicker { margin-bottom: 14px; }
+        #lobby .divider { margin: 16px 0 13px; }
+      }
+      @media (min-width: 761px) and (max-width: 1000px) {
+        #lobby { padding: 24px 35px; }
+        #lobby .main-grid { grid-template-columns: minmax(250px, .95fr) minmax(280px, 1.1fr); gap: 22px; min-height: 0; padding: 26px 0; }
+        #lobby .hero { max-width: none; }
+        #lobby h1 { font-size: 76px; }
+        #lobby .lobby-portrait { min-height: 520px; margin: 0; }
+        #lobby-art { height: 530px; min-height: 0; }
+        #lobby .loadout { grid-column: 1 / -1; width: 100%; padding: 22px 0 0; border-left: 0; border-top: 1px solid #9b9b844a; background: none; }
+        #lobby .tool-list { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+        #lobby .tool { flex-direction: column; text-align: center; gap: 7px; padding: 12px 5px; }
+        #lobby .tool .slot { display: none; }
+        #lobby .tool b { font-size: 13px; }
+        #lobby .tool small { font-size: 8px; letter-spacing: 0; }
+        #lobby .panel-heading { margin-bottom: 14px; }
+        #lobby .art-options { max-width: 400px; }
+        #lobby .weather-options { max-width: 300px; }
+      }
+      @media (max-width: 760px) {
+        #lobby { padding: 20px 24px 24px; }
+        #lobby::before { inset: 8px; }
+        #lobby .masthead { padding-bottom: 16px; margin-bottom: 0; min-height: 0; gap: 12px; }
+        #lobby .brand { font-size: 7px; letter-spacing: .13em; gap: 9px; }
+        #lobby .seal { width: 26px; height: 29px; }
+        #lobby .seal svg { width: 24px; height: 24px; }
+        #lobby .build-label { font-size: 8px; letter-spacing: .08em; }
+        #lobby .build-label .build-detail { display: none; }
+        #lobby .main-grid { display: flex; flex-direction: column; gap: 0; min-height: 0; padding: 27px 0 0; }
+        #lobby .hero { max-width: none; width: 100%; padding: 0; }
+        #lobby .eyebrow { font-size: 8px; }
+        #lobby h1 { font-size: clamp(44px, 11.5vw, 67px); letter-spacing: .12em; line-height: 1.15; margin: 16px 0 11px; }
+        #lobby h1 span { display: inline; }
+        #lobby .english-title { font-size: 8px; letter-spacing: .24em; }
+        #lobby .red-rule { margin: 20px 0 14px; }
+        #lobby .tagline { font-size: 16px; margin-bottom: 7px; }
+        #lobby .description { max-width: none; font-size: 11px; margin-bottom: 17px; line-height: 1.85; }
+        #lobby .first-blade { margin-bottom: 17px; }
+        #lobby .mode-button { min-height: 65px; padding: 13px 14px; }
+        #lobby .mode-button b { font-size: 16px; }
+        #lobby #start-tutorial { padding: 12px 14px; }
+        #lobby .network-toggle { padding-bottom: 8px; }
+        #lobby .network-panel { position: static; width: 100%; margin-top: 9px; }
+        #lobby .hero .mobile-hint { font-size: 9px; margin-top: 6px; }
+        #lobby .lobby-portrait { width: 100%; min-height: 0; margin: 13px 0 27px; align-self: auto; }
+        #lobby-art { height: 360px; min-height: 0; }
+        #lobby .lobby-portrait figcaption { margin-top: 0; font-size: 9px; }
+        #lobby .loadout { width: 100%; border-left: 0; border-top: 1px solid #9b9b844a; padding: 23px 0 24px; margin: 0; background: none; }
+        #lobby .tool-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        #lobby .tool { padding: 10px 8px; min-height: 64px; gap: 7px; }
+        #lobby .tool-icon { width: 28px; height: 28px; }
+        #lobby .tool-icon svg { width: 25px; height: 25px; }
+        #lobby .tool b { font-size: 13px; }
+        #lobby .tool small { font-size: 8px; letter-spacing: 0; }
+        #lobby .tool .slot { font-size: 9px; }
+        #lobby .panel-kicker { margin-bottom: 16px; }
+        #lobby .panel-heading { margin-bottom: 13px; }
+        #lobby .menu-footer { flex-wrap: wrap; gap: 17px; padding-top: 19px; }
+        #lobby .sound-controls { flex-wrap: wrap; gap: 15px; }
+        #lobby .footer-left { gap: 12px; }
+      }
+      @media (max-width: 380px) {
+        #lobby { padding-left: 21px; padding-right: 21px; }
+        #lobby .brand { font-size: 6px; }
+        #lobby .build-label { display: none; }
+        #lobby .tool-list { grid-template-columns: 1fr; }
+        #lobby .tool { min-height: 55px; gap: 12px; }
+        #lobby .tool small { display: inline; margin-left: 9px; }
+        #lobby-art { height: 320px; }
+      }
+
+/* RIFT_TUTORIAL_CSS */
+    </style>
+  </head>
+  <body>
+    <main id="stage">
+      <canvas
+        id="arena"
+        tabindex="0"
+        aria-label="斬境殘響遊戲戰場：A D 移動，滑鼠左鍵出刀、右鍵彈反，Space 跳躍，Shift 墊步"
+      ></canvas>
+      <div class="vignette"></div>
+      <section id="lobby" class="lobby" aria-label="遊戲準備介面">
+        <header class="masthead">
+          <div class="brand">
+            <span class="seal" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M28 8L8 32l17 23 4-17-9-6 15-15M40 9l-4 17 9 6-16 17 7 7 20-24Z" fill="currentColor"/><path d="M37 7L27 57" stroke="#d99761" stroke-width="3"/></svg></span><span>RIFTBLADE ECHOES</span>
+          </div>
+          <div class="build-label">
+            <i class="online-dot"></i> 刀劍對決 <span class="build-detail">／ 雙核篇</span>
+          </div>
+        </header>
+        <div class="main-grid">
+          <div class="hero">
+            <div class="eyebrow">A TALE OF BLADES &amp; ECHOES</div>
+            <h1>斬境<span>殘響</span></h1>
+            <div class="english-title">RIFTBLADE ECHOES</div>
+            <div class="red-rule"></div>
+            <p class="tagline">刀落有聲，餘響未歇。</p>
+            <p class="description">
+              暮雨漫過舊城，兩把刀在斷橋相逢。<br />一攻一守之間，尋找屬於你的節奏。
+            </p>
+            <p class="first-blade">
+              <b>左鍵出刀，右鍵彈反。</b>
+              <small>按住左鍵蓄力蓄斬；按住右鍵持續格擋。</small>
+            </p>
+            <div class="mode-buttons">
+              <button id="start-ai" class="mode-button primary">
+                <span><b>踏入斬境</b><small>單人 · 精英試煉</small></span
+                ><span class="arrow">↗</span></button
+              ><button id="start-local" class="mode-button">
+                <span><b>同屏切磋</b><small>雙人 · 本機對決</small></span
+                ><span class="arrow">↗</span>
+              </button>
+            </div>
+            <!-- RIFT_TUTORIAL_LAUNCH -->
+            <button id="online-tab" class="network-toggle">
+              <i class="link-icon"></i> 邀請好友 · 線上對決 <span>→</span>
+            </button>
+            <section
+              id="network-panel"
+              class="network-panel"
+              hidden
+              aria-label="線上房間"
+            >
+              <p>一人建立房間，一人加入。雙方就緒後由房主開戰。</p>
+              <div class="network-row">
+                <button id="host-room" class="small-btn">建立房間</button
+                ><input
+                  id="room-code"
+                  aria-label="房間代碼"
+                  placeholder="輸入房間碼"
+                  maxlength="24"
+                  autocomplete="off"
+                  spellcheck="false"
+                /><button id="join-room" class="small-btn">加入對決</button>
+              </div>
+              <div class="network-row">
+                <button id="copy-room" class="small-btn" disabled>
+                  複製邀請連結</button
+                ><button
+                  id="network-start"
+                  class="small-btn red"
+                  hidden
+                  disabled
+                >
+                  雙方拔刀 →</button
+                ><button id="cancel-network" class="small-btn">離開房間</button>
+              </div>
+              <p id="network-status" role="status">
+                建立房間，或輸入朋友的房間碼
+              </p>
+            </section>
+            <p class="mobile-hint">
+              觸控按鈕可出刀、彈反與切換裝具；桌面支援滑鼠與鍵盤。
+            </p>
+          </div>
+          <figure class="lobby-portrait">
+            <canvas id="lobby-art" aria-label="原創角色渡影與赤衡，兩名持劍旅人"></canvas>
+            <figcaption>渡影 <span aria-hidden="true">／</span> 赤衡</figcaption>
+          </figure>
+          <aside class="loadout" aria-label="裝具與戰技選配">
+            <div class="panel-kicker">
+              <span>行前整備</span><span>YOUR LOADOUT</span>
+            </div>
+            <div class="panel-heading">
+              <h2>隨行裝具</h2>
+              <small>攜帶兩款裝具</small>
+            </div>
+            <div class="tool-list">
+              <button
+                class="tool selected"
+                data-tool="disc"
+                aria-pressed="true"
+              >
+                <span class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 6l3-3 1 4M18 12l3 3-4 1M12 18l-3 3-1-4M6 12l-3-3 4-1"/></svg></span
+                ><span class="tool-copy"
+                  ><b>飛輪</b><small>遠距牽制 · 派生追斬</small></span
+                ><span class="slot">壹</span>
+              </button>
+              <button
+                class="tool selected"
+                data-tool="flame"
+                aria-pressed="true"
+              >
+                <span class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 9h10v6H3zM13 10l4-2v8l-4-2M20 8l2-2M20 12h3M20 16l2 2M6 15v5h4v-5"/></svg></span
+                ><span class="tool-copy"
+                  ><b>焰筒</b><small>高熱脈衝 · 刀身附火</small></span
+                ><span class="slot">貳</span>
+              </button>
+              <button class="tool" data-tool="hammer" aria-pressed="false">
+                <span class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3h10l3 5-3 5H7L4 8zM10 13v8h4v-8M8 6h8M8 10h8"/></svg></span
+                ><span class="tool-copy"
+                  ><b>重鎚</b><small>霸體重砸 · 粉碎防禦</small></span
+                ><span class="slot">＋</span>
+              </button>
+              <button class="tool" data-tool="blink" aria-pressed="false">
+                <span class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 5h12v14H6zM9 12l3-5 3 5-3 5zM2 8l2-2M2 16l2 2M20 6l2 2M20 18l2-2"/></svg></span
+                ><span class="tool-copy"
+                  ><b>影匣</b><small>受擊折光 · 位移奇襲</small></span
+                ><span class="slot">＋</span>
+              </button>
+              <button class="tool" data-tool="aegis" aria-pressed="false">
+                <span class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 4l3-2M20 12l2 3M12 20l-3 2M4 12l-2-3"/></svg></span
+                ><span class="tool-copy"
+                  ><b>輪盾</b><small>全向防護 · 蓄能迴斬</small></span
+                ><span class="slot">＋</span>
+              </button>
+            </div>
+            <hr class="divider" />
+            <div class="field-label">
+              <span>共鳴戰技</span><span>按住右鍵＋點左鍵</span>
+            </div>
+            <div class="art-options">
+              <button
+                class="art-option selected"
+                data-art="cleave"
+                aria-pressed="true"
+              >
+                <b>雙斷</b><small>重斬破勢 / 5 共鳴</small></button
+              ><button
+                class="art-option"
+                data-art="rift"
+                aria-pressed="false"
+              >
+                <b>裂斬</b><small>裂隙光刃貫穿 / 9 共鳴</small>
+              </button>
+            </div>
+            <div class="weather-options">
+              <button class="weather-option selected" data-weather="dusk">
+                鹽沼暮光</button
+              ><button class="weather-option" data-weather="storm">
+                裂爐電雨
+              </button>
+            </div>
+          </aside>
+        </div>
+        <footer class="menu-footer">
+          <div class="footer-left">
+            <button id="help-open" class="text-button">
+              <span class="keyboard-key">H</span> 操作與戰術手冊</button
+            ><span class="footer-quote">越過裂隙，仍有回聲。</span>
+          </div>
+          <div class="sound-controls">
+            <button id="sound-button" class="text-button" aria-pressed="false">開啟聲音</button
+            ><button id="weather-button" class="text-button">切換天候</button
+            ><span>暮雨與刀鳴 · 原創刀劍對決</span>
+          </div>
+        </footer>
+      </section>
+      <section id="hud" class="hud" hidden aria-label="戰鬥狀態">
+        <div class="fighter-hud left">
+          <div class="fighter-title">
+            <b id="name-0">渡影</b><small>壹 · WAYFARER</small>
+          </div>
+          <div class="life-strip">
+            <div class="life-status">
+              <span id="nodes-0" class="life-nodes" data-remaining="2" aria-label="剩餘兩顆晶核"><span class="life-node" aria-hidden="true"></span><span class="life-node" aria-hidden="true"></span></span>
+              <span id="phase-0" class="phase-label">PHASE 1</span>
+            </div>
+            <span class="tonic-count"><i class="tonic-icon" aria-hidden="true"></i> 修復劑 <b id="tonic-0">3</b><small>/ 3</small></span>
+          </div>
+          <div class="hp-track"><div id="hp-0" class="hp-fill"></div></div>
+          <div class="posture-track">
+            <div id="posture-0" class="posture-fill"></div>
+          </div>
+          <div class="fighter-meta">
+            <span id="state-0">就緒</span
+            ><span
+              ><span id="hp-value-0">100</span> 命 ·
+              <span class="spirit">共鳴 <b id="spirit-0">20</b></span></span
+            >
+          </div>
+          <div id="buff-0" class="fighter-buff"></div>
+        </div>
+        <div class="match-center">
+          <div id="round-label" class="round">第 01 場</div>
+          <div id="timer" class="timer">00:00</div>
+          <div id="mode-label" class="match-mode">精英試煉</div>
+        </div>
+        <div class="fighter-hud right">
+          <div class="fighter-title">
+            <small>貳 · FORGEWARD</small><b id="name-1">赤衡</b>
+          </div>
+          <div class="life-strip">
+            <div class="life-status">
+              <span id="nodes-1" class="life-nodes" data-remaining="2" aria-label="剩餘兩顆晶核"><span class="life-node" aria-hidden="true"></span><span class="life-node" aria-hidden="true"></span></span>
+              <span id="phase-1" class="phase-label">PHASE 1</span>
+            </div>
+            <span class="tonic-count"><i class="tonic-icon" aria-hidden="true"></i> 修復劑 <b id="tonic-1">3</b><small>/ 3</small></span>
+          </div>
+          <div class="hp-track"><div id="hp-1" class="hp-fill"></div></div>
+          <div class="posture-track">
+            <div id="posture-1" class="posture-fill"></div>
+          </div>
+          <div class="fighter-meta">
+            <span
+              ><span class="spirit">共鳴 <b id="spirit-1">20</b></span> ·
+              <span id="hp-value-1">100</span> 命</span
+            ><span id="state-1">就緒</span>
+          </div>
+          <div id="buff-1" class="fighter-buff"></div>
+        </div>
+      </section>
+      <div id="combat-caption" class="combat-caption" aria-live="polite"></div>
+      <footer id="combat-footer" class="combat-footer" hidden>
+        <div class="combat-controls">
+          <div class="quick-keys" aria-label="四個基本操作">
+            <div><kbd class="input-key">左鍵</kbd> 出刀</div>
+            <div><kbd class="input-key">右鍵</kbd> 彈反</div>
+            <div><kbd class="input-key">Space</kbd> 跳躍</div>
+            <div><kbd class="input-key">Shift</kbd> 墊步</div>
+            <span class="movement-note">A D 移動</span>
+          </div>
+          <div class="equipment-row" aria-label="裝具與輔助操作">
+            <span class="active-tool"><kbd class="input-key">E</kbd> <b id="active-tool-name">飛輪</b><span id="active-tool-slot">壹</span></span>
+            <span class="tool-swap"><span>Q / 滾輪 切換</span><span id="tool-slot-0" class="equipped-slot is-active"><b id="equipped-1">飛輪</b></span><span id="tool-slot-1" class="equipped-slot"><b id="equipped-2">焰筒</b></span></span>
+            <span class="equipment-action"><kbd class="input-key">R</kbd> 修復劑</span>
+            <span class="equipment-action"><kbd class="input-key">F</kbd> 鉤繩</span>
+            <span class="equipment-action equipped-art">按住右鍵＋點左鍵 · <b id="equipped-art">雙斷</b></span>
+          </div>
+          <div class="combat-note">
+            按住左鍵蓄力 · 按住右鍵格擋 · H 操作手冊 · Esc 暫停
+          </div>
+        </div>
+        <div class="combat-readout">
+          <span id="weather-label">暮光 / DUSK</span
+          ><span id="ping">60 HZ</span><span id="net-health">本機同步</span>
+        </div>
+      </footer>
+      <div id="touch-controls" class="touch-controls" aria-label="觸控操作">
+        <div class="touch-cluster touch-movement" role="group" aria-label="移動與裝具">
+          <div class="touch-secondary">
+            <button data-touch="KeyR" class="heal-touch" aria-label="飲用修復劑">藥</button>
+            <button data-touch="KeyQ" aria-label="切換裝具">換</button>
+            <button data-touch="KeyE" aria-label="使用目前裝具">具</button>
+            <button data-touch="KeyO" aria-label="使用戰技">技</button>
+          </div>
+          <div class="touch-primary">
+            <button data-touch="KeyA" class="move-touch" aria-label="向左移動">◀</button>
+            <button data-touch="KeyD" class="move-touch" aria-label="向右移動">▶</button>
+          </div>
+        </div>
+        <div class="touch-cluster touch-combat" role="group" aria-label="跳躍與戰鬥">
+          <div class="touch-secondary">
+            <button data-touch="KeyF" aria-label="鉤繩">鉤</button>
+            <button id="touch-pause" class="pause-touch" aria-label="暫停及聲音設定">暫停</button>
+            <button data-touch="Space" aria-label="跳躍">跳</button>
+            <button data-touch="KeyL" aria-label="墊步">步</button>
+          </div>
+          <div class="touch-primary">
+            <button data-touch="KeyK" class="guard-touch" aria-label="招架，按住格擋">架</button>
+            <button data-touch="KeyJ" class="attack-touch" aria-label="攻擊，按住蓄力">斬</button>
+          </div>
+        </div>
+      </div>
+      <!-- RIFT_TUTORIAL_UI -->
+      <section id="pause-panel" class="overlay" hidden>
+        <div class="modal">
+          <div class="eyebrow">A MOMENT OF STILLNESS</div>
+          <h2 id="pause-title">刀鋒靜止，殘響仍在。</h2>
+          <p>歇息片刻，再赴決鬥。</p>
+          <div class="audio-row">
+            <label for="volume">總音量</label
+            ><input id="volume" type="range" min="0" max="100" value="65" />
+          </div>
+          <div class="audio-row">
+            <label for="music-volume">背景音樂</label><input id="music-volume" type="range" min="0" max="100" value="30" />
+          </div>
+          <p class="music-note">招架與警告響起時，音樂會自動降低。音量為 0 可單獨關閉音樂。</p>
+          <div class="modal-actions">
+            <button id="resume" class="primary">繼續對決</button
+            ><button id="pause-lobby">返回裂爐</button>
+          </div>
+        </div>
+      </section>
+      <section id="result" class="overlay" hidden>
+        <div class="modal">
+          <div class="eyebrow">THE FINAL ECHO</div>
+          <div class="result-seal">斷決</div>
+          <h2 id="winner-name">渡影 勝利</h2>
+          <p id="result-detail"></p>
+          <div class="result-stats">
+            <div><b id="stat-deflect">0</b><span>完美招架</span></div>
+            <div><b id="stat-counter">0</b><span>踏刃與蹬踏</span></div>
+            <div><b id="stat-hits">0</b><span>雙方命中</span></div>
+          </div>
+          <div class="modal-actions">
+            <button id="retry" class="primary">再戰一場 ↗</button
+            ><button id="result-lobby">重整裝備</button>
+          </div>
+        </div>
+      </section>
+      <section
+        id="guide"
+        class="overlay"
+        hidden
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="guide-title"
+      >
+        <div class="modal guide-modal">
+          <div class="guide-top">
+            <h2 id="guide-title">斷橋・戰術手冊</h2>
+            <button id="help-close" class="close-button" aria-label="關閉手冊">
+              ×
+            </button>
+          </div>
+          <p class="guide-intro">
+            先讀刀，再出刀。每人持有雙核；體力歸零或架勢達 100 都會倒地 4 秒。倒地者無法行動且能被攻擊，近身按左鍵可施展斷決。首次斷決破壞一核，對手隨即滿血復燃、進入第二階段；再次斷決才分出勝負。
+          </p>
+          <div class="guide-grid">
+            <section class="guide-section">
+              <h3>先記四招 / THE FOUR BASICS</h3>
+              <table class="controls-table guide-basics">
+                <thead><tr><th>操作</th><th>壹／連線玩家</th></tr></thead>
+                <tbody>
+                  <tr><td><kbd class="input-key">滑鼠左鍵</kbd></td><td>出刀；按住蓄力蓄斬</td></tr>
+                  <tr><td><kbd class="input-key">滑鼠右鍵</kbd></td><td>彈反；按住持續格擋</td></tr>
+                  <tr><td><kbd class="input-key">Space</kbd></td><td>跳躍；空中再按蹬踏</td></tr>
+                  <tr><td><kbd class="input-key">Shift</kbd></td><td>墊步；朝突刺踏入可踏刃</td></tr>
+                </tbody>
+              </table>
+              <p class="guide-essential-note">A D 左右移動 · 橫向對決，滑鼠出刀與防禦會自動面向對手。</p>
+              <div class="guide-equipment">
+                <p><kbd class="input-key">E</kbd> 或滑鼠中鍵使用目前裝具；<kbd class="input-key">Q</kbd> 或滾輪切換兩款裝備。</p>
+                <p><kbd class="input-key">R</kbd> 修復劑 · <kbd class="input-key">F</kbd> 鉤繩</p>
+                <p>按住右鍵＋點左鍵：施放已選共鳴戰技。</p>
+              </div>
+              <details class="guide-details">
+                <summary>進階招式與輔助操作</summary>
+                <table class="controls-table">
+                  <tbody>
+                    <tr><td>突刺 / 下掃</td><td>Z / X</td></tr>
+                    <tr><td>雷斬 / 三連斬（貳階）</td><td>G / V</td></tr>
+                    <tr><td>蹲伏 / 降至下層平台</td><td>S 或 Left Ctrl / S＋Space</td></tr>
+                    <tr><td>天候 / 手冊 / 暫停</td><td>T / H / Esc</td></tr>
+                  </tbody>
+                </table>
+                <p>連線對決無法暫停。雙核都須以斷決破壞；首次復燃後解鎖貳階招式。</p>
+              </details>
+              <details class="guide-details">
+                <summary>純鍵盤備用操作</summary>
+                <table class="controls-table">
+                  <tbody>
+                    <tr><td>出刀 / 蓄力蓄斬</td><td>J / 長按 J</td></tr>
+                    <tr><td>彈反 / 持續格擋</td><td>K / 長按 K</td></tr>
+                    <tr><td>墊步 / 起跳</td><td>L / W（亦可 Space）</td></tr>
+                    <tr><td>直接使用裝具 壹 / 貳</td><td>U / I</td></tr>
+                    <tr><td>共鳴戰技 / 修復劑</td><td>O / C</td></tr>
+                  </tbody>
+                </table>
+              </details>
+              <details class="guide-details">
+                <summary>貳／同屏玩家完整操作</summary>
+                <table class="controls-table">
+                  <tbody>
+                    <tr><td>移動 / 蹲伏</td><td>← → / ↓</td></tr>
+                    <tr><td>起跳 / 空中蹬踏</td><td>↑</td></tr>
+                    <tr><td>輕斬 / 蓄力蓄斬</td><td>Num 1 或 ,（長按蓄力）</td></tr>
+                    <tr><td>招架 / 持續格擋</td><td>Num 2 或 .</td></tr>
+                    <tr><td>墊步 / 踏刃</td><td>Num 3 或 /</td></tr>
+                    <tr><td>裝具 壹 / 貳</td><td>Num 4 / 5 或 N / M</td></tr>
+                    <tr><td>共鳴戰技</td><td>Num 6 或 ;</td></tr>
+                    <tr><td>突刺 / 下掃</td><td>Num 7 / 8 或 [ / ]</td></tr>
+                    <tr><td>雷斬（貳階）/ 鉤繩</td><td>Num 9 / Num 0（鉤繩亦可 '）</td></tr>
+                    <tr><td>三連斬（貳階）</td><td>−（Minus）</td></tr>
+                    <tr><td>修復劑 / 每場三次</td><td>&#92;（Backslash）</td></tr>
+                  </tbody>
+                </table>
+              </details>
+              <div class="frame-strip">
+                <span>輕斬 <b>18 / 5 / 14 F</b></span
+                ><span>蓄斬 <b>36 F</b></span
+                ><span>突刺 <b>30 F</b></span
+                ><span>重鎚 <b>45 F</b></span
+                ><span>修復劑 <b>54 F / +40 HP</b></span>
+              </div>
+            </section>
+            <section class="guide-section">
+              <h3>雙核復燃 / THE CORES ENDURE</h3>
+              <div class="soul-principle">
+                <b>破勢倒地，把握四秒斷決。</b>
+                <p>體力降至 0 或架勢升至 100，便會倒地 240 邏輯幀（4 秒），期間無法移動、格擋或反擊，也仍會受傷。若未被斷決，四秒後以 15 體力、35 架勢重新站起；普通攻擊不會直接奪核。</p>
+                <p>雙核必須逐一斷決：首次被斷決後滿血復燃，PHASE 2 解鎖雷斬 G 與三連斬 V；第二次斷決結束對局。</p>
+                <p>體力 ≥75：每秒回復 35 架勢；50–74：每秒 15；低於 50：停止自然恢復。與對手距離超過 350，持續防禦可將恢復速度提高至 2.5 倍。</p>
+                <p>每場可飲用三次修復劑。按 R 後需 54 幀（0.9 秒），完成回復 40 體力；飲用期間留下空檔，先拉開距離再出手。</p>
+              </div>
+              <h3>四道反制 / READ THE BLADE</h3>
+              <div class="counter-card">
+                <kbd class="input-key counter-input">右鍵</kbd><b>壹 · 完美招架 / 震刃回響</b>
+                <p>
+                  命中前 12
+                  幀點右鍵，敵方累積大量架勢，自身不破防。連按會把窗口逐步縮至 4
+                  幀；普通格擋會累積自身架勢。
+                </p>
+              </div>
+              <div class="counter-card">
+                <kbd class="input-key counter-input">Shift</kbd><b>貳 · 踏刃 / 踩住突刺刀刃</b>
+                <p>
+                  紅色「突」提示無法格擋的突刺。朝敵人方向按 Shift 墊步，踩住刀刃，使敵方累積 35%
+                  架勢。
+                </p>
+              </div>
+              <div class="counter-card">
+                <kbd class="input-key counter-input">Space → Space</kbd><b>參 · 蹬踏 / 起跳破下掃</b>
+                <p>
+                  琥珀色「掃」提示下掃，按 Space 起跳閃避；於敵人頭頂再按一次 Space，蹬踏中斷攻擊並增加
+                  30% 架勢。
+                </p>
+              </div>
+              <div class="counter-card">
+                <kbd class="input-key counter-input">Space → 左鍵</kbd><b>肆 · 返雷 / 空中承接電荷</b>
+                <p>
+                  青色「電」提示雷斬。按 Space 起跳，在空中承受雷斬或天雷後，落地前點左鍵返雷；落地未出刀會自傷。第二階段可按 G，消耗 4 共鳴發動雷斬。
+                </p>
+              </div>
+              <h3 style="margin-top: 20px">共鳴裝具 / COMBINATION</h3>
+              <p>
+                飛輪後按攻擊可突進追斬；焰筒後輕斬可附火 10
+                秒；重鎚破普通格擋，但遭招架會大幅僵直。影匣須在受擊前 12
+                幀使用；裝備輪盾時長按防禦展開環盾，鬆開可釋放蓄能斬。
+              </p>
+              <p>
+                雙斷命中清除自身 50 點架勢。裂斬有兩道穿透裂隙光刃；共鳴每 3
+                秒回復 1 點，上限 20。S＋跳躍可降至下層平台。
+              </p>
+            </section>
+          </div>
+          <p class="guide-fine">
+            單檔遊戲，兩首背景音樂已內嵌；招架與警告音即時合成，無需下載外部素材。連線使用內嵌 PeerJS 1.5.5
+            與公用信令服務；部分 NAT／企業防火牆需要額外 TURN
+            服務。邀請時雙方須開啟同一個可存取的遊戲網址。同屏玩家使用相同已選裝備。
+          </p>
+        </div>
+      </section>
+      <div id="toast" class="toast" role="status"></div>
+      <div class="border-corner tl"></div>
+      <div class="border-corner br"></div>
+    </main>
+    <!--
+RIFTBLADE ECHOES / 斬境殘響
+Architecture: embedded PeerJS transport → strict FSM + two-node vitals →
+defender-owned authority → synthesized audio → 12-frame observation AI →
+procedural Canvas renderer → fixed 60 Hz game simulation and DOM interface.
+All runtime code and both user-supplied MP3 tracks are embedded. Combat effects are synthesized. No external asset downloads are needed.
+Online play uses PeerJS cloud signaling; offline AI/local modes need no network.
+Frame data and input bindings are in RIFT.MOVES and RIFT.B.
+window.game.debug provides deterministic stepping for development.
+-->
+<!-- PeerJS 1.5.5 license:
+Copyright (c) 2015 Michelle Bu and Eric Zhang, http://peerjs.com
+
+(The MIT License)
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ -->
+<!-- 01 · PeerJS 1.5.5 (embedded vendor) -->
+<!-- RIFT_MUSIC_DATA -->
+<!-- RIFT_SCRIPTS -->
+  </body>
+</html>

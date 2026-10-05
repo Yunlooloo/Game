@@ -1,0 +1,19 @@
+# Local tooling; the built root index.html intentionally remains tracked.
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+node_modules/
+.pytest_cache/
+.coverage
+htmlcov/
+test-results/
+playwright-report/
+artifacts/
+dist/
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example
+*.log

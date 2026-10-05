@@ -1,0 +1,18 @@
+<!-- LAUNCH START -->
+<button class="network-toggle" id="start-tutorial" type="button">新手陪練 <span>22 課・實際操作</span></button>
+<!-- LAUNCH END -->
+<!-- PANEL START -->
+<section id="training-panel" aria-label="互動陪練課程" hidden>
+  <div class="training-head"><span id="training-group">陪練</span><button id="training-fold" type="button" aria-controls="training-body" aria-expanded="true" aria-label="收合教學，露出戰場">收合</button><button id="training-exit" type="button" aria-label="離開陪練返回大廳">返回大廳</button></div>
+  <div id="training-body">
+  <div class="training-progress-track" aria-hidden="true"><i id="training-progress"></i></div>
+  <h2 id="training-title"></h2>
+  <p id="training-keys" class="training-keys"></p>
+  <p id="training-goal"></p>
+  <div id="training-details"><p id="training-tip"></p><p class="training-sandbox">陪練限定：免費補充共鳴、藥劑與安全血量。課程沒有倒數，可隨時重試；一般對局不提供這些補助。</p></div>
+  <p id="training-status" role="status" aria-live="polite" aria-atomic="true"></p>
+  <div class="training-actions"><button id="training-retry" type="button">重試本課</button><button id="training-next" type="button" disabled>下一課 →</button></div>
+  <div class="training-navigation"><label for="training-select">選課</label><select id="training-select" aria-label="選擇陪練課程"></select><button id="training-expand" type="button" aria-controls="training-details" aria-expanded="true">收起訣竅</button></div>
+  </div>
+</section>
+<!-- PANEL END -->
