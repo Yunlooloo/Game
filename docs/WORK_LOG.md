@@ -30,7 +30,7 @@ Codex（分工審核、整合驗證）；單一共同工作樹。
 
 ### Tests
 
-已實跑portable build與`--check`、7組Node suites、26項Chromium smoke；builder另外驗證搬移目錄、缺模組／重複marker失敗、只讀drift檢查和大小寫結束標記。最終靜態／乾淨複本／CI／部署結果集中於 [VALIDATION](VALIDATION.md)，不在日誌維護另一份測試數字清單。
+已實跑portable build與`--check`、7組Node suites、26項Chromium smoke；builder另外驗證搬移目錄、缺模組／重複marker失敗、只讀drift檢查和大小寫結束標記。靜態、乾淨複本、GitHub CI與Pages均通過，主要提交`2bd1772`已推送main；公開HTML和README內容一致。證據集中於 [VALIDATION](VALIDATION.md)，不在日誌維護另一份測試數字清單。
 
 ### Known Problems / Do Not Forget
 

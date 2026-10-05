@@ -43,6 +43,6 @@ Build **PASS**：14,335,866 bytes，SHA256 `10a98714423629033c78cd756e7d2305a927
 
 最終本機 **PASS**：check、7/7 Node suites、26/26 Chromium checks、乾淨複本build/check/unit。最終命令、環境、實測範圍與本次更新後結果由 [VALIDATION](VALIDATION.md) 維護；重新接手仍要跑自己的baseline，不能沿用這些數字當新修改證據。
 
-## Release / Remaining Verification
+## Release / Verification
 
-Pages維持`main:/`。本次交付前仍會完成最終文件check、乾淨複本、commit/push與公開artifact核對；實際完成狀態以此次最後的commit／CI／Pages紀錄及VALIDATION為準。下一位若看到未提交工作，先查git status/log，不假設這份交班代表已push。
+Pages維持`main:/`。主要提交 `2bd1772` 已推送，GitHub CI與Pages均success；公開HTML及README與本機一致，詳細run連結在VALIDATION。本交班補記是docs-only收尾，沒有未完成的runtime migration。下一次接手先查git status/log與最新CI／Pages，不能把這份歷史成功當成任意未來版本保證。

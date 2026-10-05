@@ -43,7 +43,7 @@ Last Updated: **2026-10-05** · 狀態快照；歷史理由見 [WORK_LOG](WORK_L
 
 ## Current Development Focus
 
-完成可重現開發流程及多人／多AI的專案記憶；下一項內容開發建議用第二Boss驗證extension point，而非先重寫所有系統。沒有作者承諾的發行排程。
+已建立可重現開發流程及多人／多AI的專案記憶；下一項內容開發建議用第二Boss驗證extension point，而非先重寫所有系統。沒有作者承諾的發行排程。
 
 ## Next Recommended Tasks
 
