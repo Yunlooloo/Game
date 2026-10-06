@@ -41,3 +41,27 @@ Codex（分工審核、整合驗證）；單一共同工作樹。
 ### Recommended Next Step
 
 先做resize／實機品質驗證；內容方面以第二Boss作一條完整垂直切片驗證definition/factory接點，保留赤衡回歸。下一個實質任務完成後追加本日誌並覆寫CURRENT_HANDOFF，不能只在最終聊天留下理由。
+
+## 2026-10-06 — 4.1.0 連續招架與三階段赤衡
+### Agent
+Codex（並行AI／Vitals／render／測試／文件，最後整合與獨立審查）。
+### Task / Before
+4.0.2招架連按降至4tick、紫色雙波共用長動畫、Boss首次被招架後後跳、100/100/2容量與玩家相同。玩家要求讀招與連續接刀，並提高Boss耐久和階段。
+### Impact Analysis
+修改Combat/FSM、Vitals、Boss AI、renderer、HUD和教學；保存鍵不變，PvP維持100標尺但時序變更需protocol4；單檔與Pages方式不變。沿用同一resolver，不加第二套引擎／registry。回退必須一起回退source／artifact／protocol。
+### Changes / Why
+- 成功招架重置懲罰、空按保留可用下限與8tick緩衝；輕招收刀可接防禦，修正硬直末幀空隙，避免把正確連擋誤當抖刀。
+- 明確maxHp/maxPosture/maxNodes與比例helper，使三核Boss復燃、治療、HUD不再被100硬上限截斷。
+- 固定三階段組合、較清楚起手、組末空檔；多波中途招架保持節拍且每波6tick，避免第一彈取消整段或收刀仍命中。
+- 紫色裂斬不再block chip，逐波準備提示；審查發現蓄斬先閃假輕斬cue，改為30tick放開、44tick真正出刀前提示。
+- 修正AI成本與hitstop時鐘；沒有加入尚未使用的抽象。
+### Files Changed
+src/core.js、fsm.js、vitals.js、ai.js、render.js、net.js、shell.html、tutorial.js；index.html；新增三組回歸、更新既有與browser smoke；系統文件、ADR004、README／AGENTS、狀態與manifest。
+### Architecture Impact / Decisions
+既有actor首次支援不同容量，仍只有兩actor。Boss profile實際啟用但registry仍未存在；PvP邊界不變。ADR-004說明取代全域雙核／100HP假設，保留ADR-003防守方權限。
+### Tests
+build/check、10/10 Node suites、29/29 Chromium checks；正式engine129項、combat rhythm18項、AI rhythm9項、Boss vitals6項；瀏覽器含三核／重試、提示對準碰撞、非零音訊、手機長按與雙指。曾發現舊48tick charge期望與舊AI撤退欄位，依新設計更新；沒有跳過失敗。詳VALIDATION。
+### Known Problems / Do Not Forget
+未驗證真實iPhone、跨網WebRTC及主觀平衡；Canvas旋轉仍TD-16。每刀成功會消耗窗口，需要下一次按鍵；AI Boss末刀才Recoil的規則不可無意帶進PvP。所有多波變動都要對齊提示／碰撞。
+### Recommended Next Step
+先實玩新版取得可重現回饋，再調節拍或耐久；第二Boss才提取registry/factory，不因此次容量接點順手改整個引擎。

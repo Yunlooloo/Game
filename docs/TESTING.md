@@ -45,7 +45,10 @@ RIFT_BROWSER_EXECUTABLE=/usr/bin/chromium python3 scripts/test.py --browser-only
 | [audio-music.test.cjs](../tests/audio-music.test.cjs) | 音樂切換、loop、fade、duck、音量、mute、pause、media failure | Mock media／AudioContext |
 | [ios-audio.test.cjs](../tests/ios-audio.test.cjs) | `interrupted`、手勢重試、未完成 resume、舊 promise 順序、audioSession 相容 | 模擬 iOS 授權狀態；不是 iPhone／WebKit 測試 |
 | [authority.test.cjs](../tests/authority.test.cjs) | 防守方結算、ID 去重、資料驗證、100／200 ms 模擬延遲、pose 權限與 transport lifecycle | Mock Peer／計時；不證明真實 NAT、TURN 或跨網路 DataChannel |
-| [browser_smoke.py](../tests/browser_smoke.py) | 真 DOM／Canvas、滑鼠鍵盤、音樂解碼與 graph samples、pause、兩核心到勝利／重開、觸控尺寸／長按／雙指／取消、房號可編輯 | Chromium，包含明確初始狀態注入；headless samples 不證明硬體輸出 |
+| [combat-rhythm.test.cjs](../tests/combat-rhythm.test.cjs) | 真實多波碰撞／連續招架、空按懲罰、按住格擋、收刀與受擊緩衝、Boss三核及AI蓄斬真實視覺提示 | 正式simulation；提示測試讀正式renderer計時方法 |
+| [boss-vitals.test.cjs](../tests/boss-vitals.test.cjs) | 240/220/3容量、恢復門檻、治療中斷與三核生命週期 | 共用FSM/Vitals |
+| [ai-rhythm.test.cjs](../tests/ai-rhythm.test.cjs) | 三階段固定招式組合、反擊空檔、成本及HP比例 | AI輸入接正式simulation，部分資源隔離fixture |
+| [browser_smoke.py](../tests/browser_smoke.py) | 真 DOM／Canvas、滑鼠鍵盤、音樂解碼與 graph samples、pause、Boss三核心到勝利／重開、觸控尺寸／長按／雙指／取消、房號可編輯 | Chromium，包含明確初始狀態注入；headless samples 不證明硬體輸出 |
 
 `tests/helpers/engine.cjs` 是 headless adapter；production 邏輯仍來自 `src/`，不能複製傷害公式到 mock 以使測試看似通過。`tests/cases/` 為 engine 行為場景。修改 renderer／DOM wiring 時不能只依靠 VM：它們刻意跳過畫面和真實事件系統。
 

@@ -15,7 +15,7 @@ flowchart LR
   Commit --> CI[驗證工作流程]
 ```
 
-- Repository：`https://github.com/Yunlooloo/Game`，發行版本 `4.0.2`。
+- Repository：`https://github.com/Yunlooloo/Game`，發行版本由 [PROJECT_STATUS](PROJECT_STATUS.md) 維護。
 - Hosting：GitHub Pages。2026-10-05 唯讀 API 確認 `build_type=legacy`、`source.branch=main`、`source.path=/`，沒有 custom domain。
 - 本次架構收編前，Pages `built` commit 是 `e5847fa279a49a92b0f7fc296dfe052b751648b2`。這是審核基準，不是要求永遠部署這個 hash；每次發布都要查最新 commit。
 - 目前 branch publishing 自動由 GitHub 建置，無遊戲 backend、runtime npm install、Vite／Webpack、Vercel、Netlify 或 Firebase。
@@ -74,7 +74,7 @@ print('Verified public HTML:', len(actual), hashlib.sha256(actual).hexdigest())
 PY
 ```
 
-6. 瀏覽器確認大廳、開聲音、移動、戰鬥、勝敗重開；UI 變更檢查手機橫直向。記錄 commit／瀏覽器／裝置／測試結果，明列未實測項目。網址加 `?v=4.0.2` 可避開既有 HTML cache，但不取代比對內容。
+6. 瀏覽器確認大廳、開聲音、移動、戰鬥、勝敗重開；UI 變更檢查手機橫直向。記錄 commit／瀏覽器／裝置／測試結果，明列未實測項目。網址加 `?v=4.1.0` 可避開既有 HTML cache，但不取代比對內容。
 
 CI 狀態、Pages build 和網頁實際內容是三個不同證據；不要只看到 push 成功就宣稱已上線。雲端執行環境設定的 Publish 與 GitHub Pages 發布也是不同操作。
 

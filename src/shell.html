@@ -602,8 +602,7 @@
         border: 1px solid #f1fff78c;
       }
       .life-node.spent,
-      .life-nodes[data-remaining="1"] .life-node:last-child,
-      .life-nodes[data-remaining="0"] .life-node {
+      .life-nodes .life-node.spent {
         opacity: .23;
         background: transparent;
         box-shadow: none;
@@ -1726,7 +1725,7 @@
             <span class="seal" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M28 8L8 32l17 23 4-17-9-6 15-15M40 9l-4 17 9 6-16 17 7 7 20-24Z" fill="currentColor"/><path d="M37 7L27 57" stroke="#d99761" stroke-width="3"/></svg></span><span>RIFTBLADE ECHOES</span>
           </div>
           <div class="build-label">
-            <i class="online-dot"></i> 刀劍對決 <span class="build-detail">／ 雙核篇</span>
+            <i class="online-dot"></i> 刀劍對決 <span class="build-detail">／ 連刃篇</span>
           </div>
         </header>
         <div class="main-grid">
@@ -1862,7 +1861,7 @@
                 data-art="rift"
                 aria-pressed="false"
               >
-                <b>裂斬</b><small>裂隙光刃貫穿 / 9 共鳴</small>
+                <b>裂斬</b><small>雙波遠斬 / 9 共鳴</small>
               </button>
             </div>
             <div class="weather-options">
@@ -2046,7 +2045,7 @@
             </button>
           </div>
           <p class="guide-intro">
-            先讀刀，再出刀。每人持有雙核；體力歸零或架勢達 100 都會倒地 4 秒。倒地者無法行動且能被攻擊，近身按左鍵可施展斷決。首次斷決破壞一核，對手隨即滿血復燃、進入第二階段；再次斷決才分出勝負。
+            先讀刀，再接刀。玩家持有雙核；試煉中的赤衡持有三核、240 體力與 220 架勢。體力歸零或架勢全滿時倒地 4 秒，近身按左鍵斷決。每次破壞一核，剩餘核心使對手滿血復燃；最後一核才決定勝負。連續成功招架不會縮短窗口，見到刀光就按下一拍。
           </p>
           <div class="guide-grid">
             <section class="guide-section">
@@ -2120,18 +2119,16 @@
               <h3>雙核復燃 / THE CORES ENDURE</h3>
               <div class="soul-principle">
                 <b>破勢倒地，把握四秒斷決。</b>
-                <p>體力降至 0 或架勢升至 100，便會倒地 240 邏輯幀（4 秒），期間無法移動、格擋或反擊，也仍會受傷。若未被斷決，四秒後以 15 體力、35 架勢重新站起；普通攻擊不會直接奪核。</p>
-                <p>雙核必須逐一斷決：首次被斷決後滿血復燃，PHASE 2 解鎖雷斬 G 與三連斬 V；第二次斷決結束對局。</p>
-                <p>體力 ≥75：每秒回復 35 架勢；50–74：每秒 15；低於 50：停止自然恢復。與對手距離超過 350，持續防禦可將恢復速度提高至 2.5 倍。</p>
-                <p>每場可飲用三次修復劑。按 R 後需 54 幀（0.9 秒），完成回復 40 體力；飲用期間留下空檔，先拉開距離再出手。</p>
+                <p>體力降至 0 或架勢全滿，便會倒地 240 邏輯幀（4 秒），期間無法移動、格擋或反擊，也仍會受傷。若未被斷決，四秒後以 15% 體力、35% 架勢重新站起；普通攻擊不會直接奪核。</p>
+                <p>玩家與切磋對手為雙核；試煉赤衡為三核（240 體力／220 架勢）。逐核斷決後滿血復燃；赤衡第二階加入連斬與雷斬，第三階加入裂斬與更長連段，出刀速度不變。</p>
+                <p>體力 ≥75%：每秒回復 35 架勢；50–74%：每秒 15；低於 50%：停止自然恢復。與對手距離超過 350，持續防禦可將恢復速度提高至 2.5 倍。</p>
+                <p>每場可飲用三次修復劑。按 R 後需 54 幀（0.9 秒），完成回復 40% 體力；飲用期間留下空檔，先拉開距離再出手。</p>
               </div>
               <h3>四道反制 / READ THE BLADE</h3>
               <div class="counter-card">
                 <kbd class="input-key counter-input">右鍵</kbd><b>壹 · 完美招架 / 震刃回響</b>
                 <p>
-                  命中前 12
-                  幀點右鍵，敵方累積大量架勢，自身不破防。連按會把窗口逐步縮至 4
-                  幀；普通格擋會累積自身架勢。
+                  命中前 16 幀點右鍵，成功後放開再按，逐刀接招；成功招架重置連按懲罰。只有快速空按才縮短窗口，最低仍有 12 幀。按住右鍵是普通格擋，會累積自身架勢。輕斬收刀 6 幀後可轉防禦。
                 </p>
               </div>
               <div class="counter-card">
@@ -2161,7 +2158,7 @@
                 幀使用；裝備輪盾時長按防禦展開環盾，鬆開可釋放蓄能斬。
               </p>
               <p>
-                雙斷命中清除自身 50 點架勢。裂斬有兩道穿透裂隙光刃；共鳴每 3
+                雙斷命中清除自身 50 點架勢。裂斬有兩道可格擋、可招架的光刃，相隔 24 幀；看刀尖亮起逐拍接刀。共鳴每 3
                 秒回復 1 點，上限 20。S＋跳躍可降至下層平台。
               </p>
             </section>

@@ -1,57 +1,55 @@
 # Project Status
 
-Last Updated: **2026-10-05** · 狀態快照；歷史理由見 [WORK_LOG](WORK_LOG.md)，最新交班見 [CURRENT_HANDOFF](CURRENT_HANDOFF.md)。
+Last Updated: **2026-10-06** · 現況快照；歷史理由見 [WORK_LOG](WORK_LOG.md)，最新交班見 [CURRENT_HANDOFF](CURRENT_HANDOFF.md)。
 
 ## Current Version
 
-**IMPLEMENTED：4.0.2**，協議版本3。此次維護整理不修改遊戲產物，因此不升runtime版本；詳細更動見 [CHANGELOG](../CHANGELOG.md)。
+**IMPLEMENTED：4.1.0**，通訊協議4。完整版本變化見 [CHANGELOG](../CHANGELOG.md)。
 
 ## Current Playable State
 
-可從大廳選裝、挑戰「赤衡」、同屏雙人或進入22課陪練；有多層競技場、掛索、天候、五工具／兩奧義、兩核心復燃、勝敗及重試。PeerJS雙人模式已有實作，但真實跨網／實機品質仍需驗證。線上遊玩入口在 [README](../README.md)。
+大廳選裝、挑戰赤衡、同屏/P2P雙人、22課陪練、多層競技場／掛索／天候、五工具／兩奧義、勝敗與重試。赤衡為三核心、240HP／220架勢；玩家與PvP／教學維持兩核心、100HP／100架勢。
 
 | 狀態 | 系統 |
 | --- | --- |
-| IMPLEMENTED | 固定60Hz、角色移動、攻防／反制、FSM、HP／架勢／倒地、二階段與雙核心 |
-| IMPLEMENTED | 單一Boss的延遲感知、導航、治療；22課訓練與課程完成紀錄 |
-| IMPLEMENTED | Canvas人物／場景／VFX；合成SFX和兩首內嵌BGM；滑鼠／鍵盤／觸控 |
-| IMPLEMENTED | source版控、可重現單檔build、Node測試、Chromium smoke、品質CI和本文件系統 |
-| PARTIAL（不是完整平台保證） | P2P線上流程有實作／mock測試，但跨網連通未證實；iOS修正有模擬測試，缺實機結果 |
-| PARTIAL | 響應式CSS／safe-area已存在，Canvas旋轉後resize仍缺listener；設定只存在記憶體 |
-| PARTIAL | Boss phase支援目前兩核心特例，尚非可任意配置階段／多Boss架構 |
-| PLANNED | Boss registry、第三actor、關卡／Encounter切換、故事／NPC／對話／任務 |
-| PLANNED | 背包／裝備數值／通用status effect、進度／成就、版本化save與migration |
-| OPTIONAL | XP／商店／掉落經濟、Localization、controller／PWA、server-authoritative排名 |
+| IMPLEMENTED | 固定60Hz、FSM、命中／招架／反制、HP／架勢比例恢復、倒地與逐核斷決 |
+| IMPLEMENTED | 16tick招架、成功重置懲罰、逐刀重新點按、防禦緩衝、輕招收刀轉防禦 |
+| IMPLEMENTED | 赤衡三階段固定招式組合、可反擊空檔、延遲感知、導航、比例治療 |
+| IMPLEMENTED | 逐波6tick接觸窗、收刀／出刀提示、Boss連段中間招架保持節拍、末刀反彈 |
+| IMPLEMENTED | Canvas場景／人物／VFX、合成SFX／兩首內嵌BGM、滑鼠／鍵盤／觸控 |
+| IMPLEMENTED | source版控、可重現單檔build、10組Node suites、Chromium smoke、品質CI與交接文件 |
+| PARTIAL | P2P有實作／模擬測試，真實跨網連通仍未證實；iOS有模擬回歸，缺實機結果 |
+| PARTIAL | 響應式CSS有safe-area；Canvas旋轉resize listener仍缺；設定只存記憶體 |
+| PARTIAL | Boss容量與階段已支援3核，profile仍在core、單一AI；不是多Boss registry |
+| PLANNED | Boss registry、第三actor、Stage／Encounter、故事／NPC／對話／任務 |
+| PLANNED | 背包／裝備數值／通用status、進度／成就、版本化完整Save |
+| OPTIONAL | XP／商店、Localization、controller／PWA、server-authoritative排名 |
 
-`PARTIAL` 是已實作子集的完成度說明，不取代 IMPLEMENTED／PLANNED／OPTIONAL 對功能存在性的區分。
+PARTIAL只表示已實作子集的完成度，不把未完成平台保證當作已有功能。
 
-## Architecture State / Health
+## Architecture Health
 
 | 分類 | 現況 | 修改邊界 |
 | --- | --- | --- |
-| Stable | FSM／Vitals基本契約、單檔builder | 以既有回歸與build一致性維護；不是宣稱無bug |
-| Acceptable | 小型可變world、單Boss controller、原生IIFE／Rift*模組 | 在目前duel規模可用，先延伸再抽離 |
-| Needs Improvement | core協調過多、單一Boss／固定地圖、二actor／100HP跨模組假設 | 第二Boss先做最小definition/factory；多敵人另做identity遷移 |
-| Fragile | 教學wrapper依賴resolver、手勢音訊恢復、Canvas旋轉、未驗證實網 | 修改必測對應場景；完整Save尚不存在，不能稱其migration穩定 |
-| Avoid Changing Without Review | bootstrap順序、fixed tick/hitstop、defender authority、兩核心、存量storage/protocol IDs | 先Impact Analysis、相關ADR與相容回退；不是永遠禁止修改 |
+| Stable | 單檔builder、defender ownership、固定step | 維持現有回歸；不等於宣稱無bug |
+| Acceptable | 共用FSM/Vitals容量helper、兩actor duel、原生Rift*模組 | 新平衡由實際玩家回饋調整，勿複製Boss私有傷害系統 |
+| Needs Improvement | core協調過多、單Boss profile、固定地圖、兩actor索引 | 第二Boss才抽最小definition/factory；多敵人另做identity遷移 |
+| Fragile | 教學resolver wrapper、手勢音訊、Canvas旋轉、未驗證實網 | 修改需對應測試與裝置證據 |
+| Avoid Changing Without Review | bootstrap、frame/step、FSM、defender權限、storage/protocol IDs | Impact Analysis＋ADR；PvP網路容量仍100/100/2 |
 
-目前**沒有 runtime migration in progress**。本次只把既有完整來源收編；歷史 `/workspace/ashina-build` 不再是維護真實來源，也不被build/test依賴。未新增未啟用的Boss/Save/EventBus空殼。
+沒有runtime migration in progress。BOSS_PROFILE／容量helper已全部接線；沒有同時維護兩套傷害或Boss引擎。理由見 [ADR-004](adr/004-readable-rhythm-and-boss-capacity.md)。
 
 ## Known Issues
 
-詳 [TECH_DEBT](TECH_DEBT.md)：TD-03實網連通、TD-04 iPhone實機、TD-16旋轉resize、TD-01/02核心擴充邊界、TD-05/17資源權利與vendor provenance。這些尚未因文件整理而修復；完整重現／完成條件只維護在技術債文件。
+[TECH_DEBT](TECH_DEBT.md) 維護完整清單：實網、實體iPhone、Canvas旋轉、擴充邊界與素材權利仍未解決。本次修復AI成本門檻與hitstop時鐘，並修正招架／提示／波間碰撞問題。自動測試不能代替真實玩家對難度與手感的回饋。
 
-## Current Development Focus
+## Current Development Focus / Next Recommended Tasks
 
-已建立可重現開發流程及多人／多AI的專案記憶；下一項內容開發建議用第二Boss驗證extension point，而非先重寫所有系統。沒有作者承諾的發行排程。
+1. 實際遊玩4.1.0，分辨「看不清」「按了未生效」與「尚未掌握節拍」，以重現案例調整，不先增加速度。
+2. iPhone實測聲音、背景恢復、雙指操作與本次逐拍招架。
+3. 修正Canvas旋轉尺寸同步並加resize／DPR回歸。
+4. 兩裝置不同網路驗證WebRTC協議4連通與斷線。
+5. 依 [BOSS_SYSTEM](BOSS_SYSTEM.md) 提取最小definition/factory加入第二Boss。
+6. 補齊素材權利與vendor來源；第一個永久解鎖需求再做Save migration。
 
-## Next Recommended Tasks
-
-1. 修正Canvas尺寸同步，測進行中旋轉／resize／DPR。
-2. 真實iPhone驗證聲音啟動、背景恢復與雙指操作。
-3. 兩裝置不同網路驗證WebRTC連通／斷線流程。
-4. 依 [BOSS_SYSTEM](BOSS_SYSTEM.md) 建最小registry/factory並加入第二Boss，保留赤衡基準。
-5. 補齊音樂與vendor權利／來源紀錄。
-6. 第一項永久解鎖需求出現時，連同Save schema／migration實作。
-
-每次完成實質任務由當次維護者刷新本快照，不把舊的「正在做」累積在此。驗證結果見 [VALIDATION](VALIDATION.md)。
+驗證記錄見 [VALIDATION](VALIDATION.md)；以上不是作者承諾的發行時程。

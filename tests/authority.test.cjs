@@ -254,7 +254,7 @@ check('net sendCombat dispatches owned payload through both endpoint roles',()=>
     const a=transport(role),b=transport(role==='host'?'guest':'host');
     const payload={type:'ATTACK_START',playerId:role==='host'?0:1,attackId:'a-1'};
     assert.equal(a.net.sendCombat(payload),true);
-    assert.deepEqual(a.sent[0],[3,'c',1,a.now(),payload]);
+    assert.deepEqual(a.sent[0],[4,'c',1,a.now(),payload]);
     b.net._receive(a.sent[0]);assert.deepEqual(b.received,[payload]);
     assert.equal(a.net.combatHistory[0].seq,1);assert.deepEqual(clone(a.net.combatHistory[0].payload),payload);
     payload.attackId='modified';assert.equal(a.net.combatHistory[0].payload.attackId,'a-1');
@@ -280,27 +280,27 @@ check('net combat validates payload shape, type, size and unsafe keys',()=>{
 });
 check('net combat sequence gap, late and duplicate metrics',()=>{
   const a=transport(),p={type:'ATTACK_START'};
-  a.net._receive([3,'c',1,a.now(),p]);a.net._receive([3,'c',3,a.now(),p]);
-  a.net._receive([3,'c',2,a.now(),p]);a.net._receive([3,'c',3,a.now(),p]);
+  a.net._receive([4,'c',1,a.now(),p]);a.net._receive([4,'c',3,a.now(),p]);
+  a.net._receive([4,'c',2,a.now(),p]);a.net._receive([4,'c',3,a.now(),p]);
   const m=a.net.getMetrics();assert.equal(m.messagesReceived,2);assert.equal(m.sequenceGaps,1);
   assert.equal(m.lateMessages,2);assert.equal(a.received.length,2);
   assert.ok(Math.abs(m.estimatedMissingPercent-100/3)<1e-12);assert.equal(m.reliable,true);
   assert.match(m.estimateLabel,/非 UDP/);
-  assert.throws(()=>a.net._receive([3,'c',4101,a.now(),p]));assert.equal(a.net.getMetrics().messagesReceived,2);
+  assert.throws(()=>a.net._receive([4,'c',4101,a.now(),p]));assert.equal(a.net.getMetrics().messagesReceived,2);
 });
 check('net delayed metric waits for synchronized clock and uses offset',()=>{
   const a=transport(),p={type:'PLAYER_STATE'};
-  a.net._receive([3,'c',1,a.now()-10000,p]);assert.equal(a.net.getMetrics().delayedMessages,0);
+  a.net._receive([4,'c',1,a.now()-10000,p]);assert.equal(a.net.getMetrics().delayedMessages,0);
   a.net._clockSamples=1;a.net.clockOffsetMs=100;
-  a.net._receive([3,'c',2,a.now()-150,p]);assert.equal(a.net.getMetrics().delayedMessages,0);
-  a.net._receive([3,'c',3,a.now()-151,p]);assert.equal(a.net.getMetrics().delayedMessages,1);
+  a.net._receive([4,'c',2,a.now()-150,p]);assert.equal(a.net.getMetrics().delayedMessages,0);
+  a.net._receive([4,'c',3,a.now()-151,p]);assert.equal(a.net.getMetrics().delayedMessages,1);
   a.advance(4000000);assert.equal(a.net.getMetrics().lastReceiveAgeMs,3600000);
 });
 check('net incoming combat rejects malformed packets and leaves callback untouched',()=>{
-  const bad=[[3,'c',0,1000000,{type:'HIT_CONFIRMED'}],[3,'c',1,-1,{type:'HIT_CONFIRMED'}],
-    [3,'c',1,1e15+1,{type:'HIT_CONFIRMED'}],[3,'c',1,1000000,[]],
-    [3,'c',1,1000000,{type:'lower'}],[3,'c',1,1000000,{type:'HIT_CONFIRMED'},'extra'],
-    [2,'c',1,1000000,{type:'HIT_CONFIRMED'}],[3,'c',1.5,1000000,{type:'HIT_CONFIRMED'}]];
+  const bad=[[4,'c',0,1000000,{type:'HIT_CONFIRMED'}],[4,'c',1,-1,{type:'HIT_CONFIRMED'}],
+    [4,'c',1,1e15+1,{type:'HIT_CONFIRMED'}],[4,'c',1,1000000,[]],
+    [4,'c',1,1000000,{type:'lower'}],[4,'c',1,1000000,{type:'HIT_CONFIRMED'},'extra'],
+    [3,'c',1,1000000,{type:'HIT_CONFIRMED'}],[4,'c',1.5,1000000,{type:'HIT_CONFIRMED'}]];
   for(const p of bad){const a=transport();assert.throws(()=>a.net._receive(p));assert.equal(a.received.length,0);}
 });
 check('net accepts input mask 65535 and rejects 65536 at both ends',()=>{
@@ -308,25 +308,25 @@ check('net accepts input mask 65535 and rejects 65536 at both ends',()=>{
   assert.equal(guest.net.sendInput(4,65535,3),true);host.net._receive(guest.sent[0]);
   assert.equal(host.inputs[0].bits,65535);assert.equal(guest.net.inputHistory[0].bits,65535);
   assert.equal(guest.net.sendInput(5,65536,4),false);assert.equal(guest.net.sendInput(5,-1,4),false);
-  assert.throws(()=>host.net._receive([3,'i',5,65536,4,2,host.now(),0]));
-  assert.equal(host.net.sendInput(5,0,4),false);assert.throws(()=>guest.net._receive([3,'i',5,0,4,2,guest.now(),0]));
+  assert.throws(()=>host.net._receive([4,'i',5,65536,4,2,host.now(),0]));
+  assert.equal(host.net.sendInput(5,0,4),false);assert.throws(()=>guest.net._receive([4,'i',5,0,4,2,guest.now(),0]));
 });
 check('net first clock offset sample applies directly; subsequent sample smooths',()=>{
   const a=transport(),n=a.now();
-  a.net._pings.set(1,n-100);a.net._receive([3,'q',1,n-100,n-50+200]);
+  a.net._pings.set(1,n-100);a.net._receive([4,'q',1,n-100,n-50+200]);
   assert.equal(a.net.clockOffsetMs,200);assert.equal(a.net._clockSamples,1);assert.equal(a.net.pingMs,100);
-  a.net._pings.set(2,n-50);a.net._receive([3,'q',2,n-50,n-25+100]);
+  a.net._pings.set(2,n-50);a.net._receive([4,'q',2,n-50,n-25+100]);
   assert.equal(a.net.clockOffsetMs,170);assert.equal(a.net._clockSamples,2);assert.equal(a.net.pingMs,88);
 });
 check('net zero first offset is still a clock sample and unknown pongs are ignored',()=>{
   const a=transport(),n=a.now();a.net._pings.set(1,n-100);
-  a.net._receive([3,'q',1,n-100,n-50]);assert.equal(a.net._clockSamples,1);assert.equal(a.net.clockOffsetMs,0);
-  a.net._pings.set(2,n-100);a.net._receive([3,'q',2,n-100,n-50+200]);assert.equal(a.net.clockOffsetMs,60);
-  a.net._receive([3,'q',99,n-100,n-50+900]);assert.equal(a.net.clockOffsetMs,60);assert.equal(a.net._clockSamples,2);
+  a.net._receive([4,'q',1,n-100,n-50]);assert.equal(a.net._clockSamples,1);assert.equal(a.net.clockOffsetMs,0);
+  a.net._pings.set(2,n-100);a.net._receive([4,'q',2,n-100,n-50+200]);assert.equal(a.net.clockOffsetMs,60);
+  a.net._receive([4,'q',99,n-100,n-50+900]);assert.equal(a.net.clockOffsetMs,60);assert.equal(a.net._clockSamples,2);
 });
 check('net reconnect resets combat and clock histories and metrics',()=>{
   const a=transport();a.net.sendCombat({type:'HEAL_START'});
-  a.net._receive([3,'c',3,a.now(),{type:'HEAL_START'}]);a.net._clockSamples=1;a.net.clockOffsetMs=250;
+  a.net._receive([4,'c',3,a.now(),{type:'HEAL_START'}]);a.net._clockSamples=1;a.net.clockOffsetMs=250;
   a.net._begin('guest');assert.equal(a.net.combatHistory.length,0);assert.equal(a.net._combatSequence,0);
   assert.equal(a.net.getMetrics().messagesReceived,0);assert.equal(a.net.getMetrics().sequenceGaps,0);
   assert.equal(a.net._clockSamples,0);assert.equal(a.net.clockOffsetMs,0);assert.equal(a.net._combatLastReceived,0);

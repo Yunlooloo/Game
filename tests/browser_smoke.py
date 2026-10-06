@@ -58,6 +58,14 @@ async def smoke(url, report):
             await page.locator("#start-ai").click()
             await page.wait_for_function("game.world.tick > 10")
             check("Boss mode advances the fixed simulation", await page.evaluate("game.mode === 'ai' && game.world.players[1].aiControlled && game.world.phase === 'fighting'"))
+            check("Boss HUD presents three cores and a larger health capacity", await page.evaluate("""() => {
+              game.renderHUD();
+              const p=game.world.players[0], b=game.world.players[1], nodes=document.getElementById('nodes-1');
+              return p.maxHp===100 && p.nodes===2 && b.maxHp===240 && b.maxPosture===220 && b.nodes===3 &&
+                nodes.dataset.remaining==='3' && nodes.getAttribute('aria-label').includes('3/3') &&
+                nodes.children.length===3 && nodes.querySelectorAll('.spent').length===0 &&
+                document.getElementById('hp-1').style.width==='100%';
+            }"""))
             # Separate the actors for input tests; AI still runs on production code.
             await page.evaluate("game.debug.setPlayers({x:1600,y:1080,ground:true},{x:3000,y:1080,ground:true});game.world.weather='dusk'")
             x = await page.evaluate("game.world.players[0].x")
@@ -78,6 +86,20 @@ async def smoke(url, report):
             await page.wait_for_function(f"!game.paused && game.world.tick > {tick}")
             check("Resume continues the match", True)
 
+            await page.evaluate("""() => {
+              game.start('ai'); game.paused=true; game.world.weather='dusk';
+              game.debug.setPlayers({x:1800,y:1080,ground:true,facing:1},{x:1950,y:1080,ground:true,facing:-1});
+              game.begin(game.world.players[1],'rift');game.debug.step(0,0,44);
+              game.renderer.render(game.world,0);game.renderHUD();
+            }""")
+            await page.screenshot(path=str(OUT / "rift-cue.png"))
+            check("Rendered purple cue precedes an actual successful parry", await page.evaluate("""() => {
+              const boss=game.world.players[1],cue=game.renderer.attackBeat(boss);
+              if(cue.until!==8)return false;
+              game.debug.step(game.debug.bits.GUARD,0,1);game.debug.step(0,0,7);
+              return game.stats.deflects===1 && game.world.players[0].hp===100 && boss.state==='ACTIVE';
+            }"""))
+
             # Fixture injection is explicit: health is lowered using production hit(),
             # then a normal attack input must consume each core through the real FSM.
             first = await page.evaluate("""() => {
@@ -90,8 +112,17 @@ async def smoke(url, report):
               return {down,nodes:b.nodes,hp:b.hp,posture:b.posture,phase:b.phase,state:b.state,round:game.world.phase};
             }""")
             check("Zero HP exposes a finisher without automatic death", first["down"], first)
-            check("First finisher restores the boss in phase two", first["nodes"] == 1 and first["hp"] == 100 and first["posture"] == 0 and first["phase"] == 2 and first["state"] == "REVIVING" and first["round"] == "fighting", first)
+            check("First finisher restores the boss in phase two with two cores", first["nodes"] == 2 and first["hp"] == 240 and first["posture"] == 0 and first["phase"] == 2 and first["state"] == "REVIVING" and first["round"] == "fighting", first)
             second = await page.evaluate("""() => {
+              game.world.effects.hitstop = 0; game.debug.step(0,0,90);
+              game.debug.setPlayers({x:1800,y:1080,ground:true,facing:1},{x:1880,y:1080,ground:true,facing:-1,hp:1});
+              game.debug.hit(0,1,'light'); game.world.effects.hitstop = 0;
+              game.debug.step(game.debug.bits.ATTACK,0,1);
+              const b = game.world.players[1];
+              return {nodes:b.nodes,hp:b.hp,posture:b.posture,phase:b.phase,state:b.state,round:game.world.phase};
+            }""")
+            check("Second finisher starts phase three instead of ending the fight", second["nodes"] == 1 and second["hp"] == 240 and second["posture"] == 0 and second["phase"] == 3 and second["state"] == "REVIVING" and second["round"] == "fighting", second)
+            third = await page.evaluate("""() => {
               game.world.effects.hitstop = 0; game.debug.step(0,0,90);
               game.debug.setPlayers({x:1800,y:1080,ground:true,facing:1},{x:1880,y:1080,ground:true,facing:-1,hp:1});
               game.debug.hit(0,1,'light'); game.world.effects.hitstop = 0;
@@ -99,9 +130,10 @@ async def smoke(url, report):
               game.showResult();
               return {nodes:game.world.players[1].nodes,phase:game.world.phase,winner:game.world.winner,visible:!document.getElementById('result').hidden};
             }""")
-            check("Second finisher ends the match and shows victory", second["nodes"] == 0 and second["phase"] == "ended" and second["winner"] == 0 and second["visible"], second)
+            check("Third finisher ends the match and shows victory", third["nodes"] == 0 and third["phase"] == "ended" and third["winner"] == 0 and third["visible"], third)
             await page.locator("#retry").click()
-            check("Result restart restores two cores and the Boss match", await page.evaluate("game.mode === 'ai' && game.world.phase === 'fighting' && game.world.players.every(p => p.nodes === 2 && p.hp === 100)"))
+            check("Result restart restores the player's two cores and Boss's three cores", await page.evaluate("game.mode === 'ai' && game.world.phase === 'fighting' && game.world.players[0].nodes === 2 && game.world.players[0].hp === 100 && game.world.players[1].nodes === 3 && game.world.players[1].hp === 240 && game.world.players[1].phase === 1"))
+            await page.wait_for_timeout(400)  # Let the core-opacity restart transition settle.
             await page.screenshot(path=str(OUT / "desktop.png"))
             await desktop.close()
 
@@ -160,7 +192,7 @@ def main():
     # Invalidate evidence from a previous successful run before any imports,
     # socket binding or browser launch can fail.
     report_file.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    for name in ("desktop.png", "mobile.png"):
+    for name in ("desktop.png", "mobile.png", "rift-cue.png"):
         (OUT / name).unlink(missing_ok=True)
     server = thread = None
     try:

@@ -2,6 +2,8 @@
 
 Status: Accepted · Date: 2026-10-05
 
+4.1.0補註：全角色雙核假設已由 [ADR-004](004-readable-rhythm-and-boss-capacity.md) 的Boss容量規則取代；本ADR固定tick／defender authority決策仍有效。以下Context保留當時背景。
+
 ## Context
 
 **IMPLEMENTED**：戰鬥以60Hz固定step、FSM、兩核心規則運作；線上由防守方視覺接觸裁決，再回傳結果。這些機制是目前手感與同步契約，不能因架構整理被換掉。

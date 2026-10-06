@@ -43,7 +43,7 @@ test("deflect cannot cancel its 12 frame lock and guard flags follow states", ()
   assert.equal(FSM.enter(p, S.MOVE), true);
   assert.equal(p.guard, false);
   assert.equal(p.aegis, false);
-  assert.deepEqual([0, 1, 2, 3, 4, 8].map(FSM.parryWindow), [12, 10, 8, 6, 4, 4]);
+  assert.deepEqual([0, 1, 2, 3, 4, 8].map(FSM.parryWindow), [16, 14, 12, 12, 12, 12]);
 });
 
 test("posture uses exact HP bands, distance threshold, delay, and AI-only phase multiplier", () => {

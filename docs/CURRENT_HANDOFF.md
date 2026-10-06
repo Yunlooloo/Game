@@ -2,47 +2,47 @@
 
 ## Last Updated / Last Agent
 
-2026-10-05 · **Codex**。本檔只保留最新一棒；前次任務脈絡保存於 [WORK_LOG](WORK_LOG.md)。
+2026-10-06 · **Codex**。本檔只保留最新交棒，歷史理由見 [WORK_LOG](WORK_LOG.md)。
 
 ## What I Was Working On
 
-將原本只有發行HTML的遊戲整理成可長期維護、可重現建置、跨AI接手的repository；保留目前4.0.2玩法與Pages方式。
+4.1.0戰鬥節奏重整：玩家反映招架太難、Boss出刀太快／後期太容易，要求可學習的連續接刀與三條命Boss。
 
 ## What Is Finished
 
-- 原始九模組、HTML/CSS、PeerJS及音樂納入版控；portable builder產物與原版逐位元相同。
-- 系統現況、未來Boss／敵人／能力／道具／Stage／故事／Save契約、Cookbook與Mermaid圖。
-- Node回歸與Chromium smoke、品質CI、部署／rollback／資安依賴文件。
-- AGENTS、導航、狀態、工作日誌、協作協定、ADR與技術債。
+- 16tick招架、成功重置債務；快速空按最低12tick，每刀需重新點按。8tick防禦緩衝，輕招收刀6tick可轉防禦，修復硬直結束無防備一幀。
+- 赤衡240HP／220架勢／3核心，兩次滿血復燃後第三次才勝利；所有比例恢復／HUD均接容量helper。
+- Boss固定三階段招式組合與反擊空檔；各階段不縮短起手，Boss起手霸體仍受傷／架勢與反制。
+- 裂斬兩波相隔24tick、普通格擋無chip，三連斬每18tick；每波6tick接觸、波間無隱形傷害。
+- 多波招架保留Boss中途節拍、末刀反彈；實際動畫逐波收刀／放刀，蓄斬不再亮錯輕斬提示。
+- hitstop同步凍結AI時鐘；成本從共用MOVES讀取。協議4拒絕3；更新教學、ADR與維護文件。
 
-## What Is Not Finished
+## What Is Not Finished / Known Issues
 
-本次沒有實作第二Boss、runtime registry、inventory、stage切換、dialogue、通用effect或完整save；這些均是PLANNED。未修Canvas旋轉缺口，未完成真實iPhone音訊與跨網WebRTC驗證。不要誤將文件提案當已啟用API。
+沒有第二Boss registry、Stage/Story/Inventory或完整Save。Canvas旋轉、真實iPhone聲音與跨網WebRTC仍未驗證／修復；詳TECH_DEBT。新平衡需要真實玩家回饋，測試只證明具體規則與流程。
 
-## Important Context / Decisions
+## Current Architecture / Important Decisions
 
-單檔是刻意的發行契約；維護來源已移到repo內，**不要回去改私人工作區再忘記提交source**。目前每場兩actor、normalized100HP，不可只添第三人或任意maxHP。保留FSM／defender裁決／hitstop輸入；registry由真實第二份內容需求再引入。理由見 [ADR](adr/README.md)。沒有runtime migration in progress。
+延伸既有fighter與MOVES/FSM/Vitals；core的 `BOSS_PROFILE` 與 `attackDefinition` 是目前Boss容量／起手覆寫真實來源，`RiftAI._patterns` 定義階段組合。玩家/PvP/教學100/100/2；只有本機AI Boss240/220/3，線上validator仍100上限。沒有第二套Damage系統、沒有runtime migration in progress。見 [ADR-004](adr/004-readable-rhythm-and-boss-capacity.md)。
 
 ## Files You Should Read First
 
-[README](../README.md) → [AGENTS](../AGENTS.md) → [AI_HANDOFF](AI_HANDOFF.md) → [PROJECT_STATUS](PROJECT_STATUS.md) → 本檔／[WORK_LOG](WORK_LOG.md) → [ARCHITECTURE](ARCHITECTURE.md) → 此次任務system文件。合作細節見 [AI_COLLABORATION](AI_COLLABORATION.md)。
+[README](../README.md) → [AGENTS](../AGENTS.md) → [AI_HANDOFF](AI_HANDOFF.md) → [PROJECT_STATUS](PROJECT_STATUS.md) → 本檔／[WORK_LOG](WORK_LOG.md) → [ARCHITECTURE](ARCHITECTURE.md) → [COMBAT_SYSTEM](COMBAT_SYSTEM.md)／[BOSS_SYSTEM](BOSS_SYSTEM.md)／ADR-004。
 
 ## Safe Next Tasks
 
-1. 修正resize listener並建立旋轉回歸；此任務不用改combat。
-2. iPhone／不同網路的實機驗證，留下裝置與版本證據。
-3. 照BOSS_SYSTEM做第二Boss的definition/factory／本機selector，保留赤衡。
+1. 收集新節奏重現案例與實機回饋；優先調清楚的profile/MOVES數值。
+2. 獨立處理Canvas旋轉或iPhone音訊實機驗證，不順便換引擎。
+3. 第二Boss依Cookbook提取現有profile/controller接點。
 
 ## Dangerous Areas / Do Not Change Casually
 
-`Game.frame/step`、`RiftFSM.enter`、`RiftVitals.takeNode`、`RiftAuthority`、`RiftTutorial.observeCombat`、`RiftAudio.start`與觸控edge buffering。它們各有跨模組時序契約，並非不能改，但不能憑偏好重寫。兩人HUD／相機／`1-id`與HP100上限分散，需要整體Impact Analysis。
+`frame/step`、defender authority、多波contact去重、guardBuffer與DEFLECT窗口、`takeNode`容量、教學wrapper、iOS手勢與touch edges。不要讓AI在hitstop偷跑、不要把Boss容量送入現有PvP封包；更改波次也要同步renderer提示與協議相容性。
 
 ## Current Build State / Current Test State
 
-Build **PASS**：14,335,866 bytes，SHA256 `10a98714423629033c78cd756e7d2305a9276c4de530d81b5568ce56bbb0d81a`，runtime不變。
+**PASS**：build/check、10/10 Node suites、29/29 Chromium checks，0 JavaScript exception；其中18項combat-rhythm、9項AI rhythm、6項Boss vitals為新增行為覆蓋。正式測試範圍／限制及發布證據由 [VALIDATION](VALIDATION.md) 維護；接手仍須跑自己的baseline。
 
-最終本機 **PASS**：check、7/7 Node suites、26/26 Chromium checks、乾淨複本build/check/unit。最終命令、環境、實測範圍與本次更新後結果由 [VALIDATION](VALIDATION.md) 維護；重新接手仍要跑自己的baseline，不能沿用這些數字當新修改證據。
+## Release
 
-## Release / Verification
-
-Pages維持`main:/`。主要提交 `2bd1772` 已推送，GitHub CI與Pages均success；公開HTML及README與本機一致，詳細run連結在VALIDATION。本交班補記是docs-only收尾，沒有未完成的runtime migration。下一次接手先查git status/log與最新CI／Pages，不能把這份歷史成功當成任意未來版本保證。
+單檔Pages `main:/`部署方式維持；發布核對見VALIDATION。不要把雲端環境設定Publish當作網站部署，也不要沿用舊版本hash作證。

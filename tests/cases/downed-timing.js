@@ -49,13 +49,13 @@
 
   [a,b]=reset({x:1180,hp:0,posture:100,state:'STUNNED',lockFrames:240}, {x:1000});
   const AI=window.RiftAI;
-  let ai=new AI();ai.retreatUntil=999;ai.disengageUntil=999;let aiBits=0;const unseen=[];
-  for(let i=0;i<13;i++){aiBits=ai.input(game.world,b,a);if(i<12)unseen.push(aiBits);}
+  let ai=new AI();let aiBits=0;const unseen=[];
+  for(let i=0;i<13;i++){ai.openingUntil=999;ai.openingPending=18;aiBits=ai.input(game.world,b,a);if(i<12)unseen.push(aiBits);}
   check('AI retains twelve-frame observation latency for new downed state',unseen.every(bits=>bits===0),unseen);
-  check('Visually confirmed downed target overrides old retreat and is approached',!!(aiBits&B.RIGHT)&&!(aiBits&B.LEFT)&&!(aiBits&B.ATTACK)&&ai.retreatUntil===0&&ai.disengageUntil===0,{bits:aiBits,retreat:ai.retreatUntil,disengage:ai.disengageUntil});
-  a.x=1080;ai=new AI();ai.retreatUntil=999;ai.disengageUntil=999;
-  for(let i=0;i<13;i++)aiBits=ai.input(game.world,b,a);
-  check('AI commits nearby finisher instead of retreating after visible down',!!(aiBits&B.ATTACK)&&!!(aiBits&B.RIGHT)&&!(aiBits&B.LEFT)&&ai.retreatUntil===0&&ai.disengageUntil===0,{bits:aiBits,retreat:ai.retreatUntil,disengage:ai.disengageUntil});
+  check('Visually confirmed downed target overrides old pause and is approached',!!(aiBits&B.RIGHT)&&!(aiBits&B.LEFT)&&!(aiBits&B.ATTACK)&&ai.openingUntil===0&&ai.openingPending===0,{bits:aiBits,opening:ai.openingUntil,pending:ai.openingPending});
+  a.x=1080;ai=new AI();
+  for(let i=0;i<13;i++){ai.openingUntil=999;ai.openingPending=18;aiBits=ai.input(game.world,b,a);}
+  check('AI commits nearby finisher instead of pausing after visible down',!!(aiBits&B.ATTACK)&&!!(aiBits&B.RIGHT)&&!(aiBits&B.LEFT)&&ai.openingUntil===0&&ai.openingPending===0,{bits:aiBits,opening:ai.openingUntil,pending:ai.openingPending});
 
   // Stale velocity is rejected centrally, including while falling to a platform.
   [a,b]=reset({}, {hp:5,y:1000,ground:false,vy:0});V.hurt(b,10);b.vx=17;b.dash=8;b.dashDir=1;

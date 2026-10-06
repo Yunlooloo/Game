@@ -99,7 +99,8 @@
   }
 
   function basePostureRate(playerOrHp) {
-    const hp = typeof playerOrHp === "number" ? playerOrHp : playerOrHp?.hp;
+    const maximum = typeof playerOrHp === "object" && playerOrHp?.maxHp > 0 ? playerOrHp.maxHp : 100;
+    const hp = typeof playerOrHp === "number" ? playerOrHp : playerOrHp?.hp / maximum * 100;
     if (!Number.isFinite(hp) || hp < 50) return 0;
     return hp >= 75 ? 35 : 15;
   }
@@ -112,13 +113,15 @@
     if (rate === 0) return 0;
     if (player.state === STATE.GUARD && distance > 350) rate *= 2.5;
     if (player.burn > 0) rate *= 0.25;
-    if (player.aiControlled && player.phase === 2) rate *= 1.2;
+    if (player.aiControlled && player.phase >= 2) rate *= 1.2;
     return rate;
   }
 
   function parryWindow(spamOrPlayer = 0) {
     const spam = typeof spamOrPlayer === "object" ? spamOrPlayer?.guardSpam : spamOrPlayer;
-    return Math.max(4, 12 - 2 * Math.max(0, finite(spam)));
+    // Only unanswered rapid presses accrue debt; a confirmed parry clears it.
+    // Keep a usable floor so a learned multi-hit rhythm never becomes a 4f lottery.
+    return Math.max(12, 16 - 2 * Math.max(0, finite(spam)));
   }
 
   const api = Object.freeze({STATE, STATES: STATE, State: STATE, enum: STATE,

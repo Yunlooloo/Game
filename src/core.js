@@ -184,20 +184,28 @@
     },
     rift: {
       name: "裂斬",
-      windup: 40,
-      active: 24,
+      windup: 52,
+      active: 30,
       recovery: 38,
       reach: 510,
       damage: 19,
       posture: 25,
       kind: "rift",
       cost: 9,
-      waves: [0, 14],
-      chip: 0.45,
+      waves: [0, 24],
+      hitWindow: 6,
     },
   };
   MOVES.punish={name:"疾刺",windup:10,active:8,recovery:30,reach:190,damage:24,posture:24,kind:"thrust",lunge:18};
-  MOVES.triple={name:"連斬",windup:15,active:25,recovery:24,reach:150,damage:11,posture:15,kind:"slash",waves:[0,9,18],lunge:11,cost:6};
+  MOVES.triple={name:"連斬",windup:32,active:42,recovery:32,reach:150,damage:11,posture:15,kind:"slash",waves:[0,18,36],hitWindow:6,lunge:7,cost:6};
+  for(const key of ['light','combo','chase','air'])MOVES[key].guardCancel=6;
+  for(const move of Object.values(MOVES))if(move.waves)move.hitWindow=6;
+  // Encounter asymmetry is explicit; PvP and training keep their shared baseline.
+  // Phase pressure comes from patterns, never from shortening these tells.
+  const BOSS_PROFILE=Object.freeze({maxHp:240,maxPosture:220,maxNodes:3,
+    windup:Object.freeze({light:26,combo:22,chase:24,air:24,thrust:38,sweep:40,lightning:48,punish:30,triple:32,charged:44}),
+    moves:Object.freeze({charged:Object.freeze({waves:Object.freeze([0,18]),active:24}),
+      cleave:Object.freeze({waves:Object.freeze([0,20]),active:26})})});
   const TOOL_NAMES = {
     disc: "飛輪",
     flame: "焰筒",
@@ -219,6 +227,7 @@
       facing: id ? -1 : 1,
       ground: true,
       hp: 100,
+      maxHp:100, maxPosture:100, maxNodes:2,
       nodes:2, phase:1, tonics:3, healPending:0, lockFrames:0, aiControlled:false, wasParried:0, attackId:null,lastCounterTick:-999,
       posture: 0,
       spirit: 20,
@@ -244,7 +253,9 @@
       guardAge: 0,
       guardSpam: 0,
       lastGuard: -999,
-      deflectWindow: 12,
+      deflectWindow: 16,
+      guardBuffer: 0,
+      lastParryTick: -999,
       dash: 0,
       dashDir: 0,
       invuln: 0,
@@ -414,7 +425,7 @@
         states: STATES,
         snapshot: () => this.snapshot(),
         reset: () => this.start("local"),
-        version: "4.0.2", fsm:RiftFSM,vitals:RiftVitals,
+        version: "4.1.0", fsm:RiftFSM,vitals:RiftVitals,
       };
     }
     canReceiveInput() {
@@ -856,6 +867,8 @@
       this.toolKeySlot = 0;
       this.toolMouseSlot = 0;
       this.world.players[1].aiControlled=mode === "ai";
+      if(mode==='ai')Object.assign(this.world.players[1],{maxHp:BOSS_PROFILE.maxHp,hp:BOSS_PROFILE.maxHp,
+        maxPosture:BOSS_PROFILE.maxPosture,maxNodes:BOSS_PROFILE.maxNodes,nodes:BOSS_PROFILE.maxNodes});
       if(config?.round)this.world.round=config.round;
       this.authority=mode === "online"?new RiftAuthority(this,this.net):null;
       this.deathRequests=new Set();this.deathSerial=0;this.remoteStorm=false;
@@ -896,7 +909,7 @@
       $("touch-controls").classList.remove("playing");
       document.body.classList.remove('combat-active');
       this.world.players.forEach((p) => {
-        p.hp = 100;
+        p.hp = RiftVitals.maxHp(p);
         p.dead = false;
         p.state = "IDLE";
         p.move = null;
@@ -1012,6 +1025,10 @@
     }
     owns(p) {return this.mode !== 'online' || p.id === this.localId;}
     transition(p,state,options={}) {return RiftFSM.enter(p,state,options);}
+    attackDefinition(p,key){
+      const m=MOVES[key];
+      return {...m,...(p.aiControlled?{windup:BOSS_PROFILE.windup[key]??m.windup,armor:true,...BOSS_PROFILE.moves[key]}:{})};
+    }
     begin(p,key,free=false,remote=false) {
       const m=MOVES[key],cancel=p.state==='RECOVERY'&&p.confirm>0;
       if(!m || (!remote&&['lightning','triple'].includes(key)&&p.phase<2))return false;
@@ -1019,7 +1036,7 @@
       if(!free&&(m.cost||0)>p.spirit){if(p.id===this.localId)this.toast('共鳴不足');return false;}
       if(!this.transition(p,'STARTUP',{complete:cancel||remote||p.state==='GRAPPLING'}))return false;
       if(!free)p.spirit-=m.cost||0;
-      Object.assign(p,{move:{...m},moveName:key,charge:0,hits:[],wave:0,guard:false,aegis:false,grapple:null,confirm:0,attackReleased:key!=='light'||!(p.prevBits&B.ATTACK),holdCharged:false});
+      Object.assign(p,{move:this.attackDefinition(p,key),moveName:key,charge:0,hits:[],wave:0,guard:false,aegis:false,grapple:null,confirm:0,attackReleased:key!=='light'||!(p.prevBits&B.ATTACK),holdCharged:false});
       p.moveSeq++;p.attackId=`${this.world.round}:${p.id}:${p.moveSeq}`;
       if(key==='hammer'&&p.ground){p.vy=-10;p.ground=false;}
       if(key==='flame')p.fireReady=180;
@@ -1046,6 +1063,8 @@
     tickPlayer(p,bits,enemy){
       const w=this.world,pressed=bits&~p.prevBits,released=p.prevBits&~bits;
       p.prevBits=bits;p.peace++;
+      p.guardBuffer=Math.max(0,(p.guardBuffer||0)-1);
+      if(pressed&B.GUARD&&['IDLE','MOVE','GUARD','DEFLECT','RECOVERY','HIT_STUN','RECOIL'].includes(p.state))p.guardBuffer=8;
       const mouseFacing = p.id === this.localId && (this.mouseFaceTick >= w.tick || this.mouseButtons.has(0) || this.mouseButtons.has(2) || !!(bits&B.ART) && this.mouseArtGesture);
       if(mouseFacing && RiftFSM.canAct(p)) p.facing = enemy.x >= p.x ? 1 : -1;
       for(const key of ['deflect','dash','invuln','blinkWindow','confirm','chase','fireReady','fireBlade','drop'])if(p[key]>0)p[key]--;
@@ -1056,6 +1075,7 @@
         this.physics(p,0);return;
       }
       if(['STUNNED','HIT_STUN','RECOIL','BLADE_PINNED','REVIVING','EXECUTING'].includes(p.state)){
+        const resumeGuard=['HIT_STUN','RECOIL','BLADE_PINNED'].includes(p.state);
         // A hit gives a short impulse, not a constant slide throughout hit-stun.
         // This keeps ordinary confirmed follow-ups within their intended reach.
         if(p.state==='HIT_STUN')p.vx*=.75;
@@ -1067,12 +1087,16 @@
             // pose throttle, so the peer can safely leave its downed replica state.
           }else this.idle(p);
         }
-        this.physics(p,0);return;
+        if(p.lockFrames>0||!resumeGuard){this.physics(p,0);return;}
       }
-      if(pressed&B.GUARD&&(RiftFSM.canAct(p)||p.state==='DEFLECT')){
-        p.guardSpam=w.tick-p.lastGuard<=24?Math.min(4,p.guardSpam+1):0;p.lastGuard=w.tick;
+      // A light attack commits through contact, then permits a defensive cancel.
+      // Holding guard queues ordinary cover; only a recent press earns a parry.
+      if(p.state==='RECOVERY'&&p.move?.guardCancel!=null&&p.st>=p.move.guardCancel&&((bits&B.GUARD)||p.guardBuffer))this.idle(p);
+      if(p.guardBuffer>0&&(RiftFSM.canAct(p)||p.state==='DEFLECT')){
+        p.guardSpam=w.tick-p.lastGuard<12&&p.lastParryTick<p.lastGuard?Math.min(2,p.guardSpam+1):0;p.lastGuard=w.tick;
         p.deflectWindow=RiftFSM.parryWindow(p.guardSpam);p.deflect=p.deflectWindow;p.guardAge=0;
-        if(p.state!=='DEFLECT')this.transition(p,'DEFLECT',{frames:12});p.guard=true;
+        this.transition(p,'DEFLECT',{complete:true,restart:true,frames:p.deflectWindow});p.guard=true;p.guardBuffer=0;
+        if(!(bits&(B.LEFT|B.RIGHT))&&Math.abs(enemy.x-p.x)<600)p.facing=enemy.x>=p.x?1:-1;
       }
       if(p.state==='DEFLECT'){
         if(p.lockFrames>0){p.st++;p.lockFrames--;p.vx=0;this.physics(p,0);return;}
@@ -1101,7 +1125,7 @@
       if(pressed&B.JUMP&&(free||canCancel)){
         if(p.ground){if(bits&B.DOWN){p.drop=18;p.y+=5;p.ground=false;}else{p.vy=-15.3;p.ground=false;p.stomp=0;this.fx('jump',p.x,p.y);}}
         else if(Math.abs(p.x-enemy.x)<115&&p.y<enemy.y-25&&p.y>enemy.y-215&&!p.stomp&&enemy.move?.kind==='sweep'&&['STARTUP','ACTIVE'].includes(enemy.state)){
-          p.stomp=1;p.vy=-13;p.y=enemy.y-90;this.counter(enemy,p,enemy.move,'STOMP',30,35,`${enemy.attackId}:stomp`);
+          p.stomp=1;p.vy=-13;p.y=enemy.y-90;this.counter(enemy,p,enemy.move,'STOMP',RiftVitals.maxPosture(enemy)*.30,35,`${enemy.attackId}:stomp`);
           this.impact(8,9);this.ring(enemy.x,enemy.y-68);this.fx('bladeCounter',enemy.x,enemy.y);this.caption('蹬踏');this.stats.stomps++;
         }else if(p.grapple){this.idle(p);p.vy=-13;}
       }
@@ -1134,7 +1158,7 @@
     advanceAttack(p){
       if(p.state==='STARTUP'&&p.move){
         p.st++;p.charge=p.st;
-        if(p.moveName==='light'&&p.st>=18&&!p.attackReleased){p.moveName='charged';p.move={...MOVES.charged};p.holdCharged=true;}
+        if(p.moveName==='light'&&p.st>=p.move.windup&&!p.attackReleased){p.moveName='charged';p.move=this.attackDefinition(p,'charged');p.holdCharged=true;}
         if(p.st>=p.move.windup&&!p.holdCharged){this.transition(p,'ACTIVE',{complete:true});p.hits=[];this.activate(p);}
       }else if(p.state==='ACTIVE'&&p.move){
         p.st++;if(p.move.waves?.includes(p.st)){p.wave++;p.hits=[];this.activate(p);}if(p.st>=p.move.active)this.transition(p,'RECOVERY',{complete:true});
@@ -1144,6 +1168,11 @@
       // Horizontal immobilization also protects replicas from stale dash velocity.
       // Gravity remains active so a fighter downed in the air lands naturally.
       if(p.state==='STUNNED'){p.vx=0;p.dash=0;p.dashDir=0;p.blinkWindow=0;p.grapple=null;}
+      if(p.state==='ACTIVE'&&p.move?.lunge){
+        if(!this.contactActive(p))p.vx=0;
+        const other=this.world.players[1-p.id],gap=(other.x-p.x)*p.facing;
+        if(gap>=0&&Math.abs(other.y-p.y)<100)p.vx=p.facing*Math.min(Math.abs(p.vx),Math.max(0,gap-68));
+      }
       const prev = p.y;
       p.x = clamp(p.x + p.vx, 24, 3976);
       p.vy = Math.min(22, p.vy + 0.68);
@@ -1235,6 +1264,7 @@
           maxLife: 14,
           color,
           kind: m.kind,
+          wave: p.wave || 0,
         });
       this.fx(
         m.kind === "hammer"
@@ -1277,13 +1307,16 @@
           v.vy -= 3;
         }
     }
-    addPosture(p,n){p.posture=clamp(p.posture+n,0,100);p.peace=0;if(p.posture>=100&&p.state!=='STUNNED')this.breakPosture(p);}
+    addPosture(p,n){const cap=RiftVitals.maxPosture(p);p.posture=clamp(p.posture+n,0,cap);p.peace=0;if(p.posture>=cap&&p.state!=='STUNNED')this.breakPosture(p);}
     breakPosture(p){
       if(!RiftVitals.down(p))return;
       this.fx('break',p.x,p.y);this.ring(p.x,p.y-40,'#e34237');this.sparks(p.x,p.y-45,'#ed7565',32);this.caption('架勢崩解・可斷決',90);
     }
     recoil(a,kind,amount,frames){
       a.wasParried=(a.wasParried||0)+1;a.lastCounterTick=this.world.tick;this.addPosture(a,amount);
+      // Boss strings keep their advertised beats until the final parry; a full
+      // posture break or special counter still stops the entire attack.
+      if(kind==='PARRIED'&&a.aiControlled&&a.state==='ACTIVE'&&a.move?.waves&&a.wave<a.move.waves.length-1){a.vx=0;return;}
       if(a.state!=='STUNNED'){this.transition(a,kind==='BLADE_PIN'?'BLADE_PINNED':'RECOIL',{interrupt:true,frames});a.stun=frames;}a.vx=0;
     }
     counter(a,t,m,kind,amount,frames,contactId,originalAttackId=null){
@@ -1306,7 +1339,7 @@
         t.vy=-4;t.ground=false;t.invuln=12;this.begin(t,'blink',true);this.fx('blink',t.x,t.y);this.caption('折光位移');report('BLINK');return 'blink';
       }
       if(m.kind==='thrust'&&t.dash>0&&t.dashDir===Math.sign(a.x-t.x)){
-        t.x=a.x+a.facing*58;t.vx=0;t.dash=0;this.counter(a,t,m,'BLADE_PIN',35,42,contactId,attackId);
+        t.x=a.x+a.facing*58;t.vx=0;t.dash=0;this.counter(a,t,m,'BLADE_PIN',RiftVitals.maxPosture(a)*.35,42,contactId,attackId);
         this.impact(8,13);this.world.effects.bladeCounter=32;this.ring(x,y,'#f4d9a5');this.fx('bladeCounter',x,y);this.caption('踏刃');this.stats.bladeCounter++;return 'bladeCounter';
       }
       if(m.kind==='sweep'&&!t.ground&&t.y<a.y-28){report('DODGED');return 'jump';}
@@ -1318,12 +1351,13 @@
       if(t.invuln>0&&!peril){report('DODGED');return 'evade';}
       if(perfect&&!peril){
         t.parries++;t.lastCounterTick=this.world.tick;this.stats.deflects++;
+        t.lastParryTick=this.world.tick;t.guardSpam=0;t.deflect=0;t.lockFrames=Math.min(t.lockFrames,2);
         this.counter(a,t,m,'PARRIED',m.posture*1.55+7,m.kind==='hammer'?64:18,contactId,attackId);
         this.parryImpact(x,y);this.caption('完美招架',48);return 'deflect';
       }
       if((opt.guard??t.guard)&&(front||t.aegis)&&!peril){
         this.impact(6,4);this.sparks(x,y,'#e8c597',16,.75);this.fx('guard',x,y);if(!this.authority)a.confirm=22;
-        this.addPosture(t,t.aegis?m.posture*.2:m.breakGuard?100:m.posture*1.35);
+        this.addPosture(t,t.aegis?m.posture*.2:m.breakGuard?RiftVitals.maxPosture(t):m.posture*1.35);
         if(m.chip)RiftVitals.hurt(t,m.damage*m.chip,{posture:0,stun:0});
         if(t.hp<=0)RiftVitals.down(t);report('BLOCKED');return 'guard';
       }
@@ -1337,9 +1371,13 @@
       this.sparks(t.x,y,'#a53e35',25,1,'blood');this.fx('hit',x,y,m.damage/12);
       if(m.kind==='reversal')this.sparks(t.x,y,'#c1e4ff',50,1.4);report('HIT',{attackerPostureDelta});return 'hit';
     }
+    contactActive(p){
+      if(p.state!=='ACTIVE'||!p.move)return false;
+      return !p.move.hitWindow||p.st-(p.move.waves?.[p.wave]||0)<p.move.hitWindow;
+    }
     collisions(){
       const w=this.world,[p0,p1]=w.players;
-      const blade=p=>p.state==='ACTIVE'&&p.move&&['slash','cleave'].includes(p.move.kind);
+      const blade=p=>this.contactActive(p)&&['slash','cleave'].includes(p.move.kind);
       // Decide simultaneous blade contact before either posture break clears an attack.
       const clash=blade(p0)&&blade(p1)&&!p0.hits.includes(1)&&!p1.hits.includes(0)&&
         Math.abs(p0.y-p1.y)<100&&Math.abs(p0.x-p1.x)<Math.min(p0.move.reach,p1.move.reach)&&
@@ -1358,7 +1396,7 @@
       if(!clash)for(const t of w.players){
         if(!this.owns(t))continue;
         const a=w.players[1-t.id],m=a.move;
-        if(a.state!=='ACTIVE'||!m||m.kind==='projectile'||a.hits.includes(t.id))continue;
+        if(!this.contactActive(a)||!m||m.kind==='projectile'||a.hits.includes(t.id))continue;
         const dx=(t.x-a.x)*a.facing,vertical=Math.abs(t.y-a.y)<(m.kind==='reversal'?700:m.kind==='hammer'?150:100);
         if(dx>=-32&&dx<m.reach&&vertical){a.hits.push(t.id);this.hit(a,t,m);}
       }
@@ -1383,7 +1421,7 @@
     finisherScene(a,t,final){
       this.transition(a,'EXECUTING',{interrupt:true,frames:45});a.x=t.x-a.facing*60;
       this.world.effects.execution=final?150:45;this.impact(25,18);this.sparks(t.x,t.y-45,'#b8332e',75,2,'blood');
-      this.fx('finisher',t.x,t.y,1.3);this.caption(final?'斷 決':'復 燃・第二階段',final?150:100);
+      this.fx('finisher',t.x,t.y,1.3);this.caption(final?'斷 決':`復 燃・第${t.phase===3?'三':'二'}階段`,final?150:100);
       if(final){
         if(this.world.phase==='ended')return;this.world.phase='ended';this.world.winner=a.id;this.scores[a.id]++;
         this.clearInputs();clearTimeout(this.resultTimer);this.resultTimer=setTimeout(()=>this.showResult(),1600);
@@ -1529,7 +1567,8 @@
                 this.step(bits);this.authority?.publishState();
               }
             } else {
-              const bits=[this.input(0),this.mode === "ai" ? this.ai.input(this.world,this.world.players[1],this.world.players[0]) : this.input(1)];
+              const bossBits=this.mode==='ai'?(this.world.effects.hitstop>0?this.world.players[1].prevBits:this.ai.input(this.world,this.world.players[1],this.world.players[0])):this.input(1);
+              const bits=[this.input(0),bossBits];
               this.step(bits);
             }
           } else this.effects();
@@ -1543,7 +1582,7 @@
         this.lastHud = t;
       }
       this.audio.update(
-        Math.max(...this.world.players.map((p) => p.posture / 100)),
+        Math.max(...this.world.players.map((p) => RiftVitals.postureRatio(p))),
         this.world.weather,
         dt,
       );
@@ -1554,9 +1593,9 @@
       const w = this.world;
       for (let i = 0; i < 2; i++) {
         const p = w.players[i];
-        $("hp-" + i).style.width = p.hp + "%";
-        $("posture-" + i).style.width = p.posture + "%";
-        $("posture-" + i).classList.toggle("critical", p.posture > 75);
+        $("hp-" + i).style.width = RiftVitals.hpRatio(p)*100 + "%";
+        $("posture-" + i).style.width = RiftVitals.postureRatio(p)*100 + "%";
+        $("posture-" + i).classList.toggle("critical", RiftVitals.postureRatio(p) > .75);
         $("name-" + i).textContent = p.name;
         $("hp-value-" + i).textContent = Math.ceil(p.hp);
         $("spirit-" + i).textContent = String(Math.floor(p.spirit)).padStart(
@@ -1564,7 +1603,7 @@
           "0",
         );
         $("state-" + i).textContent =
-          p.state === "STUNNED" && p.posture >= 99
+          p.state === "STUNNED" && RiftVitals.postureRatio(p) >= .99
             ? "架勢崩解 — 可斷決"
             : p.charged
               ? "接雷中 — 空中揮刀"
@@ -1578,8 +1617,13 @@
         if (p.aegis) $("state-" + i).textContent = "輪盾・展開";
         if(RiftVitals.vulnerable(p))$("state-"+i).textContent="失衡 — 貼身斷決";
         if(p.state==='DRINKING')$("state-"+i).textContent="修復中・無防備";
-        if(p.state==='REVIVING')$("state-"+i).textContent="復燃・第二階段";
-        if($("nodes-"+i)){$("nodes-"+i).dataset.remaining=String(p.nodes);$("nodes-"+i).setAttribute('aria-label',`共鳴雙核 ${p.nodes}/2`);}
+        if(p.state==='REVIVING')$("state-"+i).textContent=`復燃・第${p.phase===3?'三':'二'}階段`;
+        if($("nodes-"+i)){
+          const nodes=$("nodes-"+i),count=RiftVitals.maxNodes(p);
+          if(nodes.dataset.capacity!==String(count)){nodes.innerHTML=Array.from({length:count},()=>'<span class="life-node" aria-hidden="true"></span>').join('');nodes.dataset.capacity=String(count);}
+          nodes.dataset.remaining=String(p.nodes);nodes.setAttribute('aria-label',`共鳴核心 ${p.nodes}/${count}`);
+          [...nodes.children].forEach((node,n)=>node.classList.toggle('spent',n>=p.nodes));
+        }
         if($("phase-"+i))$("phase-"+i).textContent=`PHASE ${p.phase}`;
         if($("tonic-"+i))$("tonic-"+i).textContent=String(p.tonics);
         $("buff-" + i).textContent = [
@@ -1883,6 +1927,6 @@
     return m.kind === kind;
   }
   window.game = new Game();
-  window.RIFT = { MOVES, B, STATES };
+  window.RIFT = { MOVES, B, STATES, BOSS_PROFILE };
   if(window.RiftTutorial)window.game.tutorial=new RiftTutorial(window.game);
 })();

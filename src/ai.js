@@ -12,8 +12,12 @@ window.RiftAI = class RiftAI {
     this.parries = 0;
     this.wasParried = 0;
     this.counterUntil = 0;
-    this.retreatUntil = 0;
-    this.disengageUntil = 0;
+    this.pattern = null;
+    this.patternCursor = 0;
+    this.patternPhase = 0;
+    this.action = null;
+    this.openingUntil = 0;
+    this.openingPending = 0;
     this.guardUntil = 0;
     this.chargeUntil = 0;
     this.nextAttack = 30;
@@ -40,6 +44,18 @@ window.RiftAI = class RiftAI {
     this.seed = n >>> 0;
     return this.seed / 4294967296;
   }
+  _patterns(phase) {
+    // The player learns phrases; later phases add endings, not faster tells.
+    if (phase >= 3) return [
+      ['triple'], ['light', 'thrust', 'sweep'], ['art'],
+      ['lightning', 'light'], ['charged', 'sweep']
+    ];
+    if (phase >= 2) return [
+      ['light', 'light', 'thrust'], ['triple'], ['light', 'sweep'],
+      ['lightning'], ['charged']
+    ];
+    return [['light', 'light', 'thrust'], ['light', 'sweep'], ['charged']];
+  }
   _observe(self, enemy) {
     if (Math.hypot(enemy.x - self.x, enemy.y - self.y) > 800) {
       return { frame: this.frame, visible: false };
@@ -49,6 +65,7 @@ window.RiftAI = class RiftAI {
       frame: this.frame, visible: true, x: enemy.x, y: enemy.y,
       vx: enemy.vx || 0, vy: enemy.vy || 0, ground: !!enemy.ground,
       state: enemy.state, st: enemy.st || 0, hp: enemy.hp,
+      maxHp: enemy.maxHp || 100, maxPosture: enemy.maxPosture || 100,
       posture: enemy.posture, guard: !!enemy.guard, aegis: !!enemy.aegis,
       guardSpam: enemy.guardSpam || 0, hidden: !!enemy.hidden,
       charged: enemy.charged || 0, stun: enemy.stun || 0, dead: !!enemy.dead,
@@ -203,18 +220,41 @@ window.RiftAI = class RiftAI {
     const seen = visible ? packet :
       (this.lastSight && f - this.lastSight.frame < 180 ? this.lastSight : null);
 
+    const state = self.state || 'IDLE';
+    const ready = state === 'IDLE' || state === 'MOVE' || state === 'GUARD';
+    const hpPercent = self.hp / (self.maxHp || 100) * 100;
+    const posturePercent = self.posture / (self.maxPosture || 100) * 100;
+    const phase = Math.max(1, Math.min(3, self.phase || 1));
+    if (phase !== this.patternPhase) {
+      this.patternPhase = phase; this.patternCursor = 0; this.pattern = null;
+      this.action = null; this.openingPending = 0; this.openingUntil = 0;
+      this.nextAttack = f + 30;
+    }
+    // Measure the shared FSM's actual completion instead of maintaining a second
+    // copy of move frame data. Hitstop therefore cannot eat a promised opening.
+    if (this.action) {
+      if (['STARTUP', 'ACTIVE', 'RECOVERY'].includes(state)) this.action.started = true;
+      else if (this.action.started && ready) {
+        const gap = this.action.endsPattern ? 30 : 8;
+        this.nextAttack = f + gap;
+        if (this.action.endsPattern) this.openingUntil = f + gap;
+        this.action = null;
+      } else if (this.action.started || f - this.action.issued > 3) {
+        // A counter can end a move early; continue the phrase only after its
+        // real stun and a punish window, never as an immediate recovery cancel.
+        this.nextAttack = f + 12; this.action = null;
+      }
+    }
     // Own tactile feedback is immediate; the chosen response waits through animation locks.
     const parries = self.parries || 0, wasParried = self.wasParried || 0;
     if (parries > this.parries) this.counterUntil = f + 120;
     if (wasParried > this.wasParried) {
-      this.retreatUntil = f + 120;
+      if (state !== 'ACTIVE') this.openingPending = Math.max(this.openingPending, 18);
       this.counterUntil = 0;
       this.chargeUntil = 0;
     }
     this.parries = parries;
     this.wasParried = wasParried;
-    const state = self.state || 'IDLE';
-    const ready = state === 'IDLE' || state === 'MOVE' || state === 'GUARD';
     if (['DEAD', 'REVIVING', 'EXECUTING', 'DRINKING', 'STUNNED',
       'HIT_STUN', 'RECOIL', 'BLADE_PINNED', 'DEFLECT'].includes(state)) {
       this.pending = null;
@@ -222,14 +262,22 @@ window.RiftAI = class RiftAI {
       this.guardUntil = 0;
       if (state === 'DEAD' || state === 'REVIVING') {
         this.counterUntil = 0;
-        this.retreatUntil = 0;
-        this.disengageUntil = 0;
+        this.pattern = null; this.action = null;
+        this.openingPending = 0; this.openingUntil = 0;
+        this.nextAttack = f + 30;
         this.healPlan = null;
         this.nav = null;
       }
       return done(0);
     }
     if (!packet) return done(0);
+    if (ready && this.openingPending) {
+      this.openingUntil = f + this.openingPending;
+      this.nextAttack = Math.max(this.nextAttack, this.openingUntil);
+      this.openingPending = 0; this.pending = null;
+    }
+    const downVisible=visible&&(seen.state==='STUNNED'||seen.posture>=seen.maxPosture);
+    if (ready && f < this.openingUntil && !downVisible) return done(0);
 
     let bits = 0;
     const tap = bit => {
@@ -240,9 +288,16 @@ window.RiftAI = class RiftAI {
       const index = (self.loadout || []).indexOf(name);
       return index === 0 ? B.T1 : index === 1 ? B.T2 : 0;
     };
+    const cost = key => window.RIFT?.MOVES?.[key]?.cost ??
+      ({ disc: 1, flame: 3, hammer: 4, blink: 3, cleave: 5, rift: 9,
+        lightning: 4, triple: 6 }[key] || 0);
+    const commitAction = (key, endsPattern = true) => {
+      this.action = { key, issued: f, started: false, endsPattern };
+      this.nextAttack = Infinity;
+    };
     const cast = name => {
       const bit = toolBit(name);
-      if (!bit || (self.spirit || 0) < (name === 'disc' ? 1 : 3)) return false;
+      if (!bit || (self.spirit || 0) < cost(name)) return false;
       return tap(bit);
     };
     const age = seen ? Math.min(18, f - seen.frame) : 12;
@@ -263,9 +318,9 @@ window.RiftAI = class RiftAI {
     const finishFacing = direction => done((bits & ~3) | direction);
 
     // A visually confirmed down takes priority over a previously planned retreat.
-    if (visible && (seen.state === 'STUNNED' || seen.posture >= 100) &&
+    if (visible && (seen.state === 'STUNNED' || seen.posture >= seen.maxPosture) &&
         distance < 500 && Math.abs(dy) < 85) {
-      this.chargeUntil = 0; this.retreatUntil = 0; this.disengageUntil = 0;
+      this.chargeUntil = 0; this.openingUntil = 0; this.openingPending = 0;
       this.guardUntil = 0; this.pending = null; this.healPlan = null; this.nav = null;
       if (distance < 125 && ready) tap(B.ATTACK);
       return finishFacing(toward);
@@ -278,20 +333,11 @@ window.RiftAI = class RiftAI {
       this.nextAttack = f + 34;
       return finishFacing(toward);
     }
-    if (this.retreatUntil >= f && ready) {
-      this.retreatUntil = 0;
-      this.disengageUntil = f + 27;
-      this.nextAttack = Math.max(this.nextAttack, f + 32);
-      if (self.ground) tap(B.JUMP);
-      else if (f >= this.nextDash && tap(B.DASH)) this.nextDash = f + 45;
-      return finishFacing(away);
-    }
-    if (this.disengageUntil > f) return finishFacing(away);
     if (this.counterUntil >= f && ready) {
       this.counterUntil = 0;
       this.guardUntil = 0;
       if (knownTarget && distance < 190 && Math.abs(dy) < 110) {
-        if (tap(B.ATTACK)) this.nextAttack = f + 37;
+        if (tap(B.ATTACK)) commitAction('light');
         return finishFacing(toward);
       }
     }
@@ -300,7 +346,7 @@ window.RiftAI = class RiftAI {
       // Explicit chord selects punish. Engine must not infer it from current enemy state.
       if (tap(B.THRUST | B.DASH)) {
         this.nextPunish = f + 44;
-        this.nextAttack = f + 43;
+        commitAction('punish');
         this.nextDash = f + 44;
         this.chargeUntil = 0;
       }
@@ -316,14 +362,14 @@ window.RiftAI = class RiftAI {
       if (key !== this.lastThreat && eta >= -3 && eta <= 18 &&
           distance < (move.reach || 125) + 45 && Math.abs(dy) < 130) {
         this.lastThreat = key;
-        const awareness = seen.hidden ? 0.44 : self.posture > 78 ? 0.92 : 0.86;
+        const awareness = seen.hidden ? 0.44 : posturePercent > 78 ? 0.92 : 0.86;
         if (this._random() < awareness) {
           let kind = 'deflect', lead = 5;
           if (move.kind === 'thrust') { kind = 'bladeCounter'; lead = 2; }
           else if (move.kind === 'sweep') { kind = 'jump'; lead = 10; }
           else if (move.kind === 'lightning') { kind = 'jump'; lead = 8; }
           else if (toolBit('blink') && self.spirit >= 3 && this.nextTool <= f &&
-                   (self.posture > 72 || this._random() < 0.18)) {
+                   (posturePercent > 72 || this._random() < 0.18)) {
             kind = 'blink'; lead = 5;
           }
           const at = f + Math.max(0, eta - lead + Math.floor(this._random() * 5) - 2);
@@ -370,8 +416,8 @@ window.RiftAI = class RiftAI {
     }
     // Healing is a deliberate, punishable action: create separation, then press
     // the same 54-frame tonic input as a player. Never mutate HP or inventory.
-    if (self.hp > 55 || !(self.tonics > 0)) this.healPlan = null;
-    if (ready && self.hp <= 55 && self.tonics > 0 && f >= this.nextHeal) {
+    if (hpPercent > 55 || !(self.tonics > 0)) this.healPlan = null;
+    if (ready && hpPercent <= 55 && self.tonics > 0 && f >= this.nextHeal) {
       if (!this.healPlan) this.healPlan = { until: f + 180 };
       const safe = (!knownTarget || distance > 380) && self.ground;
       if (safe && tap(B.HEAL)) {
@@ -429,9 +475,9 @@ window.RiftAI = class RiftAI {
       else if (seen) this.lastSight = null;
       return done(bits);
     }
-    if (self.posture > 66 && distance > 200 && Math.abs(dy) < 120 &&
+    if (posturePercent > 80 && hpPercent >= 50 && distance > 200 && Math.abs(dy) < 120 &&
         ready && !this.pending) {
-      if (self.posture < 90 && this._random() < 0.012) {
+      if (posturePercent < 95 && this._random() < 0.012) {
         this.guardUntil = f + (toolBit('aegis') && self.spirit >= 2 ? 35 : 16);
         return done(bits | B.GUARD);
       }
@@ -445,30 +491,31 @@ window.RiftAI = class RiftAI {
       if (this._random() < 0.4) this.ambushUntil = f + 30;
     }
     if (this.ambushUntil > f && distance > 140) return done(bits | B.DOWN);
-    const idealRange = self.hp < 35 ? 128 : 104;
+    const idealRange = hpPercent < 35 ? 128 : 104;
     if (distance > idealRange || Math.abs(dy) > 110) face(toward);
     else if (distance < 52 && ready && this._random() < 0.28) face(away);
     if (distance > 500 && Math.abs(dy) < 90 && self.ground &&
         f >= this.nextDash && ready) {
       if (tap(B.DASH)) this.nextDash = f + 100;
     }
-    if (!ready && state !== 'RECOVERY') return done(bits);
+    if (!ready) return done(bits);
+    if (f < this.nextAttack || Math.abs(dy) > 100) return done(bits);
 
-    if (ready && f >= this.nextTool) {
+    if (!this.pattern && f >= this.nextTool) {
       if (distance > 215 && distance < 720 && Math.abs(dy) < 95 && cast('disc')) {
         this.nextTool = f + 105; this.chaseUntil = f + 80;
-        this.nextAttack = Math.max(this.nextAttack, f + 18);
+        commitAction('disc');
         return finishFacing(toward);
       }
       if (distance < 155 && Math.abs(dy) < 85 &&
           this._random() < 0.045 && cast('flame')) {
-        this.nextTool = f + 170; this.nextAttack = f + 40;
+        this.nextTool = f + 170; commitAction('flame');
         return finishFacing(toward);
       }
       if (distance < 160 && Math.abs(dy) < 110 &&
           (seen.guard || seen.aegis || seen.state === 'RECOVERY') &&
           this._random() < 0.055 && cast('hammer')) {
-        this.nextTool = f + 200; this.nextAttack = f + 82;
+        this.nextTool = f + 200; commitAction('hammer');
         return finishFacing(toward);
       }
       if (toolBit('aegis') && distance < 210 && move &&
@@ -477,50 +524,42 @@ window.RiftAI = class RiftAI {
         return done(bits | B.GUARD);
       }
     }
-    if (ready && f >= this.nextArt &&
-        distance < (self.art === 'rift' ? 380 : 145) &&
-        Math.abs(dy) < 100 && self.spirit >= (self.art === 'rift' ? 7 : 4)) {
-      const opportunity = seen.state === 'RECOVERY' || seen.posture > 68 || self.posture > 55;
-      if (opportunity && this._random() < 0.035 && tap(B.ART)) {
-        this.nextArt = f + 280; this.nextAttack = f + 95;
-        return finishFacing(toward);
-      }
-    }
-    if (f < this.nextAttack || Math.abs(dy) > 100) return done(bits);
     if (this.chaseUntil > f && distance > 145 && distance < 400 &&
         ready && tap(B.ATTACK)) {
-      this.chaseUntil = 0; this.nextAttack = f + 43;
+      this.chaseUntil = 0; commitAction('chase');
       return finishFacing(toward);
     }
-    if (distance > 175) return done(bits);
-    if (state === 'RECOVERY') {
-      if (self.st >= 5 && this._random() < 0.09 && tap(B.ATTACK)) this.nextAttack = f + 32;
-      else if (self.posture > 70 && f >= this.nextDash &&
-               this._random() < 0.045 && tap(B.DASH)) {
-        face(away); this.nextDash = f + 55;
-      }
-      return done(bits);
-    }
-    if (seen.guardSpam >= 2) {
+    if (distance > 175 && !(this.pattern?.steps[this.pattern.index] === 'art' &&
+        self.art === 'rift' && distance < 380)) return done(bits);
+    if (!this.pattern && seen.guardSpam >= 2) {
       if (tap(B.ATTACK)) {
-        // Variable 45-65f hold breaks repeated short deflect-window rhythms.
-        this.chargeUntil = f + 45 + Math.floor(this._random() * 21);
-        this.nextAttack = this.chargeUntil + 32;
+        // Empty mashing is answered by a learnable delayed tell, not a new
+        // random release point every attempt. Successful parries reset spam.
+        this.chargeUntil = f + 30;
+        commitAction('charged');
       }
       return finishFacing(toward);
     }
-    const choice = this._random(), phaseTwo = self.phase === 2;
-    if (phaseTwo && choice < 0.13 && self.spirit >= 4) {
-      if (tap(B.LIGHTNING)) this.nextAttack = f + 62;
-    } else if (phaseTwo && choice < 0.28 && self.spirit >= 6) {
-      if (tap(B.TRIPLE)) this.nextAttack = f + 85;
-    } else if (choice < 0.4 && distance > 85) {
-      if (tap(B.THRUST)) this.nextAttack = f + 53;
-    } else if (choice < 0.55 && distance < 145 && seen.ground) {
-      if (tap(B.SWEEP)) this.nextAttack = f + 58;
-    } else if (choice < 0.64 && seen.guard && distance < 150) {
-      if (tap(B.ATTACK)) { this.chargeUntil = f + 40; this.nextAttack = f + 74; }
-    } else if (tap(B.ATTACK)) this.nextAttack = f + 30 + Math.floor(this._random() * 15);
+    if (!this.pattern) {
+      const patterns = this._patterns(phase);
+      this.pattern = { steps: patterns[this.patternCursor++ % patterns.length], index: 0 };
+    }
+    const phrase = this.pattern;
+    let key = phrase.steps[phrase.index];
+    if (key === 'art') key = self.art || 'cleave';
+    // Resource exhaustion changes a phrase to an ordinary cut instead of
+    // emitting an impossible action or bypassing the shared cost checks.
+    if ((self.spirit || 0) < cost(key) ||
+        ((key === 'rift' || key === 'cleave') && f < this.nextArt)) key = 'light';
+    const attackBit = { thrust: B.THRUST, sweep: B.SWEEP,
+      lightning: B.LIGHTNING, triple: B.TRIPLE, rift: B.ART, cleave: B.ART }[key] || B.ATTACK;
+    if (tap(attackBit)) {
+      if (key === 'charged') this.chargeUntil = f + 30;
+      if (key === 'rift' || key === 'cleave') this.nextArt = f + 280;
+      const endsPattern = ++phrase.index >= phrase.steps.length;
+      commitAction(key, endsPattern);
+      if (endsPattern) this.pattern = null;
+    }
     return finishFacing(toward);
   }
 };

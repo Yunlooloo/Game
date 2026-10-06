@@ -47,7 +47,7 @@ Boss ID：boss_<slug>
 先讀 AGENTS.md、docs/AI_HANDOFF.md、docs/BOSS_SYSTEM.md、
 docs/CONTENT_COOKBOOK.md、docs/COMBAT_SYSTEM.md。
 現況尚無 registry；照文件建立最小 definition/factory/本機 selector，
-共用 input/FSM/resolver，保留赤衡；不擅自改100HP／兩actor／線上協議。
+共用 input/FSM/resolver，保留赤衡；使用既有maxHp/maxPosture/maxNodes；不擅自改PvP100標尺／兩actor／線上協議。
 測試新舊兩Boss、第一核復燃／第二核結束、相同防守方裁決。
 更新文件、CHANGELOG，依授權提交及部署。
 ```

@@ -1,6 +1,6 @@
 # Game Core、Player 與執行狀態
 
-狀態：**IMPLEMENTED** 描述 runtime `4.0.2` 的實際行為；**PLANNED** 為後續演進接口；**OPTIONAL** 只有具體玩法需要時才加入。本文件是 loop、world、角色生命週期、暫停與事件邊界的真實來源。戰鬥公式由 [COMBAT_SYSTEM](COMBAT_SYSTEM.md) 維護；輸入裝置、UI、效能與無障礙見 [PLATFORM](PLATFORM.md)。
+狀態：**IMPLEMENTED** 描述 runtime `4.1.0` 的實際行為；**PLANNED** 為後續演進接口；**OPTIONAL** 只有具體玩法需要時才加入。本文件是 loop、world、角色生命週期、暫停與事件邊界的真實來源。戰鬥公式由 [COMBAT_SYSTEM](COMBAT_SYSTEM.md) 維護；輸入裝置、UI、效能與無障礙見 [PLATFORM](PLATFORM.md)。
 
 ## IMPLEMENTED：啟動與每局流程
 
@@ -11,7 +11,7 @@
 | 大廳 | `makeWorld()` 初始 `phase='menu'`；Canvas 持續繪製背景／角色立繪，選裝與天候保存於目前的 `Game` instance |
 | 開始 | `Game.start(mode, config)` 重新建立兩人 world，設 `phase='fighting'`；重置輸入、AI、當場統計，沿用相機與目前分數 |
 | 戰鬥 | `frame → step → tickPlayer / tickRemote → collisions → weatherTick`，詳見下節 |
-| 第一核被斷決 | `RiftVitals.takeNode()` 復燃、切 Phase 2；仍是同一 world、同一回合，詳見 [COMBAT_SYSTEM](COMBAT_SYSTEM.md) |
+| 非最後一核被斷決 | `RiftVitals.takeNode()` 復燃、切下一Phase；仍是同一 world、同一回合，詳見 [COMBAT_SYSTEM](COMBAT_SYSTEM.md) |
 | 最終斷決 | `finisherScene()` 設 `phase='ended'`、winner、比分；清除輸入，1.6 秒 wall-clock timer 後 `showResult()` |
 | 重試 | 本機呼叫 `start(this.mode)` 建立新 world；線上由房主 `startOnline()` 送開局配置後雙方重建 |
 | 回大廳 | `lobby()` 停教學、斷線、改 `phase='menu'`、隱藏戰鬥 UI；不做永久存檔 |
@@ -45,7 +45,7 @@
 
 `frame()` 最後每個 render 呼叫 renderer、音訊狀態同步和 `audio.update()`，HUD 最多約每 65ms 更新一次。renderer 以自己的 `performance.now()` 進行相機平滑與環境動畫；戰鬥不能改用此時間判斷起手、無敵或 DOT。`alpha` 傳給 renderer 不代表存在完整的 previous/current world 插值。
 
-**重要限制**：AI 的 `input()` 在 `frame()` 中先於 `step()` 呼叫。因此 hitstop 雖凍結戰鬥 tick，AI 的觀察歷史／內部排程仍前進。現況的「12 次視覺觀察延遲」不能一概宣稱與十二個戰鬥 tick 完全相同；見 [TECH_DEBT](TECH_DEBT.md) TD-14。固定步長也不等於整局 deterministic replay：天雷與 VFX 使用 `Math.random()`，並沒有 rollback 世界重播。
+**AI時間契約**：`frame()` 在非凍結的固定步進才呼叫 `RiftAI.input()`；hitstop期間沿用Boss的前次bits，AI觀察歷史與內部排程一同暫停。12 tick視覺延遲及招式結束後的空檔不會被hitstop消耗。固定步長也不等於整局 deterministic replay：天雷與 VFX 使用 `Math.random()`，並沒有 rollback 世界重播。
 
 | 事件 | 實際暫停語意 |
 | --- | --- |
@@ -70,7 +70,7 @@
 | `Game` session | `mode / paused / localId / scores / loadout / art / weather`、輸入集合、audio／renderer／net／AI instance | 本頁生命週期；start 重設其中部分，不代表永久設定 |
 | `world` runtime | `phase / tick / time / players / platforms / projectiles / effects / winner / round` | 每次 `start()` 新建 |
 | actor runtime | 座標、HP、架勢、狀態計時、當次招式、冷卻旗標 | 單場角色實例；不能寫回共享招式定義 |
-| definition | `MOVES`、輸入 bits、工具名稱、FSM枚舉、LESSONS | script 載入；目前多為模組內常數與普通物件 |
+| definition | `MOVES / BOSS_PROFILE`、輸入 bits、工具名稱、FSM枚舉、LESSONS | script 載入；目前多為模組內常數與普通物件 |
 | persistent | 已完成 lesson IDs | 只有 `riftblade-tutorial-v1` localStorage；見 [SAVE_SYSTEM](SAVE_SYSTEM.md) |
 
 `window.game` 與 `window.RIFT` 是既有全域入口，不是 reactive global store。DOM 不會自動隨資料變化；需要 `renderHUD()` 或教學 `render()`。renderer 雖主要讀 world，仍會寫入 `world.camera`，不能宣稱完全純函式或把它放到另一 thread 而忽略資料同步。
@@ -104,10 +104,10 @@
 | --- | --- |
 | 身份與控制 | `id / name / aiControlled`；現在 id 恰為 0 或 1 |
 | 身體與移動 | `x/y/vx/vy/facing/ground/drop/grapple/dash/dashDir/hidden` |
-| 生命與資源 | `hp/posture/spirit/nodes/phase/tonics/healPending/peace`；100 HP 標尺是跨模組契約 |
+| 生命與資源 | `hp/maxHp/posture/maxPosture/spirit/nodes/maxNodes/phase/tonics/healPending/peace`；玩家/PvP/陪練100／100／2，AI赤衡240／220／3 |
 | FSM | `state/st/lockFrames/stun/revive`；`st` 為當前段經過 tick，不是全局時間 |
 | 攻擊實例 | `moveName/move/attackId/moveSeq/wave/hits/charge/attackReleased/holdCharged/confirm` |
-| 防守與效果 | `guard/deflect/guardSpam/aegis/invuln/blinkWindow/burn/fireBlade/charged` |
+| 防守與效果 | `guard/deflect/deflectWindow/guardSpam/guardBuffer/lastParryTick/aegis/invuln/blinkWindow/burn/fireBlade/charged` |
 | 輸入與觀察 | `prevBits/lastGuard/parries/wasParried/lastCounterTick` 等 |
 
 `tickPlayer()` 把輸入意圖轉為動作，`advanceAttack()` 管起手／有效／收招，`physics()` 管位置／重力／平台，`RiftVitals` 管生命規則；程序動畫讀這些結果，不能以「動畫播完 callback」決定命中或解除鎖定。能力內容見 [ABILITY_SYSTEM](ABILITY_SYSTEM.md)，反制／無敵／復燃數值見 [COMBAT_SYSTEM](COMBAT_SYSTEM.md)，不在此複製幀數表。
@@ -119,8 +119,8 @@
 | `IDLE / MOVE / GUARD` | 中立可動狀態；`canAct` 還要求 HP >0、未死、lockFrames<=0 |
 | `STARTUP` | 起手；普通完成只進 ACTIVE，不能開始防禦 |
 | `ACTIVE` | 有效段；普通完成只進 RECOVERY |
-| `RECOVERY` | 收招；完成後回中立；Game 只有命中確認時允許指定取消路徑 |
-| `DEFLECT` | 點按防禦狀態鎖；鎖定完成才可正常轉動作，有效招架窗口與鎖長度不同 |
+| `RECOVERY` | 收招；完成後回中立；命中確認允許追擊／墊步等取消；指定輕招經過6 tick另可防禦取消 |
+| `DEFLECT` | 點按防禦狀態鎖；進入時以16→12 tick窗口設鎖；成功後消耗窗口並縮鎖到最多2 tick，合法新按可重起招架 |
 | `RECOIL / BLADE_PINNED / HIT_STUN` | 反彈／踏刃被制／受創；倒數完成才能正常回中立 |
 | `STUNNED` | 失衡倒地，暫停所有主動操作、鎖住橫向位移；倒數完由 Vitals 恢復低 HP |
 | `GRAPPLING` | 沿掛索移動；落點或允許的攻擊／取消路徑結束 |
@@ -193,4 +193,4 @@ const event = {
 
 ## 修改後必查
 
-測試命令統一見 [TESTING](TESTING.md)。改 loop 時要比較60／144／240Hz的相同simulation結果、長stall上限、pause與hitstop差異、短tap緩衝；改actor／FSM時驗證中斷清除、兩次斷決、重開與線上副本；改事件／教學時驗證沒有重複結果／重複listener且22課依真實接觸完成。完整清單見 [REGRESSION_CHECKLIST](REGRESSION_CHECKLIST.md)。
+測試命令統一見 [TESTING](TESTING.md)。改 loop 時要比較60／144／240Hz的相同simulation結果、長stall上限、pause與hitstop差異、短tap緩衝；改actor／FSM時驗證中斷清除、防禦緩衝、玩家雙核／Boss三核、容量比例、重開與線上副本；改事件／教學時驗證沒有重複結果／重複listener且22課依真實接觸完成。完整清單見 [REGRESSION_CHECKLIST](REGRESSION_CHECKLIST.md)。

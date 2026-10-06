@@ -66,7 +66,7 @@
 - 高更新率不應加快攻擊：simulation 固定 60 Hz。檢查新程式是否誤在 renderer 或 DOM event 修改 timer／HP；不要以 render frame 數作招式幀數。
 - 長停頓後少補 tick 是 catch-up cap 的設計，不是保證斷線後補跑完整戰鬥。效能診斷見 [PLATFORM](PLATFORM.md)。
 - Boss 位於上下層時先讀 `RiftAI` 的導航和 [BOSS_SYSTEM](BOSS_SYSTEM.md)；捕捉雙方 position、platform、FSM、phase 和可見目標，而不是修改玩家座標來掩蓋卡路。
-- 失衡後只扣完 HP 不會直接結束；需貼身斷決消耗雙核心，首顆回到第二階段。用 [COMBAT_SYSTEM](COMBAT_SYSTEM.md) 和測試核對，不能將「仍有第一核心」誤當死亡 bug。
+- 失衡後只扣完 HP 不會直接結束；需貼身斷決逐顆消耗核心（玩家/PvP兩顆、赤衡三顆），剩餘核心會滿血復燃。用 [COMBAT_SYSTEM](COMBAT_SYSTEM.md) 和測試核對，不能將「仍有剩餘核心」誤當死亡 bug。
 
 ## 教學進度遺失／未來存檔損壞
 

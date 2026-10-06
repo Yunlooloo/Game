@@ -7,6 +7,7 @@
 | [001](001-source-and-single-file.md) | Accepted | 版控來源、可重現 build、保留單檔發行 |
 | [002](002-incremental-content.md) | Accepted | 由真實內容需求導入資料化，而非預造框架 |
 | [003](003-combat-authority.md) | Accepted | 保留固定 tick 與防守方裁決，明列信任限制 |
+| [004](004-readable-rhythm-and-boss-capacity.md) | Accepted | 招架節奏、Boss三核／容量接點；取代全域100HP／雙核假設，保留003裁決邊界 |
 
 新增格式：
 

@@ -546,6 +546,40 @@
       }
       c.restore(); this.c = previous;
     }
+    attackBeat(p) {
+      const move = p.move;
+      if (!move || !['STARTUP', 'ACTIVE'].includes(p.state)) return null;
+      const st = p.st || 0, waves = move.waves || [0];
+      if (p.state === 'STARTUP') return {
+        index: 0, total: waves.length, preparing: true,
+        progress: clamp(st / Math.max(1, move.windup * .65), 0, 1),
+        until: p.holdCharged || (p.moveName === 'light' && !p.attackReleased) ? Infinity : Math.max(0, move.windup - st)
+      };
+      let index = 0;
+      while (index + 1 < waves.length && st >= waves[index + 1]) index++;
+      const elapsed = st - waves[index], next = waves[index + 1];
+      const strikeTicks = Math.min(6, (next ?? move.active) - waves[index]);
+      const preparing = next !== undefined && elapsed >= strikeTicks;
+      return {
+        index, total: waves.length, preparing,
+        progress: preparing ? clamp((elapsed - strikeTicks) / Math.max(1, next - waves[index] - strikeTicks - 5), 0, 1) : clamp(elapsed / Math.max(1, strikeTicks), 0, 1),
+        until: preparing ? next - st : Infinity
+      };
+    }
+    attackCue(p, x, y, beat) {
+      if (!beat || p.move.kind !== 'rift' || p.hidden) return;
+      const c = this.c, ready = beat.until <= 8;
+      c.save(); c.translate(x, y);
+      this.path([[-64, -12], [64, -12], [68, 0], [64, 12], [-64, 12], [-68, 0]], '#243047', ready ? '#f4e6ff' : '#b795d7', 1.2);
+      c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = 'bold 12px "Noto Sans TC", sans-serif';
+      c.fillStyle = '#f3e6ff'; c.fillText('裂斬 · 可招架', 0, 0);
+      for (let i = 0; i < beat.total; i++) {
+        const x = (i - (beat.total - 1) / 2) * 21;
+        const pending = p.state === 'STARTUP' || i > beat.index;
+        this.line(x - 6, 19, x + 6, 19, pending ? '#e1c4ff' : '#62647e', pending ? 3 : 2);
+      }
+      c.restore();
+    }
     player(p, alpha) {
       const c = this.c, facing = p.facing || 1, state = p.state || 'IDLE';
       const downed = state === 'STUNNED', dead = p.dead || state === 'DEAD';
@@ -557,6 +591,7 @@
       const opponent = (this.world.players || []).find(other => other.id !== p.id);
       const counterPose = bladeCounter && opponent?.move?.kind === 'thrust';
       const pinnedPose = state === 'BLADE_PINNED' || (bladeCounter && kind === 'thrust');
+      const beat = this.attackBeat(p);
       const st = p.st || 0, speed = Math.abs(p.vx || 0) * 60, walking = !downed && !dead && !reviving && speed > 25 && p.ground;
       const rhythm = this.t * Math.min(17, speed * .045 + 5) + p.id;
       const bob = downed || dead ? 0 : p.ground ? walking ? Math.sin(rhythm * 2) * 1.8 : Math.sin(this.t * 2.1 + p.id) * .8 : 0;
@@ -643,13 +678,15 @@
       this.line(-16, -68, -19, -61, light, 1);
       this.humanHead(0, -88, p.id === 1, .65, downed ? .17 : recoiling ? -.13 : .02);
       let handX = 23, handY = -48, swordAngle = -.48;
-      if (windup) {
-        const prog = clamp(st / ((p.move && p.move.windup) || 18), 0, 1);
+      if (windup || beat?.preparing) {
+        const prog = beat?.progress ?? clamp(st / 18, 0, 1);
         if (kind === 'thrust') { handX = -9; handY = -56; swordAngle = -.04; }
         else if (kind === 'sweep') { handX = -16; handY = -31; swordAngle = -2.78; }
         else { handX = lerp(18, -8, prog); handY = lerp(-49, -89, prog); swordAngle = lerp(-.5, -2.25, prog); }
       } else if (attacking) {
-        const prog = clamp(st / ((p.move && p.move.active) || 5), 0, 1);
+        // Each collision wave needs its own release pose; one long animation hid
+        // the second and third contacts even though the simulation emitted them.
+        const prog = beat?.progress ?? clamp(st / 5, 0, 1);
         handX = 27; handY = -58 + prog * 25; swordAngle = -.8 + prog * 1.65;
         if (kind === 'thrust') { handX = 43; handY = -55; swordAngle = -.02; }
         if (kind === 'sweep') { handX = 30; handY = -19; swordAngle = .04; }
@@ -676,6 +713,15 @@
       if (drinking) this.tonic(handX + 6, handY - 7, clamp(st / 14, 0, 1));
       else if (kind === 'hammer' && (windup || attacking || state === 'RECOVERY')) this.hammer(handX, handY, swordAngle);
       else this.sword(handX, handY, swordAngle, p.fireBlade > 0, p.charged, kind === 'rift' && (windup || attacking));
+      if (beat?.until <= 8 && !p.hidden && ['slash', 'cleave', 'rift', 'hammer'].includes(kind)) {
+        // Read the combat clock, never wall time: hitstop must freeze this cue
+        // along with the approaching strike, including gaps between combo hits.
+        const x = handX + Math.cos(swordAngle) * 65, y = handY + Math.sin(swordAngle) * 65;
+        const size = 4 + (8 - beat.until) * .8;
+        c.save(); c.globalAlpha = .55 + (8 - beat.until) * .055;
+        this.path([[x - size, y], [x - 2, y - 2], [x, y - size], [x + 2, y - 2], [x + size, y], [x + 2, y + 2], [x, y + size], [x - 2, y + 2]], '#fff8dc');
+        c.restore();
+      }
       if (p.aegis && !drinking && !dead && !reviving && !downed) this.aegis(26, -61, state === 'DEFLECT');
       if (p.charge > 15 && !downed) {
         const r = 8 + Math.min(16, p.charge * .3);
@@ -685,7 +731,8 @@
       }
       c.restore(); c.restore();
       if (windup && ['thrust', 'sweep', 'lightning'].includes(kind)) this.danger(px, py - (p.hidden ? 96 : 135), kind, st);
-      if (p.posture >= 86 && !dead && !downed) {
+      this.attackCue(p, px, py - 151, beat);
+      if (p.posture >= (p.maxPosture || 100) * .86 && !dead && !downed) {
         c.globalAlpha = .6 + Math.sin(this.t * 15) * .2; this.line(px - 16, py - 119, px + 16, py - 119, '#df647b', 2); c.globalAlpha = 1;
       }
       if (downed && !dead) {
@@ -808,12 +855,15 @@
         }
         if (kind === 'lightning') { this.chargeArcs(r * .45, 0, r * .5, 1); }
         if (kind === 'rift') {
-          c.globalAlpha = life * .83;
-          for (let j = 0; j < 4; j++) {
-            c.beginPath(); c.ellipse(r * .34, j * 8 - 10, r * (.68 + j * .05), 26 + j * 9, -.18, -.9, 1.1);
-            c.strokeStyle = j % 2 ? '#8e67bb' : '#252849'; c.lineWidth = 25 - j * 4; c.stroke();
-          }
-          c.globalAlpha = life; c.strokeStyle = '#dcb8ff'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(r * .33, -8, r * .7, 31, -.18, -.9, 1.1); c.stroke();
+          // Leave both silhouettes visible; successive waves cross in opposite
+          // directions instead of accumulating an opaque wall over the defender.
+          const tilt = (s.wave || 0) % 2 ? .17 : -.17;
+          c.globalAlpha = life * .27; c.strokeStyle = '#8561b8'; c.lineWidth = 19;
+          c.beginPath(); c.ellipse(r * .33, -5, r * .68, 34, tilt, -.9, 1.1); c.stroke();
+          c.globalAlpha = life * .8; c.strokeStyle = '#b994e4'; c.lineWidth = 5;
+          c.beginPath(); c.ellipse(r * .33, -5, r * .7, 35, tilt, -.9, 1.1); c.stroke();
+          c.globalAlpha = life; c.strokeStyle = '#f0e2ff'; c.lineWidth = 1.8;
+          c.beginPath(); c.ellipse(r * .33, -5, r * .7, 36, tilt, -.9, 1.1); c.stroke();
         } else {
           const color = s.color || '#fff3c7';
           const start = kind === 'sweep' ? -.17 : kind === 'thrust' ? -.12 : -1.08;
@@ -1035,4 +1085,3 @@
   }
   window.RiftRenderer = RiftRenderer;
 })();
-

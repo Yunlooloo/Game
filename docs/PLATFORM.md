@@ -1,6 +1,6 @@
 # 平台、輸入、UI 與效能
 
-本文件以 runtime **4.0.2** 的 `src/core.js`、`src/render.js`、`src/audio.js`、`src/shell.html` 與教學 UI 為準。**IMPLEMENTED** 表示存在於程式，並不等於已通過所有裝置驗證。操作故障見 [TROUBLESHOOTING](TROUBLESHOOTING.md)，測試方法見 [TESTING](TESTING.md)。
+本文件以 runtime **4.1.0** 的 `src/core.js`、`src/render.js`、`src/audio.js`、`src/shell.html` 與教學 UI 為準。**IMPLEMENTED** 表示存在於程式，並不等於已通過所有裝置驗證。操作故障見 [TROUBLESHOOTING](TROUBLESHOOTING.md)，測試方法見 [TESTING](TESTING.md)。
 
 ## IMPLEMENTED：輸入介面
 
@@ -34,7 +34,7 @@ flowchart LR
 | 介面 | 現有來源／行為 |
 | --- | --- |
 | 準備、大廳、裝具、天氣、房間 | `src/shell.html`，`Game.bind/updateLoadout/host/join` |
-| HUD、共鳴雙核、狀態、網路指標 | `Game.renderHUD()`，約每 65 ms 更新 DOM；不是每個 simulation tick 更新 |
+| HUD、共鳴核心、狀態、網路指標 | `Game.renderHUD()`，約每 65 ms 更新 DOM；不是每個 simulation tick 更新 |
 | 暫停／聲音滑桿／操作卷軸 | `togglePause/showPause/toggleGuide`；本機暫停，線上不暫停對局 |
 | 勝敗、重開、回大廳 | `showResult/start/lobby`；沒有獨立 Victory／GameOver scene class |
 | 陪練課程 | `src/tutorial.js`、`tutorial-ui.html/css`；觸控操作時收合，課程切換與完成時展開 |

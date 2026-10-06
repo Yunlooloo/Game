@@ -33,9 +33,11 @@ function testAI() {
   assert(tick(ai, { ...base, parries: 1 }) & 16, 'counter on first actionable frame');
   ai = new AI(); warm(ai);
   for (let i = 0; i < 9; i++) assert.equal(tick(ai, { ...base, state: 'RECOIL', wasParried: 1 }), 0);
-  let bits = tick(ai, { ...base, wasParried: 1 });
-  assert.equal(bits & 9, 9, 'backjump after being parried'); assert(!(bits & 2));
-  for (let i = 0; i < 8; i++) assert.equal(tick(ai, { ...base, wasParried: 1, ground: false }), 1);
+  let bits;
+  for (let i = 0; i < 18; i++) {
+    bits = tick(ai, { ...base, wasParried: 1 });
+    assert.equal(bits, 0, 'parried boss offers a stationary riposte opening');
+  }
 
   ai = new AI(); warm(ai);
   for (let i = 0; i < 12; i++) assert.notEqual(tick(ai, base, { ...opponent, state: 'DRINKING' }) & 1088, 1088);
@@ -64,7 +66,7 @@ function testAI() {
   ai = new AI(); warm(ai, base, { ...opponent, guardSpam: 2 }); ai.nextAttack = 0;
   assert(tick(ai, base, { ...opponent, guardSpam: 2 }) & 16, 'begin spam-punishing charge');
   const hold = ai.chargeUntil - ai.frame;
-  assert(hold >= 45 && hold <= 65, 'variable 45-65f charge');
+  assert.equal(hold, 30, 'repeatable hold releases before the charged tell');
   for (let i = 1; i < hold; i++) assert(tick(ai, { ...base, state: 'STARTUP' }, { ...opponent, guardSpam: 2 }) & 16);
   assert(!(tick(ai, { ...base, state: 'STARTUP' }, { ...opponent, guardSpam: 2 }) & 16), 'release charge');
 

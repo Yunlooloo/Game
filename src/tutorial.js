@@ -10,10 +10,10 @@
     {id:'dash', title:'03 · 墊步取位', group:'起步', goal:'朝一個方向墊步，實際移動至少 80 像素。', keys:'A / D ＋ Shift 墊步', tip:'墊步消耗的是出手時機，不消耗共鳴。能閃普通斬擊，但危險招式需要相應反制。', distance:350},
     {id:'grapple', title:'04 · 掛索飛躍', group:'起步', goal:'抓住上方亮色錨點，沿掛索上升至少 80 像素。', keys:'F 掛索 · 空中左鍵可接跳斬', tip:'掛索自動挑選面前可達的高處錨點。飛到高台後，也能 S ＋ 空白鍵回到下層。', distance:330},
     {id:'light', title:'05 · 第一刀', group:'刀刃', goal:'用一次輕斬實際命中陪練。', keys:'點按滑鼠左鍵', tip:'靠近到一把劍的距離。18 幀起手 → 5 幀判定 → 14 幀收招；揮空也要付出收招時間。', distance:90},
-    {id:'charged', title:'06 · 延遲出刀', group:'刀刃', goal:'蓄力後釋放蓄斬，命中或擊破陪練的普通防禦。', keys:'按住左鍵至少 0.6 秒，再放開', tip:'陪練會一直普通防禦。雙重裂斬能崩解普通格擋，但完美招架仍可化解；不要在蓄力中嘗試防禦。', distance:110, behavior:'guard'},
+    {id:'charged', title:'06 · 延遲出刀', group:'刀刃', goal:'蓄力後釋放蓄斬，命中或擊破陪練的普通防禦。', keys:'按住左鍵至少 0.6 秒，再放開', tip:'陪練會一直普通防禦。雙重蓄斬能崩解普通格擋，但完美招架仍可化解；不要在蓄力中嘗試防禦。', distance:110, behavior:'guard'},
     {id:'combo', title:'07 · 命中才有追擊', group:'刀刃', goal:'輕斬命中後，在收招時再點左鍵，讓「追斬」命中。', keys:'左鍵 → 放開 → 命中後再點左鍵', tip:'第一刀命中或被格擋，才開放追斬／墊步取消。太早按第二次、一直按住或揮空，都不算連段。', distance:90},
     {id:'guard', title:'08 · 普通格擋的代價', group:'防守', goal:'提早按住右鍵，以普通格擋接下 2 刀。', keys:'持續按住滑鼠右鍵', tip:'陪練固定出輕斬。普通格擋不扣 HP，但累積自身架勢；不能永久靠擋來獲勝。', distance:90, behavior:'light', total:2},
-    {id:'parry', title:'09 · 聽見完美招架', group:'防守', goal:'在刀鋒接觸前點右鍵，完成 2 次完美招架。', keys:'看到刀將落下時，點一下右鍵', tip:'窗口最多 12 幀。0.4 秒內連點會縮至 4 幀。失手沒有懲罰；放開、等下一刀。金色閃環與清亮刀鳴表示成功。', distance:90, behavior:'light', total:2},
+    {id:'parry', title:'09 · 聽見完美招架', group:'防守', goal:'在刀鋒接觸前點右鍵，完成 2 次完美招架。', keys:'看到刀將落下時，點一下右鍵', tip:'窗口 16 幀。成功後放開再按，下一刀仍有完整窗口；只有快速空按會縮短至最低 12 幀。按住則繼續普通防禦。金色閃環與清亮刀鳴表示成功。', distance:90, behavior:'light', total:2},
     {id:'posture', title:'10 · HP 決定架勢恢復', group:'防守', goal:'先在安全距離按住右鍵，恢復 20 架勢；再觀察低血量時恢復停止。', keys:'按住右鍵，觀看上方架勢條', tip:'HP ≥ 75：35 / 秒；50–74：15 / 秒；低於 50：0。距離超過 350 時持續防禦，加速 2.5 倍，仍受 HP 限制。', distance:500, total:2},
     {id:'bladePin', title:'11 · 紅色「突」：踏刃', group:'反制', goal:'迎著突刺墊步，成功踏刃 2 次。', keys:'紅色「突」亮起後，接觸前朝對手按 Shift', tip:'突刺不能普通防禦。向後閃不算踏刃；反制成功會踩住刃身，重創敵方 35 架勢。', distance:130, behavior:'thrust', total:2},
     {id:'stomp', title:'12 · 琥珀色「掃」：蹬踏', group:'反制', goal:'跳過下段橫掃，再在對手頭上按一次跳躍，成功蹬踏。', keys:'空白鍵 → 靠近頭頂 → 再按空白鍵', tip:'橫掃不能擋，也不能踏刃。必須跳起、放開跳躍鍵，再按一次；保持在對手上方一個身位。', distance:70, behavior:'sweep'},
@@ -25,7 +25,7 @@
     {id:'hammer', title:'18 · 重鎚與起手風險', group:'裝備', goal:'讓重鎚擊中普通防禦，造成崩解。', keys:'靠近後按 E', tip:'本課自動裝備重鎚。45 幀前搖與霸體不代表無敵；對手若完美招架，重鎚使用者會陷入長硬直。', distance:90, tool:'hammer', behavior:'guard'},
     {id:'blink', title:'19 · 影匣的受擊時機', group:'裝備', goal:'在受擊瞬間啟動影匣，觸發位移並讓背襲命中。', keys:'刀即將碰到身體時按 E', tip:'本課自動裝備影匣。有效窗口只有 12 幀；不是常駐無敵。成功後自動移至背後出刀，無需再按攻擊。', distance:90, tool:'blink', behavior:'light', total:2},
     {id:'cleave', title:'20 · 雙斷', group:'奧義', goal:'用雙斷命中，實際清除自己的架勢。', keys:'先按住右鍵，再點左鍵（鍵盤備用 O）', tip:'本課自動裝備雙斷。慢起手換取重架勢打擊；命中可清除 50 自身架勢。奧義耗 5 共鳴。', distance:100, art:'cleave'},
-    {id:'rift', title:'21 · 裂斬', group:'奧義', goal:'用裂斬穿透陪練的普通防禦，造成 HP 傷害。', keys:'先按住右鍵，再點左鍵（鍵盤備用 O）', tip:'本課自動裝備裂斬。消耗 9 共鳴，長距離雙波有穿透傷害；很長的起手與收招仍能被懲罰。', distance:260, art:'rift', behavior:'guard'},
+    {id:'rift', title:'21 · 裂斬', group:'奧義', goal:'用裂斬的遠距雙波命中陪練。', keys:'先按住右鍵，再點左鍵（鍵盤備用 O）', tip:'本課自動裝備裂斬。消耗 9 共鳴，雙波相隔 24 幀；對手可逐波格擋或招架。長起手與收招都留下反擊機會。', distance:260, art:'rift'},
     {id:'finisher', title:'22 · 倒地、斷決與雙核復燃', group:'結業', goal:'先一刀擊倒陪練，等收刀後靠近點左鍵斷決，見證第一核心復燃。', keys:'左鍵擊倒 → 等待收刀 → 貼近再點左鍵斷決', tip:'HP 歸零或架勢滿只會倒地。4 秒內貼近才能斷決；錯過會以 15 HP 起身。第一核被奪後滿血進入第二階段，第二核才結束對局。', distance:85},
   ];
   const $ = (id) => document.getElementById(id);
@@ -83,7 +83,7 @@
       this.index=Math.max(0,Math.min(LESSONS.length-1,index));this.completedCurrent=false;this.count=0;this.ticks=0;this.wait=100;this.flags={};this.lastDraw='';
       const game=this.game,w=game.world,l=this.lesson,[p,e]=w.players;
       w.phase='fighting';w.weather='dusk';w.projectiles=[];w.lightning=[];w.effects.hitstop=0;w.effects.execution=0;w.effects.revival=0;
-      const reset=(f,x,face)=>Object.assign(f,{x,y:810,vx:0,vy:0,ground:true,facing:face,hp:100,posture:0,spirit:20,nodes:2,phase:2,tonics:3,state:'IDLE',st:0,lockFrames:0,stun:0,move:null,moveName:'',attackId:null,cancelledAttackId:null,hits:[],wave:0,dead:false,guard:false,deflect:0,guardSpam:0,lastGuard:-999,guardAge:0,aegis:false,aegisAge:0,prevBits:0,confirm:0,dash:0,dashDir:0,invuln:0,charged:0,burn:0,fireBlade:0,fireReady:0,blinkWindow:0,chase:0,grapple:null,drop:0,stomp:0,peace:0,healPending:0,attackReleased:true,holdCharged:false});
+      const reset=(f,x,face)=>Object.assign(f,{x,y:810,vx:0,vy:0,ground:true,facing:face,hp:100,posture:0,spirit:20,nodes:2,phase:2,tonics:3,state:'IDLE',st:0,lockFrames:0,stun:0,move:null,moveName:'',attackId:null,cancelledAttackId:null,hits:[],wave:0,dead:false,guard:false,deflect:0,guardSpam:0,lastGuard:-999,lastParryTick:-999,guardBuffer:0,guardAge:0,aegis:false,aegisAge:0,prevBits:0,confirm:0,dash:0,dashDir:0,invuln:0,charged:0,burn:0,fireBlade:0,fireReady:0,blinkWindow:0,chase:0,grapple:null,drop:0,stomp:0,peace:0,healPending:0,attackReleased:true,holdCharged:false});
       reset(p,1850,1);reset(e,1850+l.distance,-1);e.aiControlled=false;e.name='陪練・衡光';
       // Lessons only override the live fighter loadout, never saved lobby choices.
       p.loadout=[l.tool||'disc',l.tool==='flame'?'disc':'flame'];p.art=l.art||'cleave';
@@ -130,7 +130,7 @@
         if(id==='hammer'&&d.move==='hammer'&&blocked&&this.game.world.players[1].state==='STUNNED')this.award('hammer');
         if(id==='blink'&&d.move==='blink'&&connects&&this.flags.blinked)this.award('blinkHit');
         if(id==='cleave'&&d.move==='cleave'&&connects&&d.postureRecovered>0)this.award('cleave');
-        if(id==='rift'&&d.move==='rift'&&blocked&&d.damage>0)this.award('rift');
+        if(id==='rift'&&d.move==='rift'&&connects&&d.damage>0)this.award('rift');
       }
       if(target){
         if(id==='guard'&&blocked)this.award('block'+this.count);

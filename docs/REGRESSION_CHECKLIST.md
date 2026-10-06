@@ -1,6 +1,6 @@
 # 回歸檢查表
 
-**IMPLEMENTED**：此表用於既有 v4.0.2 功能的交付檢查。空 checkbox 是待執行，不代表失敗，也不是先前通過紀錄；本次證據另見 [VALIDATION](VALIDATION.md)。**PLANNED** 系統有專屬段落，加入前不需假装已有測試。命令與測試範圍以 [TESTING](TESTING.md) 為真實來源。
+**IMPLEMENTED**：此表用於既有 v4.1.0 功能的交付檢查。空 checkbox 是待執行，不代表失敗，也不是先前通過紀錄；本次證據另見 [VALIDATION](VALIDATION.md)。**PLANNED** 系統有專屬段落，加入前不需假装已有測試。命令與測試範圍以 [TESTING](TESTING.md) 為真實來源。
 
 ## 每次交付
 
@@ -8,19 +8,19 @@
 - [ ] Build、`scripts/check.py`、Node suites 通過；source 與根目錄 `index.html` 一致。
 - [ ] UI／audio／input／核心流程或 build 變更後，Chromium smoke 通過。
 - [ ] HTTP 啟動可見主選單與 Canvas；沒有 JavaScript exception。
-- [ ] 玩家能移動、跳躍、輕斬、防禦；Boss 可被打倒、兩次終擊後結束、能重開。
+- [ ] 玩家能移動、跳躍、輕斬、防禦；Boss 可被打倒、三次斷決後結束、能重開。
 - [ ] 維護文件／manifest／CHANGELOG 符合實際版本，沒有把未實作功能寫為已存在。
 - [ ] `git diff --check` 通過；無 credential、`.env`、cache、test-results 或外部路徑混入提交。
 
 ## 戰鬥與 Boss
 
 - [ ] 60 Hz 固定戰鬥步長在不同 render cadence 維持相同速度；hitstop 不吞攻防輸入。
-- [ ] HP ≥75／50–75／<50 的架勢恢復分段正確；<50 時為零，防禦倍率不能恢復零基數。
+- [ ] HP比例 ≥75%／50–75%／<50% 的架勢恢復分段正確；<50 時為零，防禦倍率不能恢復零基數。
 - [ ] 點按防禦有招架，長按為格擋，抖刀窗口縮小；STARTUP／硬直不能任意 guard cancel。
 - [ ] 突刺踏刃、橫掃蹬踏、接電落地／雷返、投射物與多波 move 去重正常。
 - [ ] 五種裝備、兩種奧義的成本、衍生／combo、恢復與反制維持原規則。
 - [ ] HP 歸零或架勢破裂進入倒地，不自動逃走；逾時恢復到低血可戰状態。
-- [ ] 第一核心消耗後 HP／架勢重置，第二階段啟動；第二核心耗盡才結束對局。
+- [ ] 第一核心消耗後 HP／架勢重置，第二階段啟動；玩家/PvP第二核心、赤衡第三核心耗盡才結束對局。
 - [ ] 飲藥 54 tick 才治療，被擊中取消、沒有退款或重複治療；Boss 可選擇安全飲藥。
 - [ ] 玩家在 Boss 上方／下方／不同平台，Boss 能接近或選路，不持續卡在同一點。
 - [ ] AI 保留 200 ms 視覺反應與視野限制，未讀取玩家 keyboard event；第二階段才用指定新招。
@@ -66,3 +66,13 @@
 - [ ] Save：`saveVersion`、舊版 fixture migration、損壞／未來版本、安全寫入與 storage quota。
 - [ ] Stage／story：條件、transition rollback、checkpoint、對話中止與一次性事件不重複。
 - [ ] 新 Boss：共享戰鬥契約和原 Boss 全部維持，phase／能力／reward／arena 定義可單獨驗證。
+
+## 4.1.0 接刀節奏 · IMPLEMENTED
+
+- [ ] 赤衡三核240HP／220架勢，前兩次斷決復燃，第三次結束；玩家與PvP仍雙核100。
+- [ ] 三連斬、裂斬、蓄斬逐拍完美招架；成功重置窗口，按住只普通格擋。
+- [ ] 快速空按最低12tick；受擊硬直結束不出現無防備的一幀。
+- [ ] 輕招收招6tick後轉防禦；起手、有效段、飲藥不可取消。
+- [ ] 裂斬普通格擋無HP穿透；波間收刀無隱形判定，突進不穿過對手。
+- [ ] 蓄斬提示對準真正出刀，Boss連段結束可反擊，各階段不加速起手。
+- [ ] 協議4拒絕舊協議3；所有教學仍可完成。

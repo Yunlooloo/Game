@@ -51,15 +51,17 @@ flowchart TD
     Tick --> Down{"HP = 0 或架勢滿？"}
     Down -->|否| Tick
     Down -->|是| Window["STUNNED: 240 combat ticks"]
-    Window -->|未斷決| Weak["15 HP / 35 posture 起身"]
+    Window -->|未斷決| Weak["15% HP / 35% posture 起身"]
     Weak --> Tick
     Window -->|近身攻擊| Finish{"核心剩餘？"}
-    Finish -->|1| Revive["100 HP / Phase 2 / REVIVING"]
+    Finish -->|大於0| Revive["滿HP / 下一階段 / REVIVING"]
     Revive --> Tick
     Finish -->|0| End["ended / result"]
     End -->|retry| Start
     End -->|lobby| Menu
 ```
+
+角色容量已由 `maxHp / maxPosture / maxNodes` 表示：玩家、PvP與教學100／100／2；AI模式的赤衡240／220／3。`BOSS_PROFILE` 在core中明確套用，`attackDefinition()` 統一建立Boss起手／波次覆寫的攻擊複本，Vitals以容量／比例處理恢復、崩解與復燃，HUD按比例與核心數顯示。它是已使用的小接點，尚非Boss registry或通用Stats引擎。詳 [ADR-004](adr/004-readable-rhythm-and-boss-capacity.md)。
 
 教學有保護：課程可重置／補充資源，結業只驗證第一核心，不允許正常完成課程後第二次斷決結束訓練。線上回合還需防守方確認斷決；示意流程沒有省略這個權限要求。
 
@@ -67,11 +69,13 @@ flowchart TD
 
 | 時間 | 所在 | 用途 |
 | --- | --- | --- |
-| fixed tick | `Game.frame/step` | 60 Hz、最多補 6 步；hitstop 期間不增加 combat tick，仍緩衝輸入、更新部分特效 |
+| fixed tick | `Game.frame/step` | 60 Hz、最多補 6 步；hitstop期間不增加combat tick、凍結AI觀察／排程，仍緩衝輸入、更新部分特效 |
 | render time | `RiftRenderer.render` 的 `performance.now()` | 相機與視覺動畫，不應新增傷害或決定攻擊結束 |
 | network wall time | `Date.now()` + clock offset | 意圖時間補償／RTT；不是另一份 authoritative gameplay clock |
 
-`frame` 不實作整局 rollback；pose interpolation／startup time warp 不能稱為完整 rollback netcode。細節由 [COMBAT_SYSTEM](COMBAT_SYSTEM.md) 與 [GAME_SYSTEMS](GAME_SYSTEMS.md) 維護。
+戰鬥在共用 `MOVES`／FSM上加入16→12 tick招架窗口、8 tick防禦緩衝、指定輕招6 tick收招取消、6 tick多波接觸窗及Boss非末波招架保留。AI以可重複招式組合、完整收招與固定反擊空檔形成三階段，階段不縮短起手。renderer以同一攻擊時鐘逐波收刀／放刀，紫色裂斬另有可招架提示；沒有第二套戰鬥引擎。
+
+`RiftNet` 協議4拒絕舊協議3，避免不同招架／波次時序互連；線上仍為雙核PvP，沒有同步三核Boss的擴充協議。`frame` 不實作整局 rollback；pose interpolation／startup time warp 不能稱為完整 rollback netcode。細節由 [COMBAT_SYSTEM](COMBAT_SYSTEM.md) 與 [GAME_SYSTEMS](GAME_SYSTEMS.md) 維護。
 
 ## PLANNED：演進藍圖，不是現有類別
 
@@ -144,7 +148,7 @@ classDiagram
 
 | 未來接點 | 何時引入 | 保持的契約 |
 | --- | --- | --- |
-| BossDefinition + controller factory | 第二名 Boss | 共用 FSM、input bits、命中判定；先維持 100 HP 標尺 |
+| BossDefinition + controller factory | 第二名 Boss | 共用 FSM、input bits、命中判定；沿用容量helper；僅本機AI套Boss配置，PvP仍100／100／2 |
 | AbilityDefinition／effect evaluator | 第二種來源重複同一效果 | cost／命中與防守方裁決唯一，不複製傷害程式 |
 | Entity IDs／target query | 同時第三名 actor | 先排除 `1-id`、二人相機、固定 HUD 等假設 |
 | Stage／Encounter definitions | 第二張地圖或可切換遭遇 | 地圖資料不直接處理 Boss 勝敗；重置 transient objects |

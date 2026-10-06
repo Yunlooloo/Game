@@ -4,7 +4,7 @@
     "name": "斬境殘響",
     "englishName": "Riftblade Echoes",
     "repository": "https://github.com/Yunlooloo/Game",
-    "version": "4.0.2",
+    "version": "4.1.0",
     "language": "zh-Hant",
     "status": "early prototype"
   },
@@ -26,7 +26,7 @@
     "node": ">=22",
     "playwright": "1.62.0",
     "runtimePeerJS": "1.5.5",
-    "networkProtocol": 3
+    "networkProtocol": 4
   },
   "deployTarget": {
     "provider": "GitHub Pages",
@@ -166,7 +166,7 @@
     "work_log": "docs/WORK_LOG.md"
   },
   "knownLimits": [
-    "two actors / normalized 100 HP",
+    "two actors; Boss capacities supported locally, PvP remains 100/100/2",
     "no boss registry yet",
     "not server authoritative or complete rollback",
     "physical iPhone audio unverified",

@@ -2,7 +2,7 @@
 
 這份文件管理「從哪裡改、先接哪個入口、如何驗收」；數值與系統契約以連結的系統文件為準。**IMPLEMENTED** 表示可用的現有路徑；**PLANNED** 表示首次新增時必須一起完成的接點；**OPTIONAL** 表示非必要的額外能力。
 
-目前沒有 Boss、Enemy、Item、Stage、Dialogue registry。以下未來路徑及 API 範例**不會在現版自動載入**，也不能直接貼進 console。第一次新增內容通常要先把現有預設內容接上最小 registry，再增加第二份資料；不應先造完整 RPG 框架。
+目前沒有Boss、Enemy、Item、Stage、Dialogue registry；core的 `BOSS_PROFILE` 是已接入赤衡的容量／攻擊覆寫配置，`RiftAI._patterns()` 是三階段組合來源。以下未來路徑及 API 範例**不會在現版自動載入**，也不能直接貼進 console。第一次新增內容通常要先把現有預設內容接上最小 registry，再增加第二份資料；不應先造完整 RPG 框架。
 
 ## 共用交付流程
 
@@ -36,8 +36,8 @@
 
 **Steps**
 
-1. 先刻畫赤衡基準：12 tick 視覺反應、垂直導航、飲藥、第一核心復燃、第二核心結束。不要在抽取資料時順便改平衡。
-2. 把現有預設搬成 `boss_chiheng` 定義。factory 驗證 ID／招式引用，建立新的 controller 和 runtime overrides；不能把定義物件直接當 fighter。
+1. 先刻畫赤衡基準：12 tick視覺反應與hitstop凍結、垂直導航、飲藥、240／220／3容量、前兩核復燃／第三核結束、三階段節拍。不要在抽取資料時順便改平衡。
+2. 把 `BOSS_PROFILE` 與 `_patterns()` 的現有預設搬成 `boss_chiheng` 定義。factory 驗證 ID／招式引用，建立新的 controller 和 runtime overrides；不能把定義物件直接當 fighter。
 3. `Game.start('ai', config)` 接受 `config.bossId`，缺省仍用赤衡；把配置套到 `players[1]`，保留 actor ID 1 與兩人 authority。移除原本無條件覆寫名字的那一行，讓 `this.ai` 使用所選 controller。
 4. 讓 `RiftAI.input(world,self,enemy)` 真正讀取 profile 的攻擊集合／冷卻。AI 仍只能輸出共用 input intent；新 Boss 不得直接扣玩家 HP。
 5. 登錄 `boss_tidekeeper`，接 presentation palette 與大廳選擇。新音樂不是必要條件，可以先沿用 `battle`。
@@ -49,15 +49,15 @@
 // PLANNED：完整 schema 見 BOSS_SYSTEM；這是差異摘要，不是可直接載入的定義。
 const tidekeeperProfile = {
   id: 'boss_tidekeeper', name: '潮守',
-  stats: { hp: 100, nodes: 2 },
+  stats: { maxHp: 240, maxPosture: 220, maxNodes: 3 },
   loadout: ['disc', 'aegis'], art: 'cleave',
   attackPattern: ['light', 'thrust', 'charged']
 };
 ```
 
-**Tests**：兩位 Boss 都由同一 selector 啟動；赤衡基準不變；新 Boss 配置真正生效；上下層重新接近；飲藥能被打斷；雙核心／重試／未知 ID；22 課、同屏與既有連線 authority 回歸。
+**Tests**：兩位 Boss 都由同一 selector 啟動；赤衡基準不變；新 Boss 配置真正生效；上下層重新接近；飲藥能被打斷；Boss三核／玩家雙核、比例恢復／重試／未知ID；22 課、同屏與既有連線 authority 回歸。
 
-**Common mistakes**：只放定義卻沒接 `start()`；把 `hp` 改成 1000 卻漏改固定 100 的 vitals/HUD/網路；複製整個 `RiftAI`；同場塞第三角色冒充「新增可選 Boss」；controller 直接操作 DOM 或發獎勵。
+**Common mistakes**：只放定義卻沒接 `start()`；只改當前 `hp` 沒設容量，或把本機Boss容量送進仍限100／100／2的PvP協議；複製整個 `RiftAI`；同場塞第三角色冒充「新增可選 Boss」；controller 直接操作 DOM 或發獎勵。
 
 ## Add an Enemy · PLANNED：先決定是否同場多敵人
 
@@ -84,7 +84,7 @@ const guard = {
 };
 ```
 
-**Tests**：出生／移除後沒有殘留 attack；同波對同 target 只命中一次；死亡不再行動；切換目標／視野；暫停；Boss 仍需雙核心；若加掉落，完成結果重送只領一次。
+**Tests**：出生／移除後沒有殘留 attack；同波對同 target 只命中一次；死亡不再行動；切換目標／視野；暫停；Boss仍依自身 `maxNodes` 經斷決扣核；若加掉落，完成結果重送只領一次。
 
 **Common mistakes**：只把 actor push 進 `world.players`；以 array index 當永久 entity ID；Enemy 自己做第二套傷害；一開始就加仇恨、巡邏圖、刷怪 Director，卻沒有單一可玩的 Encounter。
 
@@ -96,7 +96,7 @@ const guard = {
 
 **Steps**
 
-1. 先選既有 `kind` 和數據，避免每招都造新的判定系統。設定完整 startup／active／recovery、reach、傷害、架勢、cost；waves 必須落在 active 內。
+1. 先選既有 `kind` 和數據，避免每招都造新的判定系統。設定完整 startup／active／recovery、reach、傷害、架勢、cost；waves必須落在active內，各波 `hitWindow` 與畫面重起節拍須一致。
 2. 在 `MOVES` 加唯一 ID，再明確接到一個既有裝備槽、奧義選項或 AI profile。一般起手統一呼叫 `begin()`，不能直接 `activate()` 繞成本。
 3. 新 `kind` 才增加 resolver 和 presentation handler；新工具／奧義需同步 UI 與網路引用驗證。現有 input bitmask 已用到第 16 bit，不能任意再加一位。
 4. 若內容已造成重複，再把既有定義原樣抽到 `src/content/abilities/registry.js` 與各定義檔，保留舊 ID；接回 `begin()` 和 authority 後才增加新的資料格式。
@@ -110,7 +110,7 @@ echo_cut: { name: '鳴斬', windup: 24, active: 6, recovery: 20,
   reach: 150, damage: 12, posture: 18, kind: 'slash', cost: 3 }
 ```
 
-**Tests**：起手不可防禦；花費不足不出招；揮空／格擋／招架／受傷取消；一波不重複傷害；多波可各自命中；本地與防守端 authority 結果；新增裝備可實際選配。
+**Tests**：起手不可防禦；花費不足不出招；揮空／格擋／招架／受傷取消；一波不重複傷害；多波各自命中、波間不命中；Boss非末波招架保留／末波反彈；本地與防守端authority結果；新增裝備可實際選配。
 
 **Common mistakes**：只加 `MOVES` 但玩家永遠無法選到；新 kind 沒 resolver；用顯示名判斷招式；攻擊端直接扣遠端 HP；把 cooldown 交給真實時間 `setTimeout()`。
 

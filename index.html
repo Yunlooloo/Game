@@ -602,8 +602,7 @@
         border: 1px solid #f1fff78c;
       }
       .life-node.spent,
-      .life-nodes[data-remaining="1"] .life-node:last-child,
-      .life-nodes[data-remaining="0"] .life-node {
+      .life-nodes .life-node.spent {
         opacity: .23;
         background: transparent;
         box-shadow: none;
@@ -1758,7 +1757,7 @@
             <span class="seal" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M28 8L8 32l17 23 4-17-9-6 15-15M40 9l-4 17 9 6-16 17 7 7 20-24Z" fill="currentColor"/><path d="M37 7L27 57" stroke="#d99761" stroke-width="3"/></svg></span><span>RIFTBLADE ECHOES</span>
           </div>
           <div class="build-label">
-            <i class="online-dot"></i> 刀劍對決 <span class="build-detail">／ 雙核篇</span>
+            <i class="online-dot"></i> 刀劍對決 <span class="build-detail">／ 連刃篇</span>
           </div>
         </header>
         <div class="main-grid">
@@ -1896,7 +1895,7 @@
                 data-art="rift"
                 aria-pressed="false"
               >
-                <b>裂斬</b><small>裂隙光刃貫穿 / 9 共鳴</small>
+                <b>裂斬</b><small>雙波遠斬 / 9 共鳴</small>
               </button>
             </div>
             <div class="weather-options">
@@ -2094,7 +2093,7 @@
             </button>
           </div>
           <p class="guide-intro">
-            先讀刀，再出刀。每人持有雙核；體力歸零或架勢達 100 都會倒地 4 秒。倒地者無法行動且能被攻擊，近身按左鍵可施展斷決。首次斷決破壞一核，對手隨即滿血復燃、進入第二階段；再次斷決才分出勝負。
+            先讀刀，再接刀。玩家持有雙核；試煉中的赤衡持有三核、240 體力與 220 架勢。體力歸零或架勢全滿時倒地 4 秒，近身按左鍵斷決。每次破壞一核，剩餘核心使對手滿血復燃；最後一核才決定勝負。連續成功招架不會縮短窗口，見到刀光就按下一拍。
           </p>
           <div class="guide-grid">
             <section class="guide-section">
@@ -2168,18 +2167,16 @@
               <h3>雙核復燃 / THE CORES ENDURE</h3>
               <div class="soul-principle">
                 <b>破勢倒地，把握四秒斷決。</b>
-                <p>體力降至 0 或架勢升至 100，便會倒地 240 邏輯幀（4 秒），期間無法移動、格擋或反擊，也仍會受傷。若未被斷決，四秒後以 15 體力、35 架勢重新站起；普通攻擊不會直接奪核。</p>
-                <p>雙核必須逐一斷決：首次被斷決後滿血復燃，PHASE 2 解鎖雷斬 G 與三連斬 V；第二次斷決結束對局。</p>
-                <p>體力 ≥75：每秒回復 35 架勢；50–74：每秒 15；低於 50：停止自然恢復。與對手距離超過 350，持續防禦可將恢復速度提高至 2.5 倍。</p>
-                <p>每場可飲用三次修復劑。按 R 後需 54 幀（0.9 秒），完成回復 40 體力；飲用期間留下空檔，先拉開距離再出手。</p>
+                <p>體力降至 0 或架勢全滿，便會倒地 240 邏輯幀（4 秒），期間無法移動、格擋或反擊，也仍會受傷。若未被斷決，四秒後以 15% 體力、35% 架勢重新站起；普通攻擊不會直接奪核。</p>
+                <p>玩家與切磋對手為雙核；試煉赤衡為三核（240 體力／220 架勢）。逐核斷決後滿血復燃；赤衡第二階加入連斬與雷斬，第三階加入裂斬與更長連段，出刀速度不變。</p>
+                <p>體力 ≥75%：每秒回復 35 架勢；50–74%：每秒 15；低於 50%：停止自然恢復。與對手距離超過 350，持續防禦可將恢復速度提高至 2.5 倍。</p>
+                <p>每場可飲用三次修復劑。按 R 後需 54 幀（0.9 秒），完成回復 40% 體力；飲用期間留下空檔，先拉開距離再出手。</p>
               </div>
               <h3>四道反制 / READ THE BLADE</h3>
               <div class="counter-card">
                 <kbd class="input-key counter-input">右鍵</kbd><b>壹 · 完美招架 / 震刃回響</b>
                 <p>
-                  命中前 12
-                  幀點右鍵，敵方累積大量架勢，自身不破防。連按會把窗口逐步縮至 4
-                  幀；普通格擋會累積自身架勢。
+                  命中前 16 幀點右鍵，成功後放開再按，逐刀接招；成功招架重置連按懲罰。只有快速空按才縮短窗口，最低仍有 12 幀。按住右鍵是普通格擋，會累積自身架勢。輕斬收刀 6 幀後可轉防禦。
                 </p>
               </div>
               <div class="counter-card">
@@ -2209,7 +2206,7 @@
                 幀使用；裝備輪盾時長按防禦展開環盾，鬆開可釋放蓄能斬。
               </p>
               <p>
-                雙斷命中清除自身 50 點架勢。裂斬有兩道穿透裂隙光刃；共鳴每 3
+                雙斷命中清除自身 50 點架勢。裂斬有兩道可格擋、可招架的光刃，相隔 24 幀；看刀尖亮起逐拍接刀。共鳴每 3
                 秒回復 1 點，上限 20。S＋跳躍可降至下層平台。
               </p>
             </section>
@@ -2281,7 +2278,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Riftblade Echoes — transport only. Simulation and authority live in Game. */
 (() => {
   'use strict';
-  const VERSION = 3;
+  const VERSION = 4;
   const PREFIX = 'riftblade-';
   const MAX_PACKET = 196608;
   const MAX_HISTORY = 240;
@@ -2811,7 +2808,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   }
 
   function basePostureRate(playerOrHp) {
-    const hp = typeof playerOrHp === "number" ? playerOrHp : playerOrHp?.hp;
+    const maximum = typeof playerOrHp === "object" && playerOrHp?.maxHp > 0 ? playerOrHp.maxHp : 100;
+    const hp = typeof playerOrHp === "number" ? playerOrHp : playerOrHp?.hp / maximum * 100;
     if (!Number.isFinite(hp) || hp < 50) return 0;
     return hp >= 75 ? 35 : 15;
   }
@@ -2824,13 +2822,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     if (rate === 0) return 0;
     if (player.state === STATE.GUARD && distance > 350) rate *= 2.5;
     if (player.burn > 0) rate *= 0.25;
-    if (player.aiControlled && player.phase === 2) rate *= 1.2;
+    if (player.aiControlled && player.phase >= 2) rate *= 1.2;
     return rate;
   }
 
   function parryWindow(spamOrPlayer = 0) {
     const spam = typeof spamOrPlayer === "object" ? spamOrPlayer?.guardSpam : spamOrPlayer;
-    return Math.max(4, 12 - 2 * Math.max(0, finite(spam)));
+    // Only unanswered rapid presses accrue debt; a confirmed parry clears it.
+    // Keep a usable floor so a learned multi-hit rhythm never becomes a 4f lottery.
+    return Math.max(12, 16 - 2 * Math.max(0, finite(spam)));
   }
 
   const api = Object.freeze({STATE, STATES: STATE, State: STATE, enum: STATE,
@@ -2851,12 +2851,21 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   const finite = (value, fallback = 0) => Number.isFinite(value) ? value : fallback;
   const DOWN_TICKS = 240;
 
+  // Older player fixtures and PvP replicas retain the original duel capacities.
+  // Presentation and recovery must use ratios rather than assuming every actor has 100 HP.
+  const capacity = (value, fallback) => Number.isFinite(value) && value > 0 ? value : fallback;
+  const maxHp = (player) => capacity(player?.maxHp, 100);
+  const maxPosture = (player) => capacity(player?.maxPosture, 100);
+  const maxNodes = (player) => Math.max(1, Math.floor(capacity(player?.maxNodes, 2)));
+  const hpRatio = (player) => clamp(finite(player?.hp) / maxHp(player), 0, 1);
+  const postureRatio = (player) => clamp(finite(player?.posture) / maxPosture(player), 0, 1);
+
   // A down is a finite opportunity to finish, never an automatic loss of a core.
   // Repeated damage must not restart this timer or retain movement/evasion input.
   function down(player) {
     if (!player || player.dead || [S.REVIVING, S.DEAD, S.EXECUTING].includes(player.state)) return false;
-    player.hp = Math.min(15, Math.max(0, finite(player.hp)));
-    player.posture = 100;
+    player.hp = Math.min(maxHp(player) * 0.15, Math.max(0, finite(player.hp)));
+    player.posture = maxPosture(player);
     player.vx = 0; player.dash = 0; player.dashDir = 0;
     player.blinkWindow = 0; player.invuln = 0; player.drop = 0;
     player.guard = false; player.deflect = 0; player.aegis = false;
@@ -2866,7 +2875,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   function recoverDown(player) {
     if (!player || player.state !== S.STUNNED || player.lockFrames > 0) return false;
-    player.hp = 15; player.posture = 35; player.stun = 0;
+    player.hp = maxHp(player) * 0.15;
+    player.posture = maxPosture(player) * 0.35; player.stun = 0;
     player.vx = 0; player.dash = 0; player.dashDir = 0;
     return FSM.enter(player, S.IDLE, {complete: true});
   }
@@ -2874,15 +2884,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   function vulnerable(player) {
     return !!player && !player.dead
       && ![S.REVIVING, S.DEAD, S.EXECUTING].includes(player.state)
-      && (player.hp <= 0 || (player.state === S.STUNNED && player.posture >= 100));
+      && (player.hp <= 0 || (player.state === S.STUNNED && player.posture >= maxPosture(player)));
   }
 
   function beginDrink(player) {
-    if (!player || !player.ground || finite(player.tonics) <= 0 || player.hp >= 100 || !FSM.canAct(player))
+    if (!player || !player.ground || finite(player.tonics) <= 0 || player.hp >= maxHp(player) || !FSM.canAct(player))
       return false;
     if (!FSM.enter(player, S.DRINKING)) return false;
     player.tonics -= 1;
-    player.healPending = 40;
+    player.healPending = maxHp(player) * 0.4;
     player.vx = 0; player.dash = 0; player.blinkWindow = 0;
     return true;
   }
@@ -2893,7 +2903,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     player.lockFrames = Math.max(0, finite(player.lockFrames, 54) - 1);
     if (player.lockFrames > 0) return false;
     const heal = Math.max(0, finite(player.healPending));
-    player.hp = clamp(finite(player.hp) + heal, 0, 100);
+    player.hp = clamp(finite(player.hp) + heal, 0, maxHp(player));
     player.healPending = 0;
     FSM.enter(player, S.IDLE, {complete: true});
     return heal > 0;
@@ -2906,14 +2916,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     const amount = Math.max(0, finite(damage));
     const posture = Math.max(0, finite(options.posture));
     if (amount === 0 && posture === 0) return result;
-    const hp = clamp(finite(player.hp), 0, 100);
+    const hp = clamp(finite(player.hp), 0, maxHp(player));
     player.hp = Math.max(0, hp - amount);
     result.damaged = hp - player.hp;
-    player.posture = clamp(finite(player.posture) + posture, 0, 100);
+    player.posture = clamp(finite(player.posture) + posture, 0, maxPosture(player));
     player.peace = 0;
     result.interrupted = player.state === S.DRINKING;
     if (result.interrupted) player.healPending = 0;
-    if (player.hp <= 0 || player.posture >= 100) {
+    if (player.hp <= 0 || player.posture >= maxPosture(player)) {
       down(player);
       result.broken = true;
     } else if (player.state !== S.STUNNED
@@ -2928,7 +2938,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   function takeNode(player) {
     const result = {taken: false, dead: !!player?.dead, reviving: false, phase: player?.phase};
     if (!vulnerable(player)) return result;
-    player.nodes = Math.max(0, Math.floor(finite(player.nodes, 2)) - 1);
+    const nodeCapacity = maxNodes(player);
+    player.nodes = Math.max(0, Math.floor(clamp(finite(player.nodes, nodeCapacity), 0, nodeCapacity)) - 1);
+    player.phase = clamp(nodeCapacity - player.nodes + 1, 1, nodeCapacity);
     result.taken = true;
     player.healPending = 0;
     player.guard = false;
@@ -2940,16 +2952,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     player.stun = 0;
     player.peace = 0;
     if (player.nodes > 0) {
-      player.hp = 100;
+      player.hp = maxHp(player);
       player.posture = 0;
-      player.phase = 2;
       player.invuln = 90;
       player.dead = false;
       FSM.enter(player, S.REVIVING, {interrupt: true, frames: 90});
       result.reviving = true;
     } else {
       player.hp = 0;
-      player.posture = 100;
+      player.posture = maxPosture(player);
       player.invuln = 0;
       FSM.enter(player, S.DEAD, {interrupt: true});
       result.dead = true;
@@ -2960,13 +2971,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
   function tickPosture(player, distance = Infinity) {
     if (!player) return 0;
-    const old = clamp(finite(player.posture), 0, 100);
+    const old = clamp(finite(player.posture), 0, maxPosture(player));
     const recovered = Math.min(old, FSM.postureRate(player, distance) / 60);
     player.posture = old - recovered;
     return recovered;
   }
 
-  const api = Object.freeze({DOWN_TICKS, down, recoverDown, vulnerable, beginDrink, tickDrink, hurt, takeNode, tickPosture});
+  const api = Object.freeze({DOWN_TICKS, maxHp, maxPosture, maxNodes, hpRatio, postureRatio,
+    down, recoverDown, vulnerable, beginDrink, tickDrink, hurt, takeNode, tickPosture});
   root.RiftVitals = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(globalThis);
@@ -3664,8 +3676,12 @@ window.RiftAI = class RiftAI {
     this.parries = 0;
     this.wasParried = 0;
     this.counterUntil = 0;
-    this.retreatUntil = 0;
-    this.disengageUntil = 0;
+    this.pattern = null;
+    this.patternCursor = 0;
+    this.patternPhase = 0;
+    this.action = null;
+    this.openingUntil = 0;
+    this.openingPending = 0;
     this.guardUntil = 0;
     this.chargeUntil = 0;
     this.nextAttack = 30;
@@ -3692,6 +3708,18 @@ window.RiftAI = class RiftAI {
     this.seed = n >>> 0;
     return this.seed / 4294967296;
   }
+  _patterns(phase) {
+    // The player learns phrases; later phases add endings, not faster tells.
+    if (phase >= 3) return [
+      ['triple'], ['light', 'thrust', 'sweep'], ['art'],
+      ['lightning', 'light'], ['charged', 'sweep']
+    ];
+    if (phase >= 2) return [
+      ['light', 'light', 'thrust'], ['triple'], ['light', 'sweep'],
+      ['lightning'], ['charged']
+    ];
+    return [['light', 'light', 'thrust'], ['light', 'sweep'], ['charged']];
+  }
   _observe(self, enemy) {
     if (Math.hypot(enemy.x - self.x, enemy.y - self.y) > 800) {
       return { frame: this.frame, visible: false };
@@ -3701,6 +3729,7 @@ window.RiftAI = class RiftAI {
       frame: this.frame, visible: true, x: enemy.x, y: enemy.y,
       vx: enemy.vx || 0, vy: enemy.vy || 0, ground: !!enemy.ground,
       state: enemy.state, st: enemy.st || 0, hp: enemy.hp,
+      maxHp: enemy.maxHp || 100, maxPosture: enemy.maxPosture || 100,
       posture: enemy.posture, guard: !!enemy.guard, aegis: !!enemy.aegis,
       guardSpam: enemy.guardSpam || 0, hidden: !!enemy.hidden,
       charged: enemy.charged || 0, stun: enemy.stun || 0, dead: !!enemy.dead,
@@ -3855,18 +3884,41 @@ window.RiftAI = class RiftAI {
     const seen = visible ? packet :
       (this.lastSight && f - this.lastSight.frame < 180 ? this.lastSight : null);
 
+    const state = self.state || 'IDLE';
+    const ready = state === 'IDLE' || state === 'MOVE' || state === 'GUARD';
+    const hpPercent = self.hp / (self.maxHp || 100) * 100;
+    const posturePercent = self.posture / (self.maxPosture || 100) * 100;
+    const phase = Math.max(1, Math.min(3, self.phase || 1));
+    if (phase !== this.patternPhase) {
+      this.patternPhase = phase; this.patternCursor = 0; this.pattern = null;
+      this.action = null; this.openingPending = 0; this.openingUntil = 0;
+      this.nextAttack = f + 30;
+    }
+    // Measure the shared FSM's actual completion instead of maintaining a second
+    // copy of move frame data. Hitstop therefore cannot eat a promised opening.
+    if (this.action) {
+      if (['STARTUP', 'ACTIVE', 'RECOVERY'].includes(state)) this.action.started = true;
+      else if (this.action.started && ready) {
+        const gap = this.action.endsPattern ? 30 : 8;
+        this.nextAttack = f + gap;
+        if (this.action.endsPattern) this.openingUntil = f + gap;
+        this.action = null;
+      } else if (this.action.started || f - this.action.issued > 3) {
+        // A counter can end a move early; continue the phrase only after its
+        // real stun and a punish window, never as an immediate recovery cancel.
+        this.nextAttack = f + 12; this.action = null;
+      }
+    }
     // Own tactile feedback is immediate; the chosen response waits through animation locks.
     const parries = self.parries || 0, wasParried = self.wasParried || 0;
     if (parries > this.parries) this.counterUntil = f + 120;
     if (wasParried > this.wasParried) {
-      this.retreatUntil = f + 120;
+      if (state !== 'ACTIVE') this.openingPending = Math.max(this.openingPending, 18);
       this.counterUntil = 0;
       this.chargeUntil = 0;
     }
     this.parries = parries;
     this.wasParried = wasParried;
-    const state = self.state || 'IDLE';
-    const ready = state === 'IDLE' || state === 'MOVE' || state === 'GUARD';
     if (['DEAD', 'REVIVING', 'EXECUTING', 'DRINKING', 'STUNNED',
       'HIT_STUN', 'RECOIL', 'BLADE_PINNED', 'DEFLECT'].includes(state)) {
       this.pending = null;
@@ -3874,14 +3926,22 @@ window.RiftAI = class RiftAI {
       this.guardUntil = 0;
       if (state === 'DEAD' || state === 'REVIVING') {
         this.counterUntil = 0;
-        this.retreatUntil = 0;
-        this.disengageUntil = 0;
+        this.pattern = null; this.action = null;
+        this.openingPending = 0; this.openingUntil = 0;
+        this.nextAttack = f + 30;
         this.healPlan = null;
         this.nav = null;
       }
       return done(0);
     }
     if (!packet) return done(0);
+    if (ready && this.openingPending) {
+      this.openingUntil = f + this.openingPending;
+      this.nextAttack = Math.max(this.nextAttack, this.openingUntil);
+      this.openingPending = 0; this.pending = null;
+    }
+    const downVisible=visible&&(seen.state==='STUNNED'||seen.posture>=seen.maxPosture);
+    if (ready && f < this.openingUntil && !downVisible) return done(0);
 
     let bits = 0;
     const tap = bit => {
@@ -3892,9 +3952,16 @@ window.RiftAI = class RiftAI {
       const index = (self.loadout || []).indexOf(name);
       return index === 0 ? B.T1 : index === 1 ? B.T2 : 0;
     };
+    const cost = key => window.RIFT?.MOVES?.[key]?.cost ??
+      ({ disc: 1, flame: 3, hammer: 4, blink: 3, cleave: 5, rift: 9,
+        lightning: 4, triple: 6 }[key] || 0);
+    const commitAction = (key, endsPattern = true) => {
+      this.action = { key, issued: f, started: false, endsPattern };
+      this.nextAttack = Infinity;
+    };
     const cast = name => {
       const bit = toolBit(name);
-      if (!bit || (self.spirit || 0) < (name === 'disc' ? 1 : 3)) return false;
+      if (!bit || (self.spirit || 0) < cost(name)) return false;
       return tap(bit);
     };
     const age = seen ? Math.min(18, f - seen.frame) : 12;
@@ -3915,9 +3982,9 @@ window.RiftAI = class RiftAI {
     const finishFacing = direction => done((bits & ~3) | direction);
 
     // A visually confirmed down takes priority over a previously planned retreat.
-    if (visible && (seen.state === 'STUNNED' || seen.posture >= 100) &&
+    if (visible && (seen.state === 'STUNNED' || seen.posture >= seen.maxPosture) &&
         distance < 500 && Math.abs(dy) < 85) {
-      this.chargeUntil = 0; this.retreatUntil = 0; this.disengageUntil = 0;
+      this.chargeUntil = 0; this.openingUntil = 0; this.openingPending = 0;
       this.guardUntil = 0; this.pending = null; this.healPlan = null; this.nav = null;
       if (distance < 125 && ready) tap(B.ATTACK);
       return finishFacing(toward);
@@ -3930,20 +3997,11 @@ window.RiftAI = class RiftAI {
       this.nextAttack = f + 34;
       return finishFacing(toward);
     }
-    if (this.retreatUntil >= f && ready) {
-      this.retreatUntil = 0;
-      this.disengageUntil = f + 27;
-      this.nextAttack = Math.max(this.nextAttack, f + 32);
-      if (self.ground) tap(B.JUMP);
-      else if (f >= this.nextDash && tap(B.DASH)) this.nextDash = f + 45;
-      return finishFacing(away);
-    }
-    if (this.disengageUntil > f) return finishFacing(away);
     if (this.counterUntil >= f && ready) {
       this.counterUntil = 0;
       this.guardUntil = 0;
       if (knownTarget && distance < 190 && Math.abs(dy) < 110) {
-        if (tap(B.ATTACK)) this.nextAttack = f + 37;
+        if (tap(B.ATTACK)) commitAction('light');
         return finishFacing(toward);
       }
     }
@@ -3952,7 +4010,7 @@ window.RiftAI = class RiftAI {
       // Explicit chord selects punish. Engine must not infer it from current enemy state.
       if (tap(B.THRUST | B.DASH)) {
         this.nextPunish = f + 44;
-        this.nextAttack = f + 43;
+        commitAction('punish');
         this.nextDash = f + 44;
         this.chargeUntil = 0;
       }
@@ -3968,14 +4026,14 @@ window.RiftAI = class RiftAI {
       if (key !== this.lastThreat && eta >= -3 && eta <= 18 &&
           distance < (move.reach || 125) + 45 && Math.abs(dy) < 130) {
         this.lastThreat = key;
-        const awareness = seen.hidden ? 0.44 : self.posture > 78 ? 0.92 : 0.86;
+        const awareness = seen.hidden ? 0.44 : posturePercent > 78 ? 0.92 : 0.86;
         if (this._random() < awareness) {
           let kind = 'deflect', lead = 5;
           if (move.kind === 'thrust') { kind = 'bladeCounter'; lead = 2; }
           else if (move.kind === 'sweep') { kind = 'jump'; lead = 10; }
           else if (move.kind === 'lightning') { kind = 'jump'; lead = 8; }
           else if (toolBit('blink') && self.spirit >= 3 && this.nextTool <= f &&
-                   (self.posture > 72 || this._random() < 0.18)) {
+                   (posturePercent > 72 || this._random() < 0.18)) {
             kind = 'blink'; lead = 5;
           }
           const at = f + Math.max(0, eta - lead + Math.floor(this._random() * 5) - 2);
@@ -4022,8 +4080,8 @@ window.RiftAI = class RiftAI {
     }
     // Healing is a deliberate, punishable action: create separation, then press
     // the same 54-frame tonic input as a player. Never mutate HP or inventory.
-    if (self.hp > 55 || !(self.tonics > 0)) this.healPlan = null;
-    if (ready && self.hp <= 55 && self.tonics > 0 && f >= this.nextHeal) {
+    if (hpPercent > 55 || !(self.tonics > 0)) this.healPlan = null;
+    if (ready && hpPercent <= 55 && self.tonics > 0 && f >= this.nextHeal) {
       if (!this.healPlan) this.healPlan = { until: f + 180 };
       const safe = (!knownTarget || distance > 380) && self.ground;
       if (safe && tap(B.HEAL)) {
@@ -4081,9 +4139,9 @@ window.RiftAI = class RiftAI {
       else if (seen) this.lastSight = null;
       return done(bits);
     }
-    if (self.posture > 66 && distance > 200 && Math.abs(dy) < 120 &&
+    if (posturePercent > 80 && hpPercent >= 50 && distance > 200 && Math.abs(dy) < 120 &&
         ready && !this.pending) {
-      if (self.posture < 90 && this._random() < 0.012) {
+      if (posturePercent < 95 && this._random() < 0.012) {
         this.guardUntil = f + (toolBit('aegis') && self.spirit >= 2 ? 35 : 16);
         return done(bits | B.GUARD);
       }
@@ -4097,30 +4155,31 @@ window.RiftAI = class RiftAI {
       if (this._random() < 0.4) this.ambushUntil = f + 30;
     }
     if (this.ambushUntil > f && distance > 140) return done(bits | B.DOWN);
-    const idealRange = self.hp < 35 ? 128 : 104;
+    const idealRange = hpPercent < 35 ? 128 : 104;
     if (distance > idealRange || Math.abs(dy) > 110) face(toward);
     else if (distance < 52 && ready && this._random() < 0.28) face(away);
     if (distance > 500 && Math.abs(dy) < 90 && self.ground &&
         f >= this.nextDash && ready) {
       if (tap(B.DASH)) this.nextDash = f + 100;
     }
-    if (!ready && state !== 'RECOVERY') return done(bits);
+    if (!ready) return done(bits);
+    if (f < this.nextAttack || Math.abs(dy) > 100) return done(bits);
 
-    if (ready && f >= this.nextTool) {
+    if (!this.pattern && f >= this.nextTool) {
       if (distance > 215 && distance < 720 && Math.abs(dy) < 95 && cast('disc')) {
         this.nextTool = f + 105; this.chaseUntil = f + 80;
-        this.nextAttack = Math.max(this.nextAttack, f + 18);
+        commitAction('disc');
         return finishFacing(toward);
       }
       if (distance < 155 && Math.abs(dy) < 85 &&
           this._random() < 0.045 && cast('flame')) {
-        this.nextTool = f + 170; this.nextAttack = f + 40;
+        this.nextTool = f + 170; commitAction('flame');
         return finishFacing(toward);
       }
       if (distance < 160 && Math.abs(dy) < 110 &&
           (seen.guard || seen.aegis || seen.state === 'RECOVERY') &&
           this._random() < 0.055 && cast('hammer')) {
-        this.nextTool = f + 200; this.nextAttack = f + 82;
+        this.nextTool = f + 200; commitAction('hammer');
         return finishFacing(toward);
       }
       if (toolBit('aegis') && distance < 210 && move &&
@@ -4129,50 +4188,42 @@ window.RiftAI = class RiftAI {
         return done(bits | B.GUARD);
       }
     }
-    if (ready && f >= this.nextArt &&
-        distance < (self.art === 'rift' ? 380 : 145) &&
-        Math.abs(dy) < 100 && self.spirit >= (self.art === 'rift' ? 7 : 4)) {
-      const opportunity = seen.state === 'RECOVERY' || seen.posture > 68 || self.posture > 55;
-      if (opportunity && this._random() < 0.035 && tap(B.ART)) {
-        this.nextArt = f + 280; this.nextAttack = f + 95;
-        return finishFacing(toward);
-      }
-    }
-    if (f < this.nextAttack || Math.abs(dy) > 100) return done(bits);
     if (this.chaseUntil > f && distance > 145 && distance < 400 &&
         ready && tap(B.ATTACK)) {
-      this.chaseUntil = 0; this.nextAttack = f + 43;
+      this.chaseUntil = 0; commitAction('chase');
       return finishFacing(toward);
     }
-    if (distance > 175) return done(bits);
-    if (state === 'RECOVERY') {
-      if (self.st >= 5 && this._random() < 0.09 && tap(B.ATTACK)) this.nextAttack = f + 32;
-      else if (self.posture > 70 && f >= this.nextDash &&
-               this._random() < 0.045 && tap(B.DASH)) {
-        face(away); this.nextDash = f + 55;
-      }
-      return done(bits);
-    }
-    if (seen.guardSpam >= 2) {
+    if (distance > 175 && !(this.pattern?.steps[this.pattern.index] === 'art' &&
+        self.art === 'rift' && distance < 380)) return done(bits);
+    if (!this.pattern && seen.guardSpam >= 2) {
       if (tap(B.ATTACK)) {
-        // Variable 45-65f hold breaks repeated short deflect-window rhythms.
-        this.chargeUntil = f + 45 + Math.floor(this._random() * 21);
-        this.nextAttack = this.chargeUntil + 32;
+        // Empty mashing is answered by a learnable delayed tell, not a new
+        // random release point every attempt. Successful parries reset spam.
+        this.chargeUntil = f + 30;
+        commitAction('charged');
       }
       return finishFacing(toward);
     }
-    const choice = this._random(), phaseTwo = self.phase === 2;
-    if (phaseTwo && choice < 0.13 && self.spirit >= 4) {
-      if (tap(B.LIGHTNING)) this.nextAttack = f + 62;
-    } else if (phaseTwo && choice < 0.28 && self.spirit >= 6) {
-      if (tap(B.TRIPLE)) this.nextAttack = f + 85;
-    } else if (choice < 0.4 && distance > 85) {
-      if (tap(B.THRUST)) this.nextAttack = f + 53;
-    } else if (choice < 0.55 && distance < 145 && seen.ground) {
-      if (tap(B.SWEEP)) this.nextAttack = f + 58;
-    } else if (choice < 0.64 && seen.guard && distance < 150) {
-      if (tap(B.ATTACK)) { this.chargeUntil = f + 40; this.nextAttack = f + 74; }
-    } else if (tap(B.ATTACK)) this.nextAttack = f + 30 + Math.floor(this._random() * 15);
+    if (!this.pattern) {
+      const patterns = this._patterns(phase);
+      this.pattern = { steps: patterns[this.patternCursor++ % patterns.length], index: 0 };
+    }
+    const phrase = this.pattern;
+    let key = phrase.steps[phrase.index];
+    if (key === 'art') key = self.art || 'cleave';
+    // Resource exhaustion changes a phrase to an ordinary cut instead of
+    // emitting an impossible action or bypassing the shared cost checks.
+    if ((self.spirit || 0) < cost(key) ||
+        ((key === 'rift' || key === 'cleave') && f < this.nextArt)) key = 'light';
+    const attackBit = { thrust: B.THRUST, sweep: B.SWEEP,
+      lightning: B.LIGHTNING, triple: B.TRIPLE, rift: B.ART, cleave: B.ART }[key] || B.ATTACK;
+    if (tap(attackBit)) {
+      if (key === 'charged') this.chargeUntil = f + 30;
+      if (key === 'rift' || key === 'cleave') this.nextArt = f + 280;
+      const endsPattern = ++phrase.index >= phrase.steps.length;
+      commitAction(key, endsPattern);
+      if (endsPattern) this.pattern = null;
+    }
     return finishFacing(toward);
   }
 };
@@ -4728,6 +4779,40 @@ window.RiftAI = class RiftAI {
       }
       c.restore(); this.c = previous;
     }
+    attackBeat(p) {
+      const move = p.move;
+      if (!move || !['STARTUP', 'ACTIVE'].includes(p.state)) return null;
+      const st = p.st || 0, waves = move.waves || [0];
+      if (p.state === 'STARTUP') return {
+        index: 0, total: waves.length, preparing: true,
+        progress: clamp(st / Math.max(1, move.windup * .65), 0, 1),
+        until: p.holdCharged || (p.moveName === 'light' && !p.attackReleased) ? Infinity : Math.max(0, move.windup - st)
+      };
+      let index = 0;
+      while (index + 1 < waves.length && st >= waves[index + 1]) index++;
+      const elapsed = st - waves[index], next = waves[index + 1];
+      const strikeTicks = Math.min(6, (next ?? move.active) - waves[index]);
+      const preparing = next !== undefined && elapsed >= strikeTicks;
+      return {
+        index, total: waves.length, preparing,
+        progress: preparing ? clamp((elapsed - strikeTicks) / Math.max(1, next - waves[index] - strikeTicks - 5), 0, 1) : clamp(elapsed / Math.max(1, strikeTicks), 0, 1),
+        until: preparing ? next - st : Infinity
+      };
+    }
+    attackCue(p, x, y, beat) {
+      if (!beat || p.move.kind !== 'rift' || p.hidden) return;
+      const c = this.c, ready = beat.until <= 8;
+      c.save(); c.translate(x, y);
+      this.path([[-64, -12], [64, -12], [68, 0], [64, 12], [-64, 12], [-68, 0]], '#243047', ready ? '#f4e6ff' : '#b795d7', 1.2);
+      c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = 'bold 12px "Noto Sans TC", sans-serif';
+      c.fillStyle = '#f3e6ff'; c.fillText('裂斬 · 可招架', 0, 0);
+      for (let i = 0; i < beat.total; i++) {
+        const x = (i - (beat.total - 1) / 2) * 21;
+        const pending = p.state === 'STARTUP' || i > beat.index;
+        this.line(x - 6, 19, x + 6, 19, pending ? '#e1c4ff' : '#62647e', pending ? 3 : 2);
+      }
+      c.restore();
+    }
     player(p, alpha) {
       const c = this.c, facing = p.facing || 1, state = p.state || 'IDLE';
       const downed = state === 'STUNNED', dead = p.dead || state === 'DEAD';
@@ -4739,6 +4824,7 @@ window.RiftAI = class RiftAI {
       const opponent = (this.world.players || []).find(other => other.id !== p.id);
       const counterPose = bladeCounter && opponent?.move?.kind === 'thrust';
       const pinnedPose = state === 'BLADE_PINNED' || (bladeCounter && kind === 'thrust');
+      const beat = this.attackBeat(p);
       const st = p.st || 0, speed = Math.abs(p.vx || 0) * 60, walking = !downed && !dead && !reviving && speed > 25 && p.ground;
       const rhythm = this.t * Math.min(17, speed * .045 + 5) + p.id;
       const bob = downed || dead ? 0 : p.ground ? walking ? Math.sin(rhythm * 2) * 1.8 : Math.sin(this.t * 2.1 + p.id) * .8 : 0;
@@ -4825,13 +4911,15 @@ window.RiftAI = class RiftAI {
       this.line(-16, -68, -19, -61, light, 1);
       this.humanHead(0, -88, p.id === 1, .65, downed ? .17 : recoiling ? -.13 : .02);
       let handX = 23, handY = -48, swordAngle = -.48;
-      if (windup) {
-        const prog = clamp(st / ((p.move && p.move.windup) || 18), 0, 1);
+      if (windup || beat?.preparing) {
+        const prog = beat?.progress ?? clamp(st / 18, 0, 1);
         if (kind === 'thrust') { handX = -9; handY = -56; swordAngle = -.04; }
         else if (kind === 'sweep') { handX = -16; handY = -31; swordAngle = -2.78; }
         else { handX = lerp(18, -8, prog); handY = lerp(-49, -89, prog); swordAngle = lerp(-.5, -2.25, prog); }
       } else if (attacking) {
-        const prog = clamp(st / ((p.move && p.move.active) || 5), 0, 1);
+        // Each collision wave needs its own release pose; one long animation hid
+        // the second and third contacts even though the simulation emitted them.
+        const prog = beat?.progress ?? clamp(st / 5, 0, 1);
         handX = 27; handY = -58 + prog * 25; swordAngle = -.8 + prog * 1.65;
         if (kind === 'thrust') { handX = 43; handY = -55; swordAngle = -.02; }
         if (kind === 'sweep') { handX = 30; handY = -19; swordAngle = .04; }
@@ -4858,6 +4946,15 @@ window.RiftAI = class RiftAI {
       if (drinking) this.tonic(handX + 6, handY - 7, clamp(st / 14, 0, 1));
       else if (kind === 'hammer' && (windup || attacking || state === 'RECOVERY')) this.hammer(handX, handY, swordAngle);
       else this.sword(handX, handY, swordAngle, p.fireBlade > 0, p.charged, kind === 'rift' && (windup || attacking));
+      if (beat?.until <= 8 && !p.hidden && ['slash', 'cleave', 'rift', 'hammer'].includes(kind)) {
+        // Read the combat clock, never wall time: hitstop must freeze this cue
+        // along with the approaching strike, including gaps between combo hits.
+        const x = handX + Math.cos(swordAngle) * 65, y = handY + Math.sin(swordAngle) * 65;
+        const size = 4 + (8 - beat.until) * .8;
+        c.save(); c.globalAlpha = .55 + (8 - beat.until) * .055;
+        this.path([[x - size, y], [x - 2, y - 2], [x, y - size], [x + 2, y - 2], [x + size, y], [x + 2, y + 2], [x, y + size], [x - 2, y + 2]], '#fff8dc');
+        c.restore();
+      }
       if (p.aegis && !drinking && !dead && !reviving && !downed) this.aegis(26, -61, state === 'DEFLECT');
       if (p.charge > 15 && !downed) {
         const r = 8 + Math.min(16, p.charge * .3);
@@ -4867,7 +4964,8 @@ window.RiftAI = class RiftAI {
       }
       c.restore(); c.restore();
       if (windup && ['thrust', 'sweep', 'lightning'].includes(kind)) this.danger(px, py - (p.hidden ? 96 : 135), kind, st);
-      if (p.posture >= 86 && !dead && !downed) {
+      this.attackCue(p, px, py - 151, beat);
+      if (p.posture >= (p.maxPosture || 100) * .86 && !dead && !downed) {
         c.globalAlpha = .6 + Math.sin(this.t * 15) * .2; this.line(px - 16, py - 119, px + 16, py - 119, '#df647b', 2); c.globalAlpha = 1;
       }
       if (downed && !dead) {
@@ -4990,12 +5088,15 @@ window.RiftAI = class RiftAI {
         }
         if (kind === 'lightning') { this.chargeArcs(r * .45, 0, r * .5, 1); }
         if (kind === 'rift') {
-          c.globalAlpha = life * .83;
-          for (let j = 0; j < 4; j++) {
-            c.beginPath(); c.ellipse(r * .34, j * 8 - 10, r * (.68 + j * .05), 26 + j * 9, -.18, -.9, 1.1);
-            c.strokeStyle = j % 2 ? '#8e67bb' : '#252849'; c.lineWidth = 25 - j * 4; c.stroke();
-          }
-          c.globalAlpha = life; c.strokeStyle = '#dcb8ff'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(r * .33, -8, r * .7, 31, -.18, -.9, 1.1); c.stroke();
+          // Leave both silhouettes visible; successive waves cross in opposite
+          // directions instead of accumulating an opaque wall over the defender.
+          const tilt = (s.wave || 0) % 2 ? .17 : -.17;
+          c.globalAlpha = life * .27; c.strokeStyle = '#8561b8'; c.lineWidth = 19;
+          c.beginPath(); c.ellipse(r * .33, -5, r * .68, 34, tilt, -.9, 1.1); c.stroke();
+          c.globalAlpha = life * .8; c.strokeStyle = '#b994e4'; c.lineWidth = 5;
+          c.beginPath(); c.ellipse(r * .33, -5, r * .7, 35, tilt, -.9, 1.1); c.stroke();
+          c.globalAlpha = life; c.strokeStyle = '#f0e2ff'; c.lineWidth = 1.8;
+          c.beginPath(); c.ellipse(r * .33, -5, r * .7, 36, tilt, -.9, 1.1); c.stroke();
         } else {
           const color = s.color || '#fff3c7';
           const start = kind === 'sweep' ? -.17 : kind === 'thrust' ? -.12 : -1.08;
@@ -5218,7 +5319,6 @@ window.RiftAI = class RiftAI {
   window.RiftRenderer = RiftRenderer;
 })();
 
-
 </script>
 <!-- Module: tutorial.js -->
 <script>
@@ -5234,10 +5334,10 @@ window.RiftAI = class RiftAI {
     {id:'dash', title:'03 · 墊步取位', group:'起步', goal:'朝一個方向墊步，實際移動至少 80 像素。', keys:'A / D ＋ Shift 墊步', tip:'墊步消耗的是出手時機，不消耗共鳴。能閃普通斬擊，但危險招式需要相應反制。', distance:350},
     {id:'grapple', title:'04 · 掛索飛躍', group:'起步', goal:'抓住上方亮色錨點，沿掛索上升至少 80 像素。', keys:'F 掛索 · 空中左鍵可接跳斬', tip:'掛索自動挑選面前可達的高處錨點。飛到高台後，也能 S ＋ 空白鍵回到下層。', distance:330},
     {id:'light', title:'05 · 第一刀', group:'刀刃', goal:'用一次輕斬實際命中陪練。', keys:'點按滑鼠左鍵', tip:'靠近到一把劍的距離。18 幀起手 → 5 幀判定 → 14 幀收招；揮空也要付出收招時間。', distance:90},
-    {id:'charged', title:'06 · 延遲出刀', group:'刀刃', goal:'蓄力後釋放蓄斬，命中或擊破陪練的普通防禦。', keys:'按住左鍵至少 0.6 秒，再放開', tip:'陪練會一直普通防禦。雙重裂斬能崩解普通格擋，但完美招架仍可化解；不要在蓄力中嘗試防禦。', distance:110, behavior:'guard'},
+    {id:'charged', title:'06 · 延遲出刀', group:'刀刃', goal:'蓄力後釋放蓄斬，命中或擊破陪練的普通防禦。', keys:'按住左鍵至少 0.6 秒，再放開', tip:'陪練會一直普通防禦。雙重蓄斬能崩解普通格擋，但完美招架仍可化解；不要在蓄力中嘗試防禦。', distance:110, behavior:'guard'},
     {id:'combo', title:'07 · 命中才有追擊', group:'刀刃', goal:'輕斬命中後，在收招時再點左鍵，讓「追斬」命中。', keys:'左鍵 → 放開 → 命中後再點左鍵', tip:'第一刀命中或被格擋，才開放追斬／墊步取消。太早按第二次、一直按住或揮空，都不算連段。', distance:90},
     {id:'guard', title:'08 · 普通格擋的代價', group:'防守', goal:'提早按住右鍵，以普通格擋接下 2 刀。', keys:'持續按住滑鼠右鍵', tip:'陪練固定出輕斬。普通格擋不扣 HP，但累積自身架勢；不能永久靠擋來獲勝。', distance:90, behavior:'light', total:2},
-    {id:'parry', title:'09 · 聽見完美招架', group:'防守', goal:'在刀鋒接觸前點右鍵，完成 2 次完美招架。', keys:'看到刀將落下時，點一下右鍵', tip:'窗口最多 12 幀。0.4 秒內連點會縮至 4 幀。失手沒有懲罰；放開、等下一刀。金色閃環與清亮刀鳴表示成功。', distance:90, behavior:'light', total:2},
+    {id:'parry', title:'09 · 聽見完美招架', group:'防守', goal:'在刀鋒接觸前點右鍵，完成 2 次完美招架。', keys:'看到刀將落下時，點一下右鍵', tip:'窗口 16 幀。成功後放開再按，下一刀仍有完整窗口；只有快速空按會縮短至最低 12 幀。按住則繼續普通防禦。金色閃環與清亮刀鳴表示成功。', distance:90, behavior:'light', total:2},
     {id:'posture', title:'10 · HP 決定架勢恢復', group:'防守', goal:'先在安全距離按住右鍵，恢復 20 架勢；再觀察低血量時恢復停止。', keys:'按住右鍵，觀看上方架勢條', tip:'HP ≥ 75：35 / 秒；50–74：15 / 秒；低於 50：0。距離超過 350 時持續防禦，加速 2.5 倍，仍受 HP 限制。', distance:500, total:2},
     {id:'bladePin', title:'11 · 紅色「突」：踏刃', group:'反制', goal:'迎著突刺墊步，成功踏刃 2 次。', keys:'紅色「突」亮起後，接觸前朝對手按 Shift', tip:'突刺不能普通防禦。向後閃不算踏刃；反制成功會踩住刃身，重創敵方 35 架勢。', distance:130, behavior:'thrust', total:2},
     {id:'stomp', title:'12 · 琥珀色「掃」：蹬踏', group:'反制', goal:'跳過下段橫掃，再在對手頭上按一次跳躍，成功蹬踏。', keys:'空白鍵 → 靠近頭頂 → 再按空白鍵', tip:'橫掃不能擋，也不能踏刃。必須跳起、放開跳躍鍵，再按一次；保持在對手上方一個身位。', distance:70, behavior:'sweep'},
@@ -5249,7 +5349,7 @@ window.RiftAI = class RiftAI {
     {id:'hammer', title:'18 · 重鎚與起手風險', group:'裝備', goal:'讓重鎚擊中普通防禦，造成崩解。', keys:'靠近後按 E', tip:'本課自動裝備重鎚。45 幀前搖與霸體不代表無敵；對手若完美招架，重鎚使用者會陷入長硬直。', distance:90, tool:'hammer', behavior:'guard'},
     {id:'blink', title:'19 · 影匣的受擊時機', group:'裝備', goal:'在受擊瞬間啟動影匣，觸發位移並讓背襲命中。', keys:'刀即將碰到身體時按 E', tip:'本課自動裝備影匣。有效窗口只有 12 幀；不是常駐無敵。成功後自動移至背後出刀，無需再按攻擊。', distance:90, tool:'blink', behavior:'light', total:2},
     {id:'cleave', title:'20 · 雙斷', group:'奧義', goal:'用雙斷命中，實際清除自己的架勢。', keys:'先按住右鍵，再點左鍵（鍵盤備用 O）', tip:'本課自動裝備雙斷。慢起手換取重架勢打擊；命中可清除 50 自身架勢。奧義耗 5 共鳴。', distance:100, art:'cleave'},
-    {id:'rift', title:'21 · 裂斬', group:'奧義', goal:'用裂斬穿透陪練的普通防禦，造成 HP 傷害。', keys:'先按住右鍵，再點左鍵（鍵盤備用 O）', tip:'本課自動裝備裂斬。消耗 9 共鳴，長距離雙波有穿透傷害；很長的起手與收招仍能被懲罰。', distance:260, art:'rift', behavior:'guard'},
+    {id:'rift', title:'21 · 裂斬', group:'奧義', goal:'用裂斬的遠距雙波命中陪練。', keys:'先按住右鍵，再點左鍵（鍵盤備用 O）', tip:'本課自動裝備裂斬。消耗 9 共鳴，雙波相隔 24 幀；對手可逐波格擋或招架。長起手與收招都留下反擊機會。', distance:260, art:'rift'},
     {id:'finisher', title:'22 · 倒地、斷決與雙核復燃', group:'結業', goal:'先一刀擊倒陪練，等收刀後靠近點左鍵斷決，見證第一核心復燃。', keys:'左鍵擊倒 → 等待收刀 → 貼近再點左鍵斷決', tip:'HP 歸零或架勢滿只會倒地。4 秒內貼近才能斷決；錯過會以 15 HP 起身。第一核被奪後滿血進入第二階段，第二核才結束對局。', distance:85},
   ];
   const $ = (id) => document.getElementById(id);
@@ -5307,7 +5407,7 @@ window.RiftAI = class RiftAI {
       this.index=Math.max(0,Math.min(LESSONS.length-1,index));this.completedCurrent=false;this.count=0;this.ticks=0;this.wait=100;this.flags={};this.lastDraw='';
       const game=this.game,w=game.world,l=this.lesson,[p,e]=w.players;
       w.phase='fighting';w.weather='dusk';w.projectiles=[];w.lightning=[];w.effects.hitstop=0;w.effects.execution=0;w.effects.revival=0;
-      const reset=(f,x,face)=>Object.assign(f,{x,y:810,vx:0,vy:0,ground:true,facing:face,hp:100,posture:0,spirit:20,nodes:2,phase:2,tonics:3,state:'IDLE',st:0,lockFrames:0,stun:0,move:null,moveName:'',attackId:null,cancelledAttackId:null,hits:[],wave:0,dead:false,guard:false,deflect:0,guardSpam:0,lastGuard:-999,guardAge:0,aegis:false,aegisAge:0,prevBits:0,confirm:0,dash:0,dashDir:0,invuln:0,charged:0,burn:0,fireBlade:0,fireReady:0,blinkWindow:0,chase:0,grapple:null,drop:0,stomp:0,peace:0,healPending:0,attackReleased:true,holdCharged:false});
+      const reset=(f,x,face)=>Object.assign(f,{x,y:810,vx:0,vy:0,ground:true,facing:face,hp:100,posture:0,spirit:20,nodes:2,phase:2,tonics:3,state:'IDLE',st:0,lockFrames:0,stun:0,move:null,moveName:'',attackId:null,cancelledAttackId:null,hits:[],wave:0,dead:false,guard:false,deflect:0,guardSpam:0,lastGuard:-999,lastParryTick:-999,guardBuffer:0,guardAge:0,aegis:false,aegisAge:0,prevBits:0,confirm:0,dash:0,dashDir:0,invuln:0,charged:0,burn:0,fireBlade:0,fireReady:0,blinkWindow:0,chase:0,grapple:null,drop:0,stomp:0,peace:0,healPending:0,attackReleased:true,holdCharged:false});
       reset(p,1850,1);reset(e,1850+l.distance,-1);e.aiControlled=false;e.name='陪練・衡光';
       // Lessons only override the live fighter loadout, never saved lobby choices.
       p.loadout=[l.tool||'disc',l.tool==='flame'?'disc':'flame'];p.art=l.art||'cleave';
@@ -5354,7 +5454,7 @@ window.RiftAI = class RiftAI {
         if(id==='hammer'&&d.move==='hammer'&&blocked&&this.game.world.players[1].state==='STUNNED')this.award('hammer');
         if(id==='blink'&&d.move==='blink'&&connects&&this.flags.blinked)this.award('blinkHit');
         if(id==='cleave'&&d.move==='cleave'&&connects&&d.postureRecovered>0)this.award('cleave');
-        if(id==='rift'&&d.move==='rift'&&blocked&&d.damage>0)this.award('rift');
+        if(id==='rift'&&d.move==='rift'&&connects&&d.damage>0)this.award('rift');
       }
       if(target){
         if(id==='guard'&&blocked)this.award('block'+this.count);
@@ -5621,20 +5721,28 @@ window.RiftAI = class RiftAI {
     },
     rift: {
       name: "裂斬",
-      windup: 40,
-      active: 24,
+      windup: 52,
+      active: 30,
       recovery: 38,
       reach: 510,
       damage: 19,
       posture: 25,
       kind: "rift",
       cost: 9,
-      waves: [0, 14],
-      chip: 0.45,
+      waves: [0, 24],
+      hitWindow: 6,
     },
   };
   MOVES.punish={name:"疾刺",windup:10,active:8,recovery:30,reach:190,damage:24,posture:24,kind:"thrust",lunge:18};
-  MOVES.triple={name:"連斬",windup:15,active:25,recovery:24,reach:150,damage:11,posture:15,kind:"slash",waves:[0,9,18],lunge:11,cost:6};
+  MOVES.triple={name:"連斬",windup:32,active:42,recovery:32,reach:150,damage:11,posture:15,kind:"slash",waves:[0,18,36],hitWindow:6,lunge:7,cost:6};
+  for(const key of ['light','combo','chase','air'])MOVES[key].guardCancel=6;
+  for(const move of Object.values(MOVES))if(move.waves)move.hitWindow=6;
+  // Encounter asymmetry is explicit; PvP and training keep their shared baseline.
+  // Phase pressure comes from patterns, never from shortening these tells.
+  const BOSS_PROFILE=Object.freeze({maxHp:240,maxPosture:220,maxNodes:3,
+    windup:Object.freeze({light:26,combo:22,chase:24,air:24,thrust:38,sweep:40,lightning:48,punish:30,triple:32,charged:44}),
+    moves:Object.freeze({charged:Object.freeze({waves:Object.freeze([0,18]),active:24}),
+      cleave:Object.freeze({waves:Object.freeze([0,20]),active:26})})});
   const TOOL_NAMES = {
     disc: "飛輪",
     flame: "焰筒",
@@ -5656,6 +5764,7 @@ window.RiftAI = class RiftAI {
       facing: id ? -1 : 1,
       ground: true,
       hp: 100,
+      maxHp:100, maxPosture:100, maxNodes:2,
       nodes:2, phase:1, tonics:3, healPending:0, lockFrames:0, aiControlled:false, wasParried:0, attackId:null,lastCounterTick:-999,
       posture: 0,
       spirit: 20,
@@ -5681,7 +5790,9 @@ window.RiftAI = class RiftAI {
       guardAge: 0,
       guardSpam: 0,
       lastGuard: -999,
-      deflectWindow: 12,
+      deflectWindow: 16,
+      guardBuffer: 0,
+      lastParryTick: -999,
       dash: 0,
       dashDir: 0,
       invuln: 0,
@@ -5851,7 +5962,7 @@ window.RiftAI = class RiftAI {
         states: STATES,
         snapshot: () => this.snapshot(),
         reset: () => this.start("local"),
-        version: "4.0.2", fsm:RiftFSM,vitals:RiftVitals,
+        version: "4.1.0", fsm:RiftFSM,vitals:RiftVitals,
       };
     }
     canReceiveInput() {
@@ -6293,6 +6404,8 @@ window.RiftAI = class RiftAI {
       this.toolKeySlot = 0;
       this.toolMouseSlot = 0;
       this.world.players[1].aiControlled=mode === "ai";
+      if(mode==='ai')Object.assign(this.world.players[1],{maxHp:BOSS_PROFILE.maxHp,hp:BOSS_PROFILE.maxHp,
+        maxPosture:BOSS_PROFILE.maxPosture,maxNodes:BOSS_PROFILE.maxNodes,nodes:BOSS_PROFILE.maxNodes});
       if(config?.round)this.world.round=config.round;
       this.authority=mode === "online"?new RiftAuthority(this,this.net):null;
       this.deathRequests=new Set();this.deathSerial=0;this.remoteStorm=false;
@@ -6333,7 +6446,7 @@ window.RiftAI = class RiftAI {
       $("touch-controls").classList.remove("playing");
       document.body.classList.remove('combat-active');
       this.world.players.forEach((p) => {
-        p.hp = 100;
+        p.hp = RiftVitals.maxHp(p);
         p.dead = false;
         p.state = "IDLE";
         p.move = null;
@@ -6449,6 +6562,10 @@ window.RiftAI = class RiftAI {
     }
     owns(p) {return this.mode !== 'online' || p.id === this.localId;}
     transition(p,state,options={}) {return RiftFSM.enter(p,state,options);}
+    attackDefinition(p,key){
+      const m=MOVES[key];
+      return {...m,...(p.aiControlled?{windup:BOSS_PROFILE.windup[key]??m.windup,armor:true,...BOSS_PROFILE.moves[key]}:{})};
+    }
     begin(p,key,free=false,remote=false) {
       const m=MOVES[key],cancel=p.state==='RECOVERY'&&p.confirm>0;
       if(!m || (!remote&&['lightning','triple'].includes(key)&&p.phase<2))return false;
@@ -6456,7 +6573,7 @@ window.RiftAI = class RiftAI {
       if(!free&&(m.cost||0)>p.spirit){if(p.id===this.localId)this.toast('共鳴不足');return false;}
       if(!this.transition(p,'STARTUP',{complete:cancel||remote||p.state==='GRAPPLING'}))return false;
       if(!free)p.spirit-=m.cost||0;
-      Object.assign(p,{move:{...m},moveName:key,charge:0,hits:[],wave:0,guard:false,aegis:false,grapple:null,confirm:0,attackReleased:key!=='light'||!(p.prevBits&B.ATTACK),holdCharged:false});
+      Object.assign(p,{move:this.attackDefinition(p,key),moveName:key,charge:0,hits:[],wave:0,guard:false,aegis:false,grapple:null,confirm:0,attackReleased:key!=='light'||!(p.prevBits&B.ATTACK),holdCharged:false});
       p.moveSeq++;p.attackId=`${this.world.round}:${p.id}:${p.moveSeq}`;
       if(key==='hammer'&&p.ground){p.vy=-10;p.ground=false;}
       if(key==='flame')p.fireReady=180;
@@ -6483,6 +6600,8 @@ window.RiftAI = class RiftAI {
     tickPlayer(p,bits,enemy){
       const w=this.world,pressed=bits&~p.prevBits,released=p.prevBits&~bits;
       p.prevBits=bits;p.peace++;
+      p.guardBuffer=Math.max(0,(p.guardBuffer||0)-1);
+      if(pressed&B.GUARD&&['IDLE','MOVE','GUARD','DEFLECT','RECOVERY','HIT_STUN','RECOIL'].includes(p.state))p.guardBuffer=8;
       const mouseFacing = p.id === this.localId && (this.mouseFaceTick >= w.tick || this.mouseButtons.has(0) || this.mouseButtons.has(2) || !!(bits&B.ART) && this.mouseArtGesture);
       if(mouseFacing && RiftFSM.canAct(p)) p.facing = enemy.x >= p.x ? 1 : -1;
       for(const key of ['deflect','dash','invuln','blinkWindow','confirm','chase','fireReady','fireBlade','drop'])if(p[key]>0)p[key]--;
@@ -6493,6 +6612,7 @@ window.RiftAI = class RiftAI {
         this.physics(p,0);return;
       }
       if(['STUNNED','HIT_STUN','RECOIL','BLADE_PINNED','REVIVING','EXECUTING'].includes(p.state)){
+        const resumeGuard=['HIT_STUN','RECOIL','BLADE_PINNED'].includes(p.state);
         // A hit gives a short impulse, not a constant slide throughout hit-stun.
         // This keeps ordinary confirmed follow-ups within their intended reach.
         if(p.state==='HIT_STUN')p.vx*=.75;
@@ -6504,12 +6624,16 @@ window.RiftAI = class RiftAI {
             // pose throttle, so the peer can safely leave its downed replica state.
           }else this.idle(p);
         }
-        this.physics(p,0);return;
+        if(p.lockFrames>0||!resumeGuard){this.physics(p,0);return;}
       }
-      if(pressed&B.GUARD&&(RiftFSM.canAct(p)||p.state==='DEFLECT')){
-        p.guardSpam=w.tick-p.lastGuard<=24?Math.min(4,p.guardSpam+1):0;p.lastGuard=w.tick;
+      // A light attack commits through contact, then permits a defensive cancel.
+      // Holding guard queues ordinary cover; only a recent press earns a parry.
+      if(p.state==='RECOVERY'&&p.move?.guardCancel!=null&&p.st>=p.move.guardCancel&&((bits&B.GUARD)||p.guardBuffer))this.idle(p);
+      if(p.guardBuffer>0&&(RiftFSM.canAct(p)||p.state==='DEFLECT')){
+        p.guardSpam=w.tick-p.lastGuard<12&&p.lastParryTick<p.lastGuard?Math.min(2,p.guardSpam+1):0;p.lastGuard=w.tick;
         p.deflectWindow=RiftFSM.parryWindow(p.guardSpam);p.deflect=p.deflectWindow;p.guardAge=0;
-        if(p.state!=='DEFLECT')this.transition(p,'DEFLECT',{frames:12});p.guard=true;
+        this.transition(p,'DEFLECT',{complete:true,restart:true,frames:p.deflectWindow});p.guard=true;p.guardBuffer=0;
+        if(!(bits&(B.LEFT|B.RIGHT))&&Math.abs(enemy.x-p.x)<600)p.facing=enemy.x>=p.x?1:-1;
       }
       if(p.state==='DEFLECT'){
         if(p.lockFrames>0){p.st++;p.lockFrames--;p.vx=0;this.physics(p,0);return;}
@@ -6538,7 +6662,7 @@ window.RiftAI = class RiftAI {
       if(pressed&B.JUMP&&(free||canCancel)){
         if(p.ground){if(bits&B.DOWN){p.drop=18;p.y+=5;p.ground=false;}else{p.vy=-15.3;p.ground=false;p.stomp=0;this.fx('jump',p.x,p.y);}}
         else if(Math.abs(p.x-enemy.x)<115&&p.y<enemy.y-25&&p.y>enemy.y-215&&!p.stomp&&enemy.move?.kind==='sweep'&&['STARTUP','ACTIVE'].includes(enemy.state)){
-          p.stomp=1;p.vy=-13;p.y=enemy.y-90;this.counter(enemy,p,enemy.move,'STOMP',30,35,`${enemy.attackId}:stomp`);
+          p.stomp=1;p.vy=-13;p.y=enemy.y-90;this.counter(enemy,p,enemy.move,'STOMP',RiftVitals.maxPosture(enemy)*.30,35,`${enemy.attackId}:stomp`);
           this.impact(8,9);this.ring(enemy.x,enemy.y-68);this.fx('bladeCounter',enemy.x,enemy.y);this.caption('蹬踏');this.stats.stomps++;
         }else if(p.grapple){this.idle(p);p.vy=-13;}
       }
@@ -6571,7 +6695,7 @@ window.RiftAI = class RiftAI {
     advanceAttack(p){
       if(p.state==='STARTUP'&&p.move){
         p.st++;p.charge=p.st;
-        if(p.moveName==='light'&&p.st>=18&&!p.attackReleased){p.moveName='charged';p.move={...MOVES.charged};p.holdCharged=true;}
+        if(p.moveName==='light'&&p.st>=p.move.windup&&!p.attackReleased){p.moveName='charged';p.move=this.attackDefinition(p,'charged');p.holdCharged=true;}
         if(p.st>=p.move.windup&&!p.holdCharged){this.transition(p,'ACTIVE',{complete:true});p.hits=[];this.activate(p);}
       }else if(p.state==='ACTIVE'&&p.move){
         p.st++;if(p.move.waves?.includes(p.st)){p.wave++;p.hits=[];this.activate(p);}if(p.st>=p.move.active)this.transition(p,'RECOVERY',{complete:true});
@@ -6581,6 +6705,11 @@ window.RiftAI = class RiftAI {
       // Horizontal immobilization also protects replicas from stale dash velocity.
       // Gravity remains active so a fighter downed in the air lands naturally.
       if(p.state==='STUNNED'){p.vx=0;p.dash=0;p.dashDir=0;p.blinkWindow=0;p.grapple=null;}
+      if(p.state==='ACTIVE'&&p.move?.lunge){
+        if(!this.contactActive(p))p.vx=0;
+        const other=this.world.players[1-p.id],gap=(other.x-p.x)*p.facing;
+        if(gap>=0&&Math.abs(other.y-p.y)<100)p.vx=p.facing*Math.min(Math.abs(p.vx),Math.max(0,gap-68));
+      }
       const prev = p.y;
       p.x = clamp(p.x + p.vx, 24, 3976);
       p.vy = Math.min(22, p.vy + 0.68);
@@ -6672,6 +6801,7 @@ window.RiftAI = class RiftAI {
           maxLife: 14,
           color,
           kind: m.kind,
+          wave: p.wave || 0,
         });
       this.fx(
         m.kind === "hammer"
@@ -6714,13 +6844,16 @@ window.RiftAI = class RiftAI {
           v.vy -= 3;
         }
     }
-    addPosture(p,n){p.posture=clamp(p.posture+n,0,100);p.peace=0;if(p.posture>=100&&p.state!=='STUNNED')this.breakPosture(p);}
+    addPosture(p,n){const cap=RiftVitals.maxPosture(p);p.posture=clamp(p.posture+n,0,cap);p.peace=0;if(p.posture>=cap&&p.state!=='STUNNED')this.breakPosture(p);}
     breakPosture(p){
       if(!RiftVitals.down(p))return;
       this.fx('break',p.x,p.y);this.ring(p.x,p.y-40,'#e34237');this.sparks(p.x,p.y-45,'#ed7565',32);this.caption('架勢崩解・可斷決',90);
     }
     recoil(a,kind,amount,frames){
       a.wasParried=(a.wasParried||0)+1;a.lastCounterTick=this.world.tick;this.addPosture(a,amount);
+      // Boss strings keep their advertised beats until the final parry; a full
+      // posture break or special counter still stops the entire attack.
+      if(kind==='PARRIED'&&a.aiControlled&&a.state==='ACTIVE'&&a.move?.waves&&a.wave<a.move.waves.length-1){a.vx=0;return;}
       if(a.state!=='STUNNED'){this.transition(a,kind==='BLADE_PIN'?'BLADE_PINNED':'RECOIL',{interrupt:true,frames});a.stun=frames;}a.vx=0;
     }
     counter(a,t,m,kind,amount,frames,contactId,originalAttackId=null){
@@ -6743,7 +6876,7 @@ window.RiftAI = class RiftAI {
         t.vy=-4;t.ground=false;t.invuln=12;this.begin(t,'blink',true);this.fx('blink',t.x,t.y);this.caption('折光位移');report('BLINK');return 'blink';
       }
       if(m.kind==='thrust'&&t.dash>0&&t.dashDir===Math.sign(a.x-t.x)){
-        t.x=a.x+a.facing*58;t.vx=0;t.dash=0;this.counter(a,t,m,'BLADE_PIN',35,42,contactId,attackId);
+        t.x=a.x+a.facing*58;t.vx=0;t.dash=0;this.counter(a,t,m,'BLADE_PIN',RiftVitals.maxPosture(a)*.35,42,contactId,attackId);
         this.impact(8,13);this.world.effects.bladeCounter=32;this.ring(x,y,'#f4d9a5');this.fx('bladeCounter',x,y);this.caption('踏刃');this.stats.bladeCounter++;return 'bladeCounter';
       }
       if(m.kind==='sweep'&&!t.ground&&t.y<a.y-28){report('DODGED');return 'jump';}
@@ -6755,12 +6888,13 @@ window.RiftAI = class RiftAI {
       if(t.invuln>0&&!peril){report('DODGED');return 'evade';}
       if(perfect&&!peril){
         t.parries++;t.lastCounterTick=this.world.tick;this.stats.deflects++;
+        t.lastParryTick=this.world.tick;t.guardSpam=0;t.deflect=0;t.lockFrames=Math.min(t.lockFrames,2);
         this.counter(a,t,m,'PARRIED',m.posture*1.55+7,m.kind==='hammer'?64:18,contactId,attackId);
         this.parryImpact(x,y);this.caption('完美招架',48);return 'deflect';
       }
       if((opt.guard??t.guard)&&(front||t.aegis)&&!peril){
         this.impact(6,4);this.sparks(x,y,'#e8c597',16,.75);this.fx('guard',x,y);if(!this.authority)a.confirm=22;
-        this.addPosture(t,t.aegis?m.posture*.2:m.breakGuard?100:m.posture*1.35);
+        this.addPosture(t,t.aegis?m.posture*.2:m.breakGuard?RiftVitals.maxPosture(t):m.posture*1.35);
         if(m.chip)RiftVitals.hurt(t,m.damage*m.chip,{posture:0,stun:0});
         if(t.hp<=0)RiftVitals.down(t);report('BLOCKED');return 'guard';
       }
@@ -6774,9 +6908,13 @@ window.RiftAI = class RiftAI {
       this.sparks(t.x,y,'#a53e35',25,1,'blood');this.fx('hit',x,y,m.damage/12);
       if(m.kind==='reversal')this.sparks(t.x,y,'#c1e4ff',50,1.4);report('HIT',{attackerPostureDelta});return 'hit';
     }
+    contactActive(p){
+      if(p.state!=='ACTIVE'||!p.move)return false;
+      return !p.move.hitWindow||p.st-(p.move.waves?.[p.wave]||0)<p.move.hitWindow;
+    }
     collisions(){
       const w=this.world,[p0,p1]=w.players;
-      const blade=p=>p.state==='ACTIVE'&&p.move&&['slash','cleave'].includes(p.move.kind);
+      const blade=p=>this.contactActive(p)&&['slash','cleave'].includes(p.move.kind);
       // Decide simultaneous blade contact before either posture break clears an attack.
       const clash=blade(p0)&&blade(p1)&&!p0.hits.includes(1)&&!p1.hits.includes(0)&&
         Math.abs(p0.y-p1.y)<100&&Math.abs(p0.x-p1.x)<Math.min(p0.move.reach,p1.move.reach)&&
@@ -6795,7 +6933,7 @@ window.RiftAI = class RiftAI {
       if(!clash)for(const t of w.players){
         if(!this.owns(t))continue;
         const a=w.players[1-t.id],m=a.move;
-        if(a.state!=='ACTIVE'||!m||m.kind==='projectile'||a.hits.includes(t.id))continue;
+        if(!this.contactActive(a)||!m||m.kind==='projectile'||a.hits.includes(t.id))continue;
         const dx=(t.x-a.x)*a.facing,vertical=Math.abs(t.y-a.y)<(m.kind==='reversal'?700:m.kind==='hammer'?150:100);
         if(dx>=-32&&dx<m.reach&&vertical){a.hits.push(t.id);this.hit(a,t,m);}
       }
@@ -6820,7 +6958,7 @@ window.RiftAI = class RiftAI {
     finisherScene(a,t,final){
       this.transition(a,'EXECUTING',{interrupt:true,frames:45});a.x=t.x-a.facing*60;
       this.world.effects.execution=final?150:45;this.impact(25,18);this.sparks(t.x,t.y-45,'#b8332e',75,2,'blood');
-      this.fx('finisher',t.x,t.y,1.3);this.caption(final?'斷 決':'復 燃・第二階段',final?150:100);
+      this.fx('finisher',t.x,t.y,1.3);this.caption(final?'斷 決':`復 燃・第${t.phase===3?'三':'二'}階段`,final?150:100);
       if(final){
         if(this.world.phase==='ended')return;this.world.phase='ended';this.world.winner=a.id;this.scores[a.id]++;
         this.clearInputs();clearTimeout(this.resultTimer);this.resultTimer=setTimeout(()=>this.showResult(),1600);
@@ -6966,7 +7104,8 @@ window.RiftAI = class RiftAI {
                 this.step(bits);this.authority?.publishState();
               }
             } else {
-              const bits=[this.input(0),this.mode === "ai" ? this.ai.input(this.world,this.world.players[1],this.world.players[0]) : this.input(1)];
+              const bossBits=this.mode==='ai'?(this.world.effects.hitstop>0?this.world.players[1].prevBits:this.ai.input(this.world,this.world.players[1],this.world.players[0])):this.input(1);
+              const bits=[this.input(0),bossBits];
               this.step(bits);
             }
           } else this.effects();
@@ -6980,7 +7119,7 @@ window.RiftAI = class RiftAI {
         this.lastHud = t;
       }
       this.audio.update(
-        Math.max(...this.world.players.map((p) => p.posture / 100)),
+        Math.max(...this.world.players.map((p) => RiftVitals.postureRatio(p))),
         this.world.weather,
         dt,
       );
@@ -6991,9 +7130,9 @@ window.RiftAI = class RiftAI {
       const w = this.world;
       for (let i = 0; i < 2; i++) {
         const p = w.players[i];
-        $("hp-" + i).style.width = p.hp + "%";
-        $("posture-" + i).style.width = p.posture + "%";
-        $("posture-" + i).classList.toggle("critical", p.posture > 75);
+        $("hp-" + i).style.width = RiftVitals.hpRatio(p)*100 + "%";
+        $("posture-" + i).style.width = RiftVitals.postureRatio(p)*100 + "%";
+        $("posture-" + i).classList.toggle("critical", RiftVitals.postureRatio(p) > .75);
         $("name-" + i).textContent = p.name;
         $("hp-value-" + i).textContent = Math.ceil(p.hp);
         $("spirit-" + i).textContent = String(Math.floor(p.spirit)).padStart(
@@ -7001,7 +7140,7 @@ window.RiftAI = class RiftAI {
           "0",
         );
         $("state-" + i).textContent =
-          p.state === "STUNNED" && p.posture >= 99
+          p.state === "STUNNED" && RiftVitals.postureRatio(p) >= .99
             ? "架勢崩解 — 可斷決"
             : p.charged
               ? "接雷中 — 空中揮刀"
@@ -7015,8 +7154,13 @@ window.RiftAI = class RiftAI {
         if (p.aegis) $("state-" + i).textContent = "輪盾・展開";
         if(RiftVitals.vulnerable(p))$("state-"+i).textContent="失衡 — 貼身斷決";
         if(p.state==='DRINKING')$("state-"+i).textContent="修復中・無防備";
-        if(p.state==='REVIVING')$("state-"+i).textContent="復燃・第二階段";
-        if($("nodes-"+i)){$("nodes-"+i).dataset.remaining=String(p.nodes);$("nodes-"+i).setAttribute('aria-label',`共鳴雙核 ${p.nodes}/2`);}
+        if(p.state==='REVIVING')$("state-"+i).textContent=`復燃・第${p.phase===3?'三':'二'}階段`;
+        if($("nodes-"+i)){
+          const nodes=$("nodes-"+i),count=RiftVitals.maxNodes(p);
+          if(nodes.dataset.capacity!==String(count)){nodes.innerHTML=Array.from({length:count},()=>'<span class="life-node" aria-hidden="true"></span>').join('');nodes.dataset.capacity=String(count);}
+          nodes.dataset.remaining=String(p.nodes);nodes.setAttribute('aria-label',`共鳴核心 ${p.nodes}/${count}`);
+          [...nodes.children].forEach((node,n)=>node.classList.toggle('spent',n>=p.nodes));
+        }
         if($("phase-"+i))$("phase-"+i).textContent=`PHASE ${p.phase}`;
         if($("tonic-"+i))$("tonic-"+i).textContent=String(p.tonics);
         $("buff-" + i).textContent = [
@@ -7320,7 +7464,7 @@ window.RiftAI = class RiftAI {
     return m.kind === kind;
   }
   window.game = new Game();
-  window.RIFT = { MOVES, B, STATES };
+  window.RIFT = { MOVES, B, STATES, BOSS_PROFILE };
   if(window.RiftTutorial)window.game.tutorial=new RiftTutorial(window.game);
 })();
 

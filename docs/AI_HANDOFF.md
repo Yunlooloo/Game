@@ -21,7 +21,7 @@
 | 新素材、音樂或 SFX | [ASSET_PIPELINE](ASSET_PIPELINE.md) | assets／render／audio；保留單檔 build 和授權紀錄 |
 | UI、觸控、iOS、效能 | [PLATFORM](PLATFORM.md) | shell／core input／audio；不要重引入全頁選取或 pending audio lock |
 | 寫測試或 build 失敗 | [TESTING](TESTING.md)、[TROUBLESHOOTING](TROUBLESHOOTING.md) | check／test；先辨別依賴或遊戲缺陷 |
-| 想知道哪些不能亂改 | [AGENTS](../AGENTS.md)、[ADR](adr/README.md) | 固定 tick、defender authority、FSM、二核心、100 HP／兩 actor 契約 |
+| 想知道哪些不能亂改 | [AGENTS](../AGENTS.md)、[ADR](adr/README.md) | 固定 tick、defender authority、FSM、逐核心斷決、容量比例／兩 actor 契約、PvP100標尺 |
 | 技術債與下一步 | [TECH_DEBT](TECH_DEBT.md)、[ROADMAP](ROADMAP.md) | 第二 Boss 的小型 registry；平台實測與可重現驗證 |
 
 所有新增內容的 Files → Steps → Example → Tests → Common mistakes 統一放在 [CONTENT_COOKBOOK](CONTENT_COOKBOOK.md)，任務輸入格式見 [AI_TASK_TEMPLATE](AI_TASK_TEMPLATE.md)。不要把 cookbook 的 PLANNED 範例當作已提供 API。
