@@ -45,4 +45,4 @@
 
 ## Release
 
-單檔Pages `main:/`部署方式維持。驗證流程見 [DEPLOYMENT](DEPLOYMENT.md)，結果見VALIDATION；環境設定Publish與網站部署是兩件事。
+4.2.0遊戲提交 `0e0c116` 已推送main，CI／Pages成功，公開HTML逐位元符合本機產物；本次文件補記不改runtime。單檔Pages `main:/`部署方式維持。驗證流程見 [DEPLOYMENT](DEPLOYMENT.md)，結果見VALIDATION；環境設定Publish與網站部署是兩件事。

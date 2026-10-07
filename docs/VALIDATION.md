@@ -30,7 +30,12 @@ Date: 2026-10-07 · Baseline: `ca0625ff2e1bedbc21553321e4a77d019754d8ea` · Runt
 
 ## Deployment
 
-本機4.2.0已完成上述驗證；推送後核對本次CI／Pages commit及公開HTML完整hash，再補記此節。舊4.1.0的 `ca0625f`、CI 37487420632、Pages 37487419373均成功，不當成本次部署證據。
+**PASS**：遊戲提交 `0e0c116b9a079b43114368a74a3e60d9c9ca15bc`（`feat: improve mobile counters and clean music mix`）已推送main。
+
+- [CI 37634488346](https://github.com/Yunlooloo/Game/actions/runs/37634488346)：completed / success，head為上述提交。
+- [Pages 37634486397](https://github.com/Yunlooloo/Game/actions/runs/37634486397)：completed / success；Pages API為built、commit相同。
+- `https://yunlooloo.github.io/Game/?v=4.2.0`：HTTP200，14,351,038 bytes，完整SHA256與本機 `2bcff6bb08faa2e8c1d7a5a498429b5284445559cd62e11b4112f00f77b3cecf` 相同。
+- 本節在其後的文件提交補記；該提交不更改runtime或HTML。未來發布仍需對自己的HEAD檢查CI／Pages，不應將本次通過當作永久保證。
 
 ## 未測／保留限制
 
