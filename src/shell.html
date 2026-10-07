@@ -699,6 +699,19 @@
         text-align: center;
         padding-top: 3px;
       }
+      .combat-menu {
+        display: block;
+        width: 44px;
+        min-height: 44px;
+        margin: 5px auto 0;
+        padding: 0;
+        pointer-events: auto;
+        border: 1px solid #b7c3b542;
+        border-radius: 9px;
+        background: #142027a6;
+        color: #c7c5b9;
+        font-size: 12px;
+      }
       .match-center .round {
         font-size: 10px;
         letter-spacing: 0.2em;
@@ -1056,8 +1069,8 @@
         right: max(12px, env(safe-area-inset-right));
         bottom: calc(34px + env(safe-area-inset-bottom));
         z-index: 5;
-        justify-content: space-between;
-        align-items: flex-end;
+        grid-template-columns: 1fr 1fr;
+        align-items: end;
         pointer-events: none;
       }
       .touch-cluster {
@@ -1066,13 +1079,14 @@
         gap: var(--touch-gap);
         align-items: flex-start;
       }
-      .touch-cluster.touch-combat { align-items: flex-end; }
-      .touch-primary, .touch-secondary {
+      .touch-cluster.touch-combat { align-items: flex-end; justify-self: end; }
+      .touch-primary {
         display: grid;
         grid-template-columns: repeat(2, auto);
         gap: var(--touch-gap);
       }
-      .touch-secondary { padding: 0 3px; }
+      .touch-movement .jump-touch { align-self: center; }
+      .touch-movement { width: max-content; }
       .touch-controls button {
         pointer-events: auto;
         flex-shrink: 0;
@@ -1089,17 +1103,58 @@
         line-height: 1;
         transition: background-color .08s, border-color .08s;
       }
-      .touch-controls .touch-primary button {
+      .touch-controls .touch-cluster button {
         width: var(--touch-main);
         height: var(--touch-main);
         border-radius: 20px;
         font-size: 25px;
       }
       .touch-controls .move-touch { background: #263837e8; color: #d3e4d4; }
+      .touch-controls .jump-touch { background: #263837e8; color: #d3e4d4; }
       .touch-controls .guard-touch { background: #31514fe3; border-color: #a4d9d078; }
       .touch-controls .attack-touch { background: #91483ce8; border-color: #e5ad8382; }
       .touch-controls .heal-touch { border-color: #9dad7699; color: #d7e3b7; }
-      .touch-controls .pause-touch { font-family: var(--sans); font-size: 13px; color: #bcbdb4; }
+      .touch-utilities {
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        transform: translateX(-50%);
+      }
+      .touch-utilities summary {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        width: 64px;
+        min-height: 44px;
+        padding: 0;
+        pointer-events: auto;
+        cursor: pointer;
+        list-style: none;
+        border: 1px solid #b7c3b54d;
+        border-radius: 12px;
+        background: #142027cf;
+        color: #c7c5b9;
+        font-size: 12px;
+      }
+      .touch-utilities summary::-webkit-details-marker { display: none; }
+      .touch-utilities summary::after { content: "⌃"; }
+      .touch-utilities[open] summary::after { content: "⌄"; }
+      .touch-utilities summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+      .touch-utility-actions {
+        position: absolute;
+        left: 50%;
+        bottom: calc(var(--touch-main) * 2 + var(--touch-gap) + 12px);
+        transform: translateX(-50%);
+        display: grid;
+        grid-template-columns: repeat(5, var(--touch-aux));
+        gap: var(--touch-gap);
+        padding: 8px;
+        border: 1px solid #b7c3b542;
+        border-radius: 16px;
+        background: #101b21f0;
+      }
+      .touch-utility-actions button { font-family: var(--sans); font-size: 12px; }
       .touch-controls button:active, .touch-controls button.is-held {
         background: #736247;
         border-color: #f4d39b;
@@ -1427,7 +1482,7 @@
       }
       @media (pointer: coarse) {
         .touch-controls.playing {
-          display: flex;
+          display: grid;
         }
         .mobile-hint {
           display: block;
@@ -1519,7 +1574,16 @@
       @media (pointer: coarse) and (orientation: landscape) {
         .touch-controls { --touch-main: 72px; --touch-aux: 46px; }
         .combat-footer { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
-        .combat-caption { top: 27%; }
+        .combat-caption { top: 42%; }
+      }
+      @media (pointer: coarse) and (orientation: landscape) and (min-width: 700px) {
+        .touch-utility-actions { bottom: 56px; }
+      }
+      @media (pointer: coarse) and (orientation: landscape) and (max-width: 699px) {
+        .touch-utility-actions { bottom: calc(var(--touch-main) + 6px); }
+      }
+      @media (pointer: coarse) and (max-width: 359px) {
+        .touch-utilities { bottom: calc(var(--touch-main) + var(--touch-gap)); }
       }
       @media (pointer: coarse) and (min-width: 900px) {
         .touch-controls { --touch-main: 76px; --touch-aux: 48px; left: max(24px, env(safe-area-inset-left)); right: max(24px, env(safe-area-inset-right)); }
@@ -1740,7 +1804,7 @@
             </p>
             <p class="first-blade">
               <b>左鍵出刀，右鍵彈反。</b>
-              <small>按住左鍵蓄力蓄斬；按住右鍵持續格擋。</small>
+              <small>按住左鍵再放開蓄刺；按住右鍵持續格擋。</small>
             </p>
             <div class="mode-buttons">
               <button id="start-ai" class="mode-button primary">
@@ -1915,6 +1979,7 @@
           <div id="round-label" class="round">第 01 場</div>
           <div id="timer" class="timer">00:00</div>
           <div id="mode-label" class="match-mode">精英試煉</div>
+          <button id="combat-menu" class="combat-menu" aria-label="開啟暫停與聲音選單">選單</button>
         </div>
         <div class="fighter-hud right">
           <div class="fighter-title">
@@ -1958,7 +2023,7 @@
             <span class="equipment-action equipped-art">按住右鍵＋點左鍵 · <b id="equipped-art">雙斷</b></span>
           </div>
           <div class="combat-note">
-            按住左鍵蓄力 · 按住右鍵格擋 · H 操作手冊 · Esc 暫停
+            按住左鍵再放開蓄刺 · 按住右鍵格擋 · H 操作手冊 · Esc 暫停
           </div>
         </div>
         <div class="combat-readout">
@@ -1967,30 +2032,30 @@
         </div>
       </footer>
       <div id="touch-controls" class="touch-controls" aria-label="觸控操作">
-        <div class="touch-cluster touch-movement" role="group" aria-label="移動與裝具">
-          <div class="touch-secondary">
-            <button data-touch="KeyR" class="heal-touch" aria-label="飲用修復劑">藥</button>
-            <button data-touch="KeyQ" aria-label="切換裝具">換</button>
-            <button data-touch="KeyE" aria-label="使用目前裝具">具</button>
-            <button data-touch="KeyO" aria-label="使用戰技">技</button>
-          </div>
+        <div class="touch-cluster touch-movement" role="group" aria-label="移動與跳躍">
+          <button data-touch="Space" class="jump-touch" aria-label="跳躍">跳</button>
           <div class="touch-primary">
             <button data-touch="KeyA" class="move-touch" aria-label="向左移動">◀</button>
             <button data-touch="KeyD" class="move-touch" aria-label="向右移動">▶</button>
           </div>
         </div>
-        <div class="touch-cluster touch-combat" role="group" aria-label="跳躍與戰鬥">
-          <div class="touch-secondary">
-            <button data-touch="KeyF" aria-label="鉤繩">鉤</button>
-            <button id="touch-pause" class="pause-touch" aria-label="暫停及聲音設定">暫停</button>
-            <button data-touch="Space" aria-label="跳躍">跳</button>
-            <button data-touch="KeyL" aria-label="墊步">步</button>
-          </div>
+        <div class="touch-cluster touch-combat" role="group" aria-label="防禦、攻擊與墊步">
+          <button data-touch="KeyL" class="dodge-touch" aria-label="墊步">步</button>
           <div class="touch-primary">
             <button data-touch="KeyK" class="guard-touch" aria-label="招架，按住格擋">架</button>
-            <button data-touch="KeyJ" class="attack-touch" aria-label="攻擊，按住蓄力">斬</button>
+            <button data-touch="KeyJ" class="attack-touch" aria-label="攻擊，按住再放開蓄刺">斬</button>
           </div>
         </div>
+        <details class="touch-utilities">
+          <summary aria-label="展開或收合裝具、修復劑、戰技與鉤繩">技具</summary>
+          <div class="touch-utility-actions" role="group" aria-label="裝具與輔助操作">
+            <button data-touch="KeyQ" aria-label="切換裝具">換具</button>
+            <button data-touch="KeyE" aria-label="使用目前裝具">裝具</button>
+            <button data-touch="KeyR" class="heal-touch" aria-label="飲用修復劑">修復</button>
+            <button data-touch="KeyO" aria-label="使用戰技">戰技</button>
+            <button data-touch="KeyF" aria-label="鉤繩">鉤繩</button>
+          </div>
+        </details>
       </div>
       <!-- RIFT_TUTORIAL_UI -->
       <section id="pause-panel" class="overlay" hidden>
@@ -2053,13 +2118,13 @@
               <table class="controls-table guide-basics">
                 <thead><tr><th>操作</th><th>壹／連線玩家</th></tr></thead>
                 <tbody>
-                  <tr><td><kbd class="input-key">滑鼠左鍵</kbd></td><td>出刀；按住蓄力蓄斬</td></tr>
+                  <tr><td><kbd class="input-key">滑鼠左鍵</kbd></td><td>出刀；按住再放開蓄刺</td></tr>
                   <tr><td><kbd class="input-key">滑鼠右鍵</kbd></td><td>彈反；按住持續格擋</td></tr>
                   <tr><td><kbd class="input-key">Space</kbd></td><td>跳躍；空中再按蹬踏</td></tr>
                   <tr><td><kbd class="input-key">Shift</kbd></td><td>墊步；朝突刺踏入可踏刃</td></tr>
                 </tbody>
               </table>
-              <p class="guide-essential-note">A D 左右移動 · 橫向對決，滑鼠出刀與防禦會自動面向對手。</p>
+              <p class="guide-essential-note">A D 左右移動 · 橫向對決，滑鼠出刀與防禦會自動面向對手。蓄刺是可格擋、可招架的單次直刺；紅色「突」才是危險突刺。</p>
               <div class="guide-equipment">
                 <p><kbd class="input-key">E</kbd> 或滑鼠中鍵使用目前裝具；<kbd class="input-key">Q</kbd> 或滾輪切換兩款裝備。</p>
                 <p><kbd class="input-key">R</kbd> 修復劑 · <kbd class="input-key">F</kbd> 鉤繩</p>
@@ -2081,7 +2146,7 @@
                 <summary>純鍵盤備用操作</summary>
                 <table class="controls-table">
                   <tbody>
-                    <tr><td>出刀 / 蓄力蓄斬</td><td>J / 長按 J</td></tr>
+                    <tr><td>出刀 / 蓄刺</td><td>J / 長按 J 再放開</td></tr>
                     <tr><td>彈反 / 持續格擋</td><td>K / 長按 K</td></tr>
                     <tr><td>墊步 / 起跳</td><td>L / W（亦可 Space）</td></tr>
                     <tr><td>直接使用裝具 壹 / 貳</td><td>U / I</td></tr>
@@ -2095,7 +2160,7 @@
                   <tbody>
                     <tr><td>移動 / 蹲伏</td><td>← → / ↓</td></tr>
                     <tr><td>起跳 / 空中蹬踏</td><td>↑</td></tr>
-                    <tr><td>輕斬 / 蓄力蓄斬</td><td>Num 1 或 ,（長按蓄力）</td></tr>
+                    <tr><td>輕斬 / 蓄刺</td><td>Num 1 或 ,（長按再放開）</td></tr>
                     <tr><td>招架 / 持續格擋</td><td>Num 2 或 .</td></tr>
                     <tr><td>墊步 / 踏刃</td><td>Num 3 或 /</td></tr>
                     <tr><td>裝具 壹 / 貳</td><td>Num 4 / 5 或 N / M</td></tr>
@@ -2109,7 +2174,7 @@
               </details>
               <div class="frame-strip">
                 <span>輕斬 <b>18 / 5 / 14 F</b></span
-                ><span>蓄斬 <b>36 F</b></span
+                ><span>蓄刺 <b>36 F</b></span
                 ><span>突刺 <b>30 F</b></span
                 ><span>重鎚 <b>45 F</b></span
                 ><span>修復劑 <b>54 F / +40 HP</b></span>
@@ -2141,8 +2206,7 @@
               <div class="counter-card">
                 <kbd class="input-key counter-input">Space → Space</kbd><b>參 · 蹬踏 / 起跳破下掃</b>
                 <p>
-                  琥珀色「掃」提示下掃，按 Space 起跳閃避；於敵人頭頂再按一次 Space，蹬踏中斷攻擊並增加
-                  30% 架勢。
+                  琥珀色「掃」提示下掃，按 Space 起跳、放開，再於空中靠近時按一次 Space。170 像素內會輔助踏入，不必對準頭頂；可提早 12 幀按下，下掃收招前 18 幀仍可反制。蹬踏中斷攻擊並增加 30% 架勢，但不能隔著平台命中。
                 </p>
               </div>
               <div class="counter-card">

@@ -55,6 +55,30 @@ async def smoke(url, report):
             await page.evaluate("window.testAnalyser = game.audio.context.createAnalyser(); game.audio.ceiling.connect(testAnalyser)")
             await page.wait_for_timeout(250)
             check("Audio graph produces nonzero samples", await page.evaluate("() => {const a = new Float32Array(testAnalyser.fftSize);testAnalyser.getFloatTimeDomainData(a);return a.some(v => Math.abs(v) > .00001)}"))
+            # Render through the actual ceiling curve in Web Audio, not a mock
+            # interpolation: ordinary music must survive without new harmonics.
+            ceiling = await page.evaluate("""async () => {
+              async function render(amplitude) {
+                const c=new OfflineAudioContext(1,4096,48000), b=c.createBuffer(1,4096,48000);
+                const input=b.getChannelData(0);
+                for(let i=0;i<input.length;i++)input[i]=amplitude*Math.sin(i*2*Math.PI*440/48000);
+                const source=c.createBufferSource(), shaper=c.createWaveShaper();
+                source.buffer=b; shaper.curve=game.audio.ceiling.curve;
+                source.connect(shaper);shaper.connect(c.destination);source.start();
+                const output=(await c.startRendering()).getChannelData(0);
+                return {error:Math.max(...output.map((v,i)=>Math.abs(v-input[i]))),peak:Math.max(...output.map(Math.abs))};
+              }
+              return {normal:await render(.5),overload:await render(2)};
+            }""")
+            check("Real WaveShaper preserves normal music and bounds overloaded peaks", ceiling["normal"]["error"] < 0.000001 and 0.9 < ceiling["overload"]["peak"] < 0.93, ceiling)
+            await page.evaluate("game.audio.setMusicVolume(0)")
+            await page.wait_for_timeout(1100)
+            quiet = await page.evaluate("""() => {
+              const a=new Float32Array(testAnalyser.fftSize);testAnalyser.getFloatTimeDomainData(a);
+              return {peak:Math.max(...a.map(Math.abs)),layers:[game.audio.wind,game.audio.rain,game.audio.river].map(n=>n.level.gain.value)};
+            }""")
+            check("Music slider zero leaves no substitute ambience hiss in real output", quiet["peak"] < 0.000001 and all(abs(g) < 0.000001 for g in quiet["layers"]), quiet)
+            await page.evaluate("game.audio.setMusicVolume(.3)")
             await page.locator("#start-ai").click()
             await page.wait_for_function("game.world.tick > 10")
             check("Boss mode advances the fixed simulation", await page.evaluate("game.mode === 'ai' && game.world.players[1].aiControlled && game.world.phase === 'fighting'"))
@@ -137,6 +161,47 @@ async def smoke(url, report):
             await page.screenshot(path=str(OUT / "desktop.png"))
             await desktop.close()
 
+            async def check_mobile_layout(page, orientation):
+                layout = await page.evaluate("""() => {
+                  const rect = el => {const r=el.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height}};
+                  const left=[...document.querySelectorAll('.touch-movement [data-touch]')];
+                  const right=[...document.querySelectorAll('.touch-combat [data-touch]')];
+                  const main=[...left,...right], menu=document.getElementById('combat-menu');
+                  const codes=els=>els.map(e=>e.dataset.touch).sort().join(',');
+                  const jump=rect(document.querySelector('[data-touch="Space"]'));
+                  const moveLeft=rect(document.querySelector('[data-touch="KeyA"]'));
+                  const moveRight=rect(document.querySelector('[data-touch="KeyD"]'));
+                  return {sizes:main.map(rect), grouped:codes(left)==='KeyA,KeyD,Space' && codes(right)==='KeyJ,KeyK,KeyL' &&
+                    left.every(e=>rect(e).x+rect(e).w<=innerWidth/2) && right.every(e=>rect(e).x>=innerWidth/2),
+                    jumpAbove:jump.y+jump.h<=Math.min(moveLeft.y,moveRight.y) &&
+                      Math.abs(jump.x+jump.w/2-(moveLeft.x+moveRight.x+moveRight.w)/2)<1,
+                    closed:!document.querySelector('.touch-utilities').open,
+                    menu:!!menu && !menu.closest('#touch-controls') && rect(menu).w>=44 && rect(menu).h>=44 &&
+                      rect(menu).y+rect(menu).h<=rect(document.getElementById('combat-caption')).y};
+                }""")
+                check(f"{orientation}: jump sits above both movement keys and six primary targets stay at least 64 px",
+                      layout["grouped"] and layout["jumpAbove"] and len(layout["sizes"]) == 6 and all(r["w"] >= 64 and r["h"] >= 64 for r in layout["sizes"]), layout)
+                check(f"{orientation}: utilities start collapsed and menu stays outside thumb controls", layout["closed"] and layout["menu"], layout)
+                await page.locator(".touch-utilities summary").tap()
+                drawer = await page.evaluate("""() => {
+                  const elements=[...document.querySelectorAll('.touch-controls button,.touch-utilities summary,#combat-menu')];
+                  const boxes=elements.map(el=>{const r=el.getBoundingClientRect();return {el,r}});
+                  const fits=boxes.every(({el,r})=>r.width>=44 && r.height>=44 && r.left>=0 && r.top>=0 &&
+                    r.right<=innerWidth && r.bottom<=innerHeight && document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===el);
+                  const separated=boxes.every((a,i)=>boxes.slice(i+1).every(b=>a.r.right<=b.r.left || b.r.right<=a.r.left || a.r.bottom<=b.r.top || b.r.bottom<=a.r.top));
+                  const utilities=[...document.querySelectorAll('.touch-utility-actions [data-touch]')].map(e=>e.dataset.touch).sort();
+                  return {open:document.querySelector('.touch-utilities').open,fits,separated,utilities,
+                    boxes:boxes.map(({el,r})=>({key:el.dataset.touch || el.id || el.tagName,x:r.x,y:r.y,w:r.width,h:r.height}))};
+                }""")
+                check(f"{orientation}: utility drawer exposes every ability without overlap or offscreen targets",
+                      drawer["open"] and drawer["fits"] and drawer["separated"] and drawer["utilities"] == ["KeyE", "KeyF", "KeyO", "KeyQ", "KeyR"], drawer)
+                await page.screenshot(path=str(OUT / f"mobile-{orientation.lower().replace(' ', '-')}-utilities.png"))
+                slot = await page.evaluate("game.activeToolSlot")
+                await page.locator('[data-touch="KeyQ"]').tap()
+                check(f"{orientation}: expanded tool switch still uses the existing input binding", await page.evaluate("game.activeToolSlot") != slot)
+                await page.locator(".touch-utilities summary").tap()
+                check(f"{orientation}: utility drawer closes without pausing combat", await page.evaluate("!document.querySelector('.touch-utilities').open && !game.paused"))
+
             mobile = await browser.new_context(viewport={"width": 390, "height": 844}, has_touch=True, is_mobile=True)
             page = await mobile.new_page()
             page.on("pageerror", lambda error: report["page_errors"].append(str(error)))
@@ -146,6 +211,7 @@ async def smoke(url, report):
             await page.evaluate("game.debug.setPlayers({x:1600,y:1080,ground:true},{x:3000,y:1080,ground:true});game.world.weather='dusk'")
             await page.wait_for_function("game.audio.getMusicStatus().unlocked", timeout=10000)
             check("A real touch gesture unlocks audio", True)
+            await check_mobile_layout(page, "Portrait")
             cdp = await mobile.new_cdp_session(page)
 
             async def point(code, identifier):
@@ -153,8 +219,6 @@ async def smoke(url, report):
                 return {"x": rect["x"] + rect["width"] / 2, "y": rect["y"] + rect["height"] / 2, "id": identifier, "radiusX": 10, "radiusY": 10, "force": 1}
 
             left, guard = await point("KeyA", 1), await point("KeyK", 2)
-            dimensions = await page.evaluate("Array.from(document.querySelectorAll('[data-touch=KeyA],[data-touch=KeyD]')).map(e=>{const r=e.getBoundingClientRect();return [r.width,r.height]})")
-            check("Movement targets are at least 64 CSS pixels", all(w >= 64 and h >= 64 for w, h in dimensions), dimensions)
             x = await page.evaluate("game.world.players[0].x")
             await cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [left]})
             await page.wait_for_timeout(750)
@@ -164,12 +228,20 @@ async def smoke(url, report):
             check("Two fingers independently hold movement and guard", await page.evaluate("game.touchHeld.size === 2 && game.world.players[0].guard"))
             await cdp.send("Input.dispatchTouchEvent", {"type": "touchCancel", "touchPoints": []})
             check("Touch cancellation clears held input and feedback", await page.evaluate("game.touchHeld.size === 0 && game.touchTargets.size === 0 && !document.querySelector('.is-held')"))
+            await page.wait_for_timeout(100)
+            right, jump = await point("KeyD", 3), await point("Space", 4)
+            x = await page.evaluate("game.world.players[0].x")
+            await cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [right, jump]})
+            await page.wait_for_timeout(150)
+            movement_jump = await page.evaluate("({held:game.touchHeld.size,airborne:!game.world.players[0].ground,x:game.world.players[0].x})")
+            check("Movement and the relocated jump work together", movement_jump["held"] == 2 and movement_jump["airborne"] and movement_jump["x"] > x + 10, movement_jump)
+            await cdp.send("Input.dispatchTouchEvent", {"type": "touchCancel", "touchPoints": []})
             check("Selection and context menu defaults are blocked on controls", await page.evaluate("""() => ['selectstart','contextmenu'].every(type=>{
               const e = new Event(type,{bubbles:true,cancelable:true});
               document.querySelector('[data-touch=KeyA]').dispatchEvent(e);return e.defaultPrevented;
             })"""))
-            await page.locator("#touch-pause").tap()
-            check("Mobile pause button opens the menu", await page.evaluate("game.paused && !document.getElementById('pause-panel').hidden"))
+            await page.locator("#combat-menu").tap()
+            check("Mobile HUD menu opens pause and sound settings", await page.evaluate("game.paused && !document.getElementById('pause-panel').hidden"))
             await page.locator("#resume").tap()
             check("Mobile resume clears pause", await page.evaluate("!game.paused && !game.audio.suspended"))
             await page.screenshot(path=str(OUT / "mobile.png"))
@@ -177,6 +249,22 @@ async def smoke(url, report):
             await page.locator("#room-code").fill("TEST123")
             check("Room field remains editable and selectable", await page.locator("#room-code").evaluate("el=>{el.select();return el.selectionEnd-el.selectionStart===7 && getComputedStyle(el).userSelect!=='none'}"))
             await mobile.close()
+            landscape = await browser.new_context(viewport={"width": 844, "height": 390}, has_touch=True, is_mobile=True)
+            page = await landscape.new_page()
+            page.on("pageerror", lambda error: report["page_errors"].append(str(error)))
+            await page.goto(url, wait_until="load")
+            await page.locator("#start-local").tap()
+            await check_mobile_layout(page, "Landscape")
+            await page.screenshot(path=str(OUT / "mobile-landscape.png"))
+            await landscape.close()
+            for orientation, width, height in (("Narrow portrait", 320, 568), ("Compact landscape", 568, 320)):
+                compact = await browser.new_context(viewport={"width": width, "height": height}, has_touch=True, is_mobile=True)
+                page = await compact.new_page()
+                page.on("pageerror", lambda error: report["page_errors"].append(str(error)))
+                await page.goto(url, wait_until="load")
+                await page.locator("#start-local").tap()
+                await check_mobile_layout(page, orientation)
+                await compact.close()
             check("No browser JavaScript exceptions", not report["page_errors"], report["page_errors"])
         except Exception as error:
             report["runner_error"] = str(error)
@@ -192,7 +280,8 @@ def main():
     # Invalidate evidence from a previous successful run before any imports,
     # socket binding or browser launch can fail.
     report_file.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    for name in ("desktop.png", "mobile.png", "rift-cue.png"):
+    for name in ("desktop.png", "mobile.png", "mobile-landscape.png", "mobile-portrait-utilities.png", "mobile-landscape-utilities.png",
+                 "mobile-narrow-portrait-utilities.png", "mobile-compact-landscape-utilities.png", "rift-cue.png"):
         (OUT / name).unlink(missing_ok=True)
     server = thread = None
     try:

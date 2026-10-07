@@ -15,7 +15,7 @@
 | 動作 state | [src/fsm.js](../src/fsm.js) `RiftFSM` | `enter`, `canTransition`, `postureRate` |
 | 傷害／喝藥／倒地／復燃 | [src/vitals.js](../src/vitals.js) `RiftVitals` | `hurt`, `beginDrink`, `takeNode`, `recoverDown` |
 | 回合／勝敗／重開 | `execute`, `finisherScene`, `showResult`, `start`, `lobby` | 首次失去核心不結束 |
-| Network transport | [src/net.js](../src/net.js) `RiftNet` | vendor PeerJS；protocol `VERSION=4` |
+| Network transport | [src/net.js](../src/net.js) `RiftNet` | vendor PeerJS；protocol `VERSION=5` |
 | Defender authority | [src/authority.js](../src/authority.js) `RiftAuthority` | `Game.receive*`、`owns`、去重 |
 | Rendering／Animation | [src/render.js](../src/render.js) `RiftRenderer` | `player`, `updateCamera`, `render`；程序動畫 |
 | Audio | [src/audio.js](../src/audio.js) `RiftAudio` | `start`, `sfx`, `_mixMusic`, `getMusicStatus` |

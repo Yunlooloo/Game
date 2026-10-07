@@ -192,7 +192,7 @@ test('Boss loses three distinct cores with full-capacity revivals before victory
     }
   }
 });
-test('Real AI charged attacks expose a truthful cue before both parryable waves', () => {
+test('Real AI charged thrust exposes a truthful cue before one parryable hit', () => {
   const h=setup(),{g,p,boss,B}=h;
   h.run(fs.readFileSync(path.join(__dirname,'../src/render.js'),'utf8'));
   const beatFor=h.scope.RiftRenderer.prototype.attackBeat;
@@ -200,7 +200,7 @@ test('Real AI charged attacks expose a truthful cue before both parryable waves'
   g.ai.patternPhase=3;g.ai.pattern={steps:['charged'],index:0};g.ai.nextAttack=0;
   const cues=[],contacts=[],original=g.hit.bind(g),seen=new Set();
   g.hit=(a,t,m,opt)=>{const result=original(a,t,m,opt);if(t.id===0)contacts.push(result);return result;};
-  for(let i=0;i<260&&contacts.length<2;i++){
+  for(let i=0;i<260&&contacts.length<1;i++){
     const frozen=g.world.effects.hitstop>0;
     const bossBits=frozen?boss.prevBits:g.ai.input(g.world,boss,p);
     const beat=beatFor.call({},boss),key=`${boss.attackId}:${boss.state}:${beat?.index}`;
@@ -208,8 +208,8 @@ test('Real AI charged attacks expose a truthful cue before both parryable waves'
     if(tap){seen.add(key);cues.push(boss.moveName);}
     g.step([tap?B.GUARD:0,bossBits]);
   }
-  assert.deepEqual(cues,['charged','charged']);
-  assert.deepEqual(contacts,['deflect','deflect']);assert.equal(p.hp,100);
+  assert.deepEqual(cues,['charged']);
+  assert.deepEqual(contacts,['deflect']);assert.equal(p.hp,100);
 });
 test('Hitstop freezes AI decisions and world ticks together', () => {
   const {g}=setup();g.paused=false;g.lastTime=0;g.acc=0;

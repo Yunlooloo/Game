@@ -61,7 +61,7 @@ python3 scripts/test.py
 - `src/`、`vendor/`、`assets/` 為可重建來源；`index.html` 為提交的產物。不可只改 HTML 而漏改來源。
 - 保持固定 60 Hz 戰鬥步長、hitstop 的輸入緩衝、FSM 轉移與逐核心斷決規則；不得將戰鬥時序綁到渲染 FPS。
 - 線上命中由防守方裁決；pose packet 不得覆蓋本機玩家 HP。多波命中須保留 attack/contact ID 去重。此架構不是防作弊伺服器。
-- 目前兩名 actor 的 `0/1` 和 `1-id` 仍是跨模組契約。Vitals 透過 `maxHp/maxPosture/maxNodes` 支援 Boss 240/220/3；玩家、PvP、教學保持100/100/2。線上驗證仍限定100標尺，不能直接同步 Boss 容量。新增規則見 [ADR-004](docs/adr/004-readable-rhythm-and-boss-capacity.md)。
+- 目前兩名 actor 的 `0/1` 和 `1-id` 仍是跨模組契約。Vitals 透過 `maxHp/maxPosture/maxNodes` 支援 Boss 240/220/3；玩家、PvP、教學保持100/100/2。線上驗證仍限定100標尺，不能直接同步 Boss 容量。新增規則見 [ADR-004](docs/adr/004-readable-rhythm-and-boss-capacity.md)；長按蓄刺／輔助蹬踏見 [ADR-005](docs/adr/005-stomp-assist-and-charged-thrust.md)。
 - 玩家、Boss、陪練共用 move／FSM／傷害路徑。Boss 應輸出 input bits，不直接強扣玩家 HP 或呼叫 UI。
 - `RiftTutorial.observeCombat` 包装現有 resolver；修改 resolver 必須檢查教學，不能將訓練補給帶入正式對局。
 - 保留 iOS 可信手勢內同步 resume/play、`interrupted` 恢復與重試；不要用 pending promise 鎖住後續手勢。觸控防選取只能作用於戰鬥區，不能吞掉音訊 `touchend`。

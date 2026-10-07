@@ -75,7 +75,9 @@ flowchart TD
 
 戰鬥在共用 `MOVES`／FSM上加入16→12 tick招架窗口、8 tick防禦緩衝、指定輕招6 tick收招取消、6 tick多波接觸窗及Boss非末波招架保留。AI以可重複招式組合、完整收招與固定反擊空檔形成三階段，階段不縮短起手。renderer以同一攻擊時鐘逐波收刀／放刀，紫色裂斬另有可招架提示；沒有第二套戰鬥引擎。
 
-`RiftNet` 協議4拒絕舊協議3，避免不同招架／波次時序互連；線上仍為雙核PvP，沒有同步三核Boss的擴充協議。`frame` 不實作整局 rollback；pose interpolation／startup time warp 不能稱為完整 rollback netcode。細節由 [COMBAT_SYSTEM](COMBAT_SYSTEM.md) 與 [GAME_SYSTEMS](GAME_SYSTEMS.md) 維護。
+4.2.0延伸同一 `tickPlayer()`，以 `tryStomp()` 消費12 tick空中跳躍緩衝，容許橫掃收招前18 tick並提供受平台遮擋約束的頭頂位移輔助。`stomp / lastStompAttackId` 限制一次滯空及同次橫掃的重複反制；仍走既有 `counter()` 與行動鎖。長按攻擊的穩定 `charged` ID改為一次普通 `pierce` 蓄刺，保留危險 `thrust` 與雙波奧義 `cleave` 各自用途；沒有新的移動或傷害系統。見 [ADR-005](adr/005-stomp-assist-and-charged-thrust.md)。
+
+`RiftNet` 協議5拒絕舊協議4等版本，避免相同 `charged` ID套用不同攻擊語意；線上仍為雙核PvP，沒有同步三核Boss的擴充協議。`frame` 不實作整局 rollback；pose interpolation／startup time warp 不能稱為完整 rollback netcode。細節由 [COMBAT_SYSTEM](COMBAT_SYSTEM.md) 與 [GAME_SYSTEMS](GAME_SYSTEMS.md) 維護。
 
 ## PLANNED：演進藍圖，不是現有類別
 

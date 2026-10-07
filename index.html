@@ -699,6 +699,19 @@
         text-align: center;
         padding-top: 3px;
       }
+      .combat-menu {
+        display: block;
+        width: 44px;
+        min-height: 44px;
+        margin: 5px auto 0;
+        padding: 0;
+        pointer-events: auto;
+        border: 1px solid #b7c3b542;
+        border-radius: 9px;
+        background: #142027a6;
+        color: #c7c5b9;
+        font-size: 12px;
+      }
       .match-center .round {
         font-size: 10px;
         letter-spacing: 0.2em;
@@ -1056,8 +1069,8 @@
         right: max(12px, env(safe-area-inset-right));
         bottom: calc(34px + env(safe-area-inset-bottom));
         z-index: 5;
-        justify-content: space-between;
-        align-items: flex-end;
+        grid-template-columns: 1fr 1fr;
+        align-items: end;
         pointer-events: none;
       }
       .touch-cluster {
@@ -1066,13 +1079,14 @@
         gap: var(--touch-gap);
         align-items: flex-start;
       }
-      .touch-cluster.touch-combat { align-items: flex-end; }
-      .touch-primary, .touch-secondary {
+      .touch-cluster.touch-combat { align-items: flex-end; justify-self: end; }
+      .touch-primary {
         display: grid;
         grid-template-columns: repeat(2, auto);
         gap: var(--touch-gap);
       }
-      .touch-secondary { padding: 0 3px; }
+      .touch-movement .jump-touch { align-self: center; }
+      .touch-movement { width: max-content; }
       .touch-controls button {
         pointer-events: auto;
         flex-shrink: 0;
@@ -1089,17 +1103,58 @@
         line-height: 1;
         transition: background-color .08s, border-color .08s;
       }
-      .touch-controls .touch-primary button {
+      .touch-controls .touch-cluster button {
         width: var(--touch-main);
         height: var(--touch-main);
         border-radius: 20px;
         font-size: 25px;
       }
       .touch-controls .move-touch { background: #263837e8; color: #d3e4d4; }
+      .touch-controls .jump-touch { background: #263837e8; color: #d3e4d4; }
       .touch-controls .guard-touch { background: #31514fe3; border-color: #a4d9d078; }
       .touch-controls .attack-touch { background: #91483ce8; border-color: #e5ad8382; }
       .touch-controls .heal-touch { border-color: #9dad7699; color: #d7e3b7; }
-      .touch-controls .pause-touch { font-family: var(--sans); font-size: 13px; color: #bcbdb4; }
+      .touch-utilities {
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        transform: translateX(-50%);
+      }
+      .touch-utilities summary {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        width: 64px;
+        min-height: 44px;
+        padding: 0;
+        pointer-events: auto;
+        cursor: pointer;
+        list-style: none;
+        border: 1px solid #b7c3b54d;
+        border-radius: 12px;
+        background: #142027cf;
+        color: #c7c5b9;
+        font-size: 12px;
+      }
+      .touch-utilities summary::-webkit-details-marker { display: none; }
+      .touch-utilities summary::after { content: "⌃"; }
+      .touch-utilities[open] summary::after { content: "⌄"; }
+      .touch-utilities summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+      .touch-utility-actions {
+        position: absolute;
+        left: 50%;
+        bottom: calc(var(--touch-main) * 2 + var(--touch-gap) + 12px);
+        transform: translateX(-50%);
+        display: grid;
+        grid-template-columns: repeat(5, var(--touch-aux));
+        gap: var(--touch-gap);
+        padding: 8px;
+        border: 1px solid #b7c3b542;
+        border-radius: 16px;
+        background: #101b21f0;
+      }
+      .touch-utility-actions button { font-family: var(--sans); font-size: 12px; }
       .touch-controls button:active, .touch-controls button.is-held {
         background: #736247;
         border-color: #f4d39b;
@@ -1427,7 +1482,7 @@
       }
       @media (pointer: coarse) {
         .touch-controls.playing {
-          display: flex;
+          display: grid;
         }
         .mobile-hint {
           display: block;
@@ -1519,7 +1574,16 @@
       @media (pointer: coarse) and (orientation: landscape) {
         .touch-controls { --touch-main: 72px; --touch-aux: 46px; }
         .combat-footer { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
-        .combat-caption { top: 27%; }
+        .combat-caption { top: 42%; }
+      }
+      @media (pointer: coarse) and (orientation: landscape) and (min-width: 700px) {
+        .touch-utility-actions { bottom: 56px; }
+      }
+      @media (pointer: coarse) and (orientation: landscape) and (max-width: 699px) {
+        .touch-utility-actions { bottom: calc(var(--touch-main) + 6px); }
+      }
+      @media (pointer: coarse) and (max-width: 359px) {
+        .touch-utilities { bottom: calc(var(--touch-main) + var(--touch-gap)); }
       }
       @media (pointer: coarse) and (min-width: 900px) {
         .touch-controls { --touch-main: 76px; --touch-aux: 48px; left: max(24px, env(safe-area-inset-left)); right: max(24px, env(safe-area-inset-right)); }
@@ -1772,7 +1836,7 @@
             </p>
             <p class="first-blade">
               <b>左鍵出刀，右鍵彈反。</b>
-              <small>按住左鍵蓄力蓄斬；按住右鍵持續格擋。</small>
+              <small>按住左鍵再放開蓄刺；按住右鍵持續格擋。</small>
             </p>
             <div class="mode-buttons">
               <button id="start-ai" class="mode-button primary">
@@ -1949,6 +2013,7 @@
           <div id="round-label" class="round">第 01 場</div>
           <div id="timer" class="timer">00:00</div>
           <div id="mode-label" class="match-mode">精英試煉</div>
+          <button id="combat-menu" class="combat-menu" aria-label="開啟暫停與聲音選單">選單</button>
         </div>
         <div class="fighter-hud right">
           <div class="fighter-title">
@@ -1992,7 +2057,7 @@
             <span class="equipment-action equipped-art">按住右鍵＋點左鍵 · <b id="equipped-art">雙斷</b></span>
           </div>
           <div class="combat-note">
-            按住左鍵蓄力 · 按住右鍵格擋 · H 操作手冊 · Esc 暫停
+            按住左鍵再放開蓄刺 · 按住右鍵格擋 · H 操作手冊 · Esc 暫停
           </div>
         </div>
         <div class="combat-readout">
@@ -2001,30 +2066,30 @@
         </div>
       </footer>
       <div id="touch-controls" class="touch-controls" aria-label="觸控操作">
-        <div class="touch-cluster touch-movement" role="group" aria-label="移動與裝具">
-          <div class="touch-secondary">
-            <button data-touch="KeyR" class="heal-touch" aria-label="飲用修復劑">藥</button>
-            <button data-touch="KeyQ" aria-label="切換裝具">換</button>
-            <button data-touch="KeyE" aria-label="使用目前裝具">具</button>
-            <button data-touch="KeyO" aria-label="使用戰技">技</button>
-          </div>
+        <div class="touch-cluster touch-movement" role="group" aria-label="移動與跳躍">
+          <button data-touch="Space" class="jump-touch" aria-label="跳躍">跳</button>
           <div class="touch-primary">
             <button data-touch="KeyA" class="move-touch" aria-label="向左移動">◀</button>
             <button data-touch="KeyD" class="move-touch" aria-label="向右移動">▶</button>
           </div>
         </div>
-        <div class="touch-cluster touch-combat" role="group" aria-label="跳躍與戰鬥">
-          <div class="touch-secondary">
-            <button data-touch="KeyF" aria-label="鉤繩">鉤</button>
-            <button id="touch-pause" class="pause-touch" aria-label="暫停及聲音設定">暫停</button>
-            <button data-touch="Space" aria-label="跳躍">跳</button>
-            <button data-touch="KeyL" aria-label="墊步">步</button>
-          </div>
+        <div class="touch-cluster touch-combat" role="group" aria-label="防禦、攻擊與墊步">
+          <button data-touch="KeyL" class="dodge-touch" aria-label="墊步">步</button>
           <div class="touch-primary">
             <button data-touch="KeyK" class="guard-touch" aria-label="招架，按住格擋">架</button>
-            <button data-touch="KeyJ" class="attack-touch" aria-label="攻擊，按住蓄力">斬</button>
+            <button data-touch="KeyJ" class="attack-touch" aria-label="攻擊，按住再放開蓄刺">斬</button>
           </div>
         </div>
+        <details class="touch-utilities">
+          <summary aria-label="展開或收合裝具、修復劑、戰技與鉤繩">技具</summary>
+          <div class="touch-utility-actions" role="group" aria-label="裝具與輔助操作">
+            <button data-touch="KeyQ" aria-label="切換裝具">換具</button>
+            <button data-touch="KeyE" aria-label="使用目前裝具">裝具</button>
+            <button data-touch="KeyR" class="heal-touch" aria-label="飲用修復劑">修復</button>
+            <button data-touch="KeyO" aria-label="使用戰技">戰技</button>
+            <button data-touch="KeyF" aria-label="鉤繩">鉤繩</button>
+          </div>
+        </details>
       </div>
 
 <section id="training-panel" aria-label="互動陪練課程" hidden>
@@ -2101,13 +2166,13 @@
               <table class="controls-table guide-basics">
                 <thead><tr><th>操作</th><th>壹／連線玩家</th></tr></thead>
                 <tbody>
-                  <tr><td><kbd class="input-key">滑鼠左鍵</kbd></td><td>出刀；按住蓄力蓄斬</td></tr>
+                  <tr><td><kbd class="input-key">滑鼠左鍵</kbd></td><td>出刀；按住再放開蓄刺</td></tr>
                   <tr><td><kbd class="input-key">滑鼠右鍵</kbd></td><td>彈反；按住持續格擋</td></tr>
                   <tr><td><kbd class="input-key">Space</kbd></td><td>跳躍；空中再按蹬踏</td></tr>
                   <tr><td><kbd class="input-key">Shift</kbd></td><td>墊步；朝突刺踏入可踏刃</td></tr>
                 </tbody>
               </table>
-              <p class="guide-essential-note">A D 左右移動 · 橫向對決，滑鼠出刀與防禦會自動面向對手。</p>
+              <p class="guide-essential-note">A D 左右移動 · 橫向對決，滑鼠出刀與防禦會自動面向對手。蓄刺是可格擋、可招架的單次直刺；紅色「突」才是危險突刺。</p>
               <div class="guide-equipment">
                 <p><kbd class="input-key">E</kbd> 或滑鼠中鍵使用目前裝具；<kbd class="input-key">Q</kbd> 或滾輪切換兩款裝備。</p>
                 <p><kbd class="input-key">R</kbd> 修復劑 · <kbd class="input-key">F</kbd> 鉤繩</p>
@@ -2129,7 +2194,7 @@
                 <summary>純鍵盤備用操作</summary>
                 <table class="controls-table">
                   <tbody>
-                    <tr><td>出刀 / 蓄力蓄斬</td><td>J / 長按 J</td></tr>
+                    <tr><td>出刀 / 蓄刺</td><td>J / 長按 J 再放開</td></tr>
                     <tr><td>彈反 / 持續格擋</td><td>K / 長按 K</td></tr>
                     <tr><td>墊步 / 起跳</td><td>L / W（亦可 Space）</td></tr>
                     <tr><td>直接使用裝具 壹 / 貳</td><td>U / I</td></tr>
@@ -2143,7 +2208,7 @@
                   <tbody>
                     <tr><td>移動 / 蹲伏</td><td>← → / ↓</td></tr>
                     <tr><td>起跳 / 空中蹬踏</td><td>↑</td></tr>
-                    <tr><td>輕斬 / 蓄力蓄斬</td><td>Num 1 或 ,（長按蓄力）</td></tr>
+                    <tr><td>輕斬 / 蓄刺</td><td>Num 1 或 ,（長按再放開）</td></tr>
                     <tr><td>招架 / 持續格擋</td><td>Num 2 或 .</td></tr>
                     <tr><td>墊步 / 踏刃</td><td>Num 3 或 /</td></tr>
                     <tr><td>裝具 壹 / 貳</td><td>Num 4 / 5 或 N / M</td></tr>
@@ -2157,7 +2222,7 @@
               </details>
               <div class="frame-strip">
                 <span>輕斬 <b>18 / 5 / 14 F</b></span
-                ><span>蓄斬 <b>36 F</b></span
+                ><span>蓄刺 <b>36 F</b></span
                 ><span>突刺 <b>30 F</b></span
                 ><span>重鎚 <b>45 F</b></span
                 ><span>修復劑 <b>54 F / +40 HP</b></span>
@@ -2189,8 +2254,7 @@
               <div class="counter-card">
                 <kbd class="input-key counter-input">Space → Space</kbd><b>參 · 蹬踏 / 起跳破下掃</b>
                 <p>
-                  琥珀色「掃」提示下掃，按 Space 起跳閃避；於敵人頭頂再按一次 Space，蹬踏中斷攻擊並增加
-                  30% 架勢。
+                  琥珀色「掃」提示下掃，按 Space 起跳、放開，再於空中靠近時按一次 Space。170 像素內會輔助踏入，不必對準頭頂；可提早 12 幀按下，下掃收招前 18 幀仍可反制。蹬踏中斷攻擊並增加 30% 架勢，但不能隔著平台命中。
                 </p>
               </div>
               <div class="counter-card">
@@ -2278,7 +2342,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Riftblade Echoes — transport only. Simulation and authority live in Game. */
 (() => {
   'use strict';
-  const VERSION = 4;
+  const VERSION = 5;
   const PREFIX = 'riftblade-';
   const MAX_PACKET = 196608;
   const MAX_HISTORY = 240;
@@ -2797,6 +2861,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
       player.stun = player.lockFrames;
       player.vx = 0; player.dash = 0; player.dashDir = 0;
       player.blinkWindow = 0; player.invuln = 0; player.drop = 0;
+      player.stompBuffer = 0;
     }
     if (next === STATE.REVIVING) player.revive = player.lockFrames;
     if (next === STATE.DEAD) {
@@ -3180,14 +3245,17 @@ window.RiftAudio = class RiftAudio {
           this.limiter.attack.value = 0.001;
           this.limiter.release.value = 0.12;
           this.master.connect(this.limiter);
-          // Bound dense clashes without relying on the compressor's attack time.
+          // Leave ordinary music/effects unchanged; only soften peaks which can
+          // outrun the compressor. An always-curved transfer adds harmonics even
+          // to quiet music and sounds like distortion on small phone speakers.
           if (c.createWaveShaper) {
             this.ceiling = c.createWaveShaper();
-            const curve = new Float32Array(2048);
-            const scale = 0.92 / Math.atan(1.3);
+            const curve = new Float32Array(4097);
             for (let i = 0; i < curve.length; i++) {
               const sample = i * 2 / (curve.length - 1) - 1;
-              curve[i] = Math.atan(sample * 1.3) * scale;
+              const amplitude = Math.abs(sample), peak = Math.max(0, (amplitude - 0.8) / 0.2);
+              curve[i] = amplitude <= 0.8 ? sample :
+                Math.sign(sample) * (0.8 + 0.2 * peak - 0.04 * peak * peak - 0.04 * peak * peak * peak);
             }
             this.ceiling.curve = curve;
             this.limiter.connect(this.ceiling);
@@ -3435,9 +3503,12 @@ window.RiftAudio = class RiftAudio {
       this.ambienceNodes.push(source, filter, level);
       return { source, filter, level };
     };
-    this.wind = layer('bandpass', 320, 0.35, 0.045);
-    this.rain = layer('highpass', 2400, 0.5, 0.0001);
-    this.river = layer('lowpass', 850, 0.3, 0.024);
+    // Music already contains its own atmosphere. Start silent, including while
+    // its media play() promise is pending; update enables fallback only if the
+    // selected embedded track is absent or reports an error.
+    this.wind = layer('bandpass', 320, 0.35, 0);
+    this.rain = layer('highpass', 2400, 0.5, 0);
+    this.river = layer('lowpass', 850, 0.3, 0);
     const sway = c.createOscillator(), depth = c.createGain();
     sway.frequency.value = 0.115; depth.gain.value = 115;
     sway.connect(depth); depth.connect(this.wind.filter.frequency); sway.start();
@@ -3646,11 +3717,14 @@ window.RiftAudio = class RiftAudio {
     const c = this.context, now = c.currentTime;
     dt = Math.min(0.1, Math.max(0, Number(dt) || 0));
     this.tension += (Math.max(0, Math.min(1, Number(tension) || 0)) - this.tension) * (1 - Math.exp(-dt * 2.5));
-    const musicPlaying = this.musicVolume > 0 && [...this.musicTracks.values()].some(track => !track.element.paused && !track.error);
-    const atmosphere = musicPlaying ? 0.45 : 1;
-    this.wind.level.gain.setTargetAtTime((0.035 + this.tension * 0.025 + (weather === 'storm' ? 0.025 : 0)) * atmosphere, now, 1.2);
-    this.rain.level.gain.setTargetAtTime((weather === 'storm' ? 0.078 : 0.0001) * atmosphere, now, 1.8);
-    if (!this.muted && !musicPlaying && this.tension > 0.075 && now >= this.nextBeat) {
+    const selectedMusic = this.musicTracks.get(this.musicScene);
+    const synthFallback = this.musicVolume > 0 && (!selectedMusic || !!selectedMusic.error);
+    // Do not mistake a muted/loading track for missing music: turning the music
+    // slider to zero must not replace it with an unsolicited hiss/drum track.
+    this.wind.level.gain.setTargetAtTime(synthFallback ? 0.035 + this.tension * 0.025 + (weather === 'storm' ? 0.025 : 0) : 0, now, 0.18);
+    this.rain.level.gain.setTargetAtTime(synthFallback && weather === 'storm' ? 0.078 : 0, now, 0.18);
+    this.river.level.gain.setTargetAtTime(synthFallback ? 0.024 : 0, now, 0.18);
+    if (!this.muted && synthFallback && this.tension > 0.075 && now >= this.nextBeat) {
       const accent = this.beat++ % 4 === 0;
       this.sfx('pulse', accent ? -0.3 : 0.3, (accent ? 0.42 : 0.22) + this.tension * 0.18);
       this.nextBeat = now + 60 / (48 + this.tension * 80) * (this.tension > 0.8 && !accent ? 0.5 : 1);
@@ -4913,7 +4987,7 @@ window.RiftAI = class RiftAI {
       let handX = 23, handY = -48, swordAngle = -.48;
       if (windup || beat?.preparing) {
         const prog = beat?.progress ?? clamp(st / 18, 0, 1);
-        if (kind === 'thrust') { handX = -9; handY = -56; swordAngle = -.04; }
+        if (kind === 'thrust' || kind === 'pierce') { handX = -9; handY = -56; swordAngle = -.04; }
         else if (kind === 'sweep') { handX = -16; handY = -31; swordAngle = -2.78; }
         else { handX = lerp(18, -8, prog); handY = lerp(-49, -89, prog); swordAngle = lerp(-.5, -2.25, prog); }
       } else if (attacking) {
@@ -4921,7 +4995,7 @@ window.RiftAI = class RiftAI {
         // the second and third contacts even though the simulation emitted them.
         const prog = beat?.progress ?? clamp(st / 5, 0, 1);
         handX = 27; handY = -58 + prog * 25; swordAngle = -.8 + prog * 1.65;
-        if (kind === 'thrust') { handX = 43; handY = -55; swordAngle = -.02; }
+        if (kind === 'thrust' || kind === 'pierce') { handX = 43; handY = -55; swordAngle = -.02; }
         if (kind === 'sweep') { handX = 30; handY = -19; swordAngle = .04; }
       } else if (state === 'RECOVERY') { handX = 25; handY = -31; swordAngle = .7; }
       else if (state === 'GUARD' || state === 'DEFLECT' || p.guard) { handX = 19; handY = -51; swordAngle = -1.27; }
@@ -4946,7 +5020,7 @@ window.RiftAI = class RiftAI {
       if (drinking) this.tonic(handX + 6, handY - 7, clamp(st / 14, 0, 1));
       else if (kind === 'hammer' && (windup || attacking || state === 'RECOVERY')) this.hammer(handX, handY, swordAngle);
       else this.sword(handX, handY, swordAngle, p.fireBlade > 0, p.charged, kind === 'rift' && (windup || attacking));
-      if (beat?.until <= 8 && !p.hidden && ['slash', 'cleave', 'rift', 'hammer'].includes(kind)) {
+      if (beat?.until <= 8 && !p.hidden && ['slash', 'cleave', 'rift', 'hammer', 'pierce'].includes(kind)) {
         // Read the combat clock, never wall time: hitstop must freeze this cue
         // along with the approaching strike, including gaps between combo hits.
         const x = handX + Math.cos(swordAngle) * 65, y = handY + Math.sin(swordAngle) * 65;
@@ -5101,7 +5175,7 @@ window.RiftAI = class RiftAI {
           const color = s.color || '#fff3c7';
           const start = kind === 'sweep' ? -.17 : kind === 'thrust' ? -.12 : -1.08;
           const end = kind === 'sweep' ? .85 : kind === 'thrust' ? .12 : .83;
-          if (kind === 'thrust') {
+          if (kind === 'thrust' || kind === 'pierce') {
             this.path([[0, -4], [r + 8, 0], [0, 4]], color);
             this.line(r * .22, 0, r, 0, '#fff8db', 2);
           } else {
@@ -5334,13 +5408,13 @@ window.RiftAI = class RiftAI {
     {id:'dash', title:'03 · 墊步取位', group:'起步', goal:'朝一個方向墊步，實際移動至少 80 像素。', keys:'A / D ＋ Shift 墊步', tip:'墊步消耗的是出手時機，不消耗共鳴。能閃普通斬擊，但危險招式需要相應反制。', distance:350},
     {id:'grapple', title:'04 · 掛索飛躍', group:'起步', goal:'抓住上方亮色錨點，沿掛索上升至少 80 像素。', keys:'F 掛索 · 空中左鍵可接跳斬', tip:'掛索自動挑選面前可達的高處錨點。飛到高台後，也能 S ＋ 空白鍵回到下層。', distance:330},
     {id:'light', title:'05 · 第一刀', group:'刀刃', goal:'用一次輕斬實際命中陪練。', keys:'點按滑鼠左鍵', tip:'靠近到一把劍的距離。18 幀起手 → 5 幀判定 → 14 幀收招；揮空也要付出收招時間。', distance:90},
-    {id:'charged', title:'06 · 延遲出刀', group:'刀刃', goal:'蓄力後釋放蓄斬，命中或擊破陪練的普通防禦。', keys:'按住左鍵至少 0.6 秒，再放開', tip:'陪練會一直普通防禦。雙重蓄斬能崩解普通格擋，但完美招架仍可化解；不要在蓄力中嘗試防禦。', distance:110, behavior:'guard'},
+    {id:'charged', title:'06 · 蓄刺', group:'刀刃', goal:'蓄力後放開，以單次長距離突刺命中陪練。', keys:'按住左鍵至少 0.6 秒，再放開', tip:'蓄刺可格擋、可招架，不是紅色危險突刺；不會破普通防禦。雙斷才是兩次重擊並回復架勢的奧義。', distance:170},
     {id:'combo', title:'07 · 命中才有追擊', group:'刀刃', goal:'輕斬命中後，在收招時再點左鍵，讓「追斬」命中。', keys:'左鍵 → 放開 → 命中後再點左鍵', tip:'第一刀命中或被格擋，才開放追斬／墊步取消。太早按第二次、一直按住或揮空，都不算連段。', distance:90},
     {id:'guard', title:'08 · 普通格擋的代價', group:'防守', goal:'提早按住右鍵，以普通格擋接下 2 刀。', keys:'持續按住滑鼠右鍵', tip:'陪練固定出輕斬。普通格擋不扣 HP，但累積自身架勢；不能永久靠擋來獲勝。', distance:90, behavior:'light', total:2},
     {id:'parry', title:'09 · 聽見完美招架', group:'防守', goal:'在刀鋒接觸前點右鍵，完成 2 次完美招架。', keys:'看到刀將落下時，點一下右鍵', tip:'窗口 16 幀。成功後放開再按，下一刀仍有完整窗口；只有快速空按會縮短至最低 12 幀。按住則繼續普通防禦。金色閃環與清亮刀鳴表示成功。', distance:90, behavior:'light', total:2},
     {id:'posture', title:'10 · HP 決定架勢恢復', group:'防守', goal:'先在安全距離按住右鍵，恢復 20 架勢；再觀察低血量時恢復停止。', keys:'按住右鍵，觀看上方架勢條', tip:'HP ≥ 75：35 / 秒；50–74：15 / 秒；低於 50：0。距離超過 350 時持續防禦，加速 2.5 倍，仍受 HP 限制。', distance:500, total:2},
     {id:'bladePin', title:'11 · 紅色「突」：踏刃', group:'反制', goal:'迎著突刺墊步，成功踏刃 2 次。', keys:'紅色「突」亮起後，接觸前朝對手按 Shift', tip:'突刺不能普通防禦。向後閃不算踏刃；反制成功會踩住刃身，重創敵方 35 架勢。', distance:130, behavior:'thrust', total:2},
-    {id:'stomp', title:'12 · 琥珀色「掃」：蹬踏', group:'反制', goal:'跳過下段橫掃，再在對手頭上按一次跳躍，成功蹬踏。', keys:'空白鍵 → 靠近頭頂 → 再按空白鍵', tip:'橫掃不能擋，也不能踏刃。必須跳起、放開跳躍鍵，再按一次；保持在對手上方一個身位。', distance:70, behavior:'sweep'},
+    {id:'stomp', title:'12 · 琥珀色「掃」：蹬踏', group:'反制', goal:'跳過下段橫掃，在空中靠近時再按一次跳躍，成功蹬踏。', keys:'空白鍵 → 空中靠近 → 再按空白鍵', tip:'橫掃不能擋，也不能踏刃。跳起、放開跳躍鍵，再按一次；距離 170 像素內會輔助踏入，不必對準頭頂。可提早 12 幀按下，橫掃收招前 18 幀仍可反制；隔著平台則無法蹬踏。', distance:70, behavior:'sweep'},
     {id:'reversal', title:'13 · 青色「電」：返雷', group:'反制', goal:'躍起接雷，落地前按攻擊，把電荷反擊命中陪練。', keys:'空白鍵接雷 → 空中點左鍵', tip:'等到青色「電」進入出手前再跳；太早跳可能已落地。接雷後身上會發亮；帶電落地會自傷。', distance:120, behavior:'lightning'},
     {id:'heal', title:'14 · 修復劑與安全距離', group:'資源', goal:'在安全距離完成一次修復劑治療，回復 40 HP。', keys:'R 使用修復劑', tip:'一般對局只有 3 次。喝藥鎖定 0.9 秒，受擊就中斷且不治療。先拉開超過 350 像素；訓練會免費補充藥劑。', distance:500},
     {id:'disc', title:'15 · 飛輪與疾斬', group:'裝備', goal:'飛輪實際命中，再用左鍵疾斬命中。', keys:'E 投飛輪 → 命中後左鍵', tip:'本課自動裝備飛輪。Q／滾輪可切換兩件裝備；投射物也能被招架。命中後的追斬有長距離突進。', distance:210, tool:'disc', total:2},
@@ -5407,7 +5481,7 @@ window.RiftAI = class RiftAI {
       this.index=Math.max(0,Math.min(LESSONS.length-1,index));this.completedCurrent=false;this.count=0;this.ticks=0;this.wait=100;this.flags={};this.lastDraw='';
       const game=this.game,w=game.world,l=this.lesson,[p,e]=w.players;
       w.phase='fighting';w.weather='dusk';w.projectiles=[];w.lightning=[];w.effects.hitstop=0;w.effects.execution=0;w.effects.revival=0;
-      const reset=(f,x,face)=>Object.assign(f,{x,y:810,vx:0,vy:0,ground:true,facing:face,hp:100,posture:0,spirit:20,nodes:2,phase:2,tonics:3,state:'IDLE',st:0,lockFrames:0,stun:0,move:null,moveName:'',attackId:null,cancelledAttackId:null,hits:[],wave:0,dead:false,guard:false,deflect:0,guardSpam:0,lastGuard:-999,lastParryTick:-999,guardBuffer:0,guardAge:0,aegis:false,aegisAge:0,prevBits:0,confirm:0,dash:0,dashDir:0,invuln:0,charged:0,burn:0,fireBlade:0,fireReady:0,blinkWindow:0,chase:0,grapple:null,drop:0,stomp:0,peace:0,healPending:0,attackReleased:true,holdCharged:false});
+      const reset=(f,x,face)=>Object.assign(f,{x,y:810,vx:0,vy:0,ground:true,facing:face,hp:100,posture:0,spirit:20,nodes:2,phase:2,tonics:3,state:'IDLE',st:0,lockFrames:0,stun:0,move:null,moveName:'',attackId:null,cancelledAttackId:null,hits:[],wave:0,dead:false,guard:false,deflect:0,guardSpam:0,lastGuard:-999,lastParryTick:-999,guardBuffer:0,guardAge:0,aegis:false,aegisAge:0,prevBits:0,confirm:0,dash:0,dashDir:0,invuln:0,charged:0,burn:0,fireBlade:0,fireReady:0,blinkWindow:0,chase:0,grapple:null,drop:0,stomp:0,stompBuffer:0,lastStompAttackId:null,peace:0,healPending:0,attackReleased:true,holdCharged:false});
       reset(p,1850,1);reset(e,1850+l.distance,-1);e.aiControlled=false;e.name='陪練・衡光';
       // Lessons only override the live fighter loadout, never saved lobby choices.
       p.loadout=[l.tool||'disc',l.tool==='flame'?'disc':'flame'];p.art=l.art||'cleave';
@@ -5568,16 +5642,15 @@ window.RiftAI = class RiftAI {
       kind: "slash",
     },
     charged: {
-      name: "蓄斬",
+      name: "蓄刺",
       windup: 36,
-      active: 14,
-      recovery: 27,
-      reach: 226,
-      damage: 13,
-      posture: 26,
-      kind: "slash",
-      waves: [0, 8],
-      breakGuard: true,
+      active: 6,
+      recovery: 24,
+      reach: 210,
+      damage: 18,
+      posture: 22,
+      kind: "pierce",
+      lunge: 6,
     },
     combo: {
       name: "追斬",
@@ -5741,8 +5814,7 @@ window.RiftAI = class RiftAI {
   // Phase pressure comes from patterns, never from shortening these tells.
   const BOSS_PROFILE=Object.freeze({maxHp:240,maxPosture:220,maxNodes:3,
     windup:Object.freeze({light:26,combo:22,chase:24,air:24,thrust:38,sweep:40,lightning:48,punish:30,triple:32,charged:44}),
-    moves:Object.freeze({charged:Object.freeze({waves:Object.freeze([0,18]),active:24}),
-      cleave:Object.freeze({waves:Object.freeze([0,20]),active:26})})});
+    moves:Object.freeze({cleave:Object.freeze({waves:Object.freeze([0,20]),active:26})})});
   const TOOL_NAMES = {
     disc: "飛輪",
     flame: "焰筒",
@@ -5807,6 +5879,7 @@ window.RiftAI = class RiftAI {
       moveSeq: 0,
       holdCharged: false,
       stomp: 0,
+      stompBuffer:0, lastStompAttackId:null,
       attackReleased: false,
       aegisAge: 0,
       parries: 0,
@@ -5962,7 +6035,7 @@ window.RiftAI = class RiftAI {
         states: STATES,
         snapshot: () => this.snapshot(),
         reset: () => this.start("local"),
-        version: "4.1.0", fsm:RiftFSM,vitals:RiftVitals,
+        version: "4.2.0", fsm:RiftFSM,vitals:RiftVitals,
       };
     }
     canReceiveInput() {
@@ -6100,7 +6173,7 @@ window.RiftAI = class RiftAI {
       for (const name of ['touchstart','touchmove']) {
         $("arena").addEventListener(name, preventSurfaceDefault, {passive:false});
         $("touch-controls").addEventListener(name, e => {
-          // Leave native clicks enabled for the separate Pause button.
+          // Leave native clicks enabled for the utility drawer and HUD menu.
           if (e.target.closest?.('[data-touch]')) preventSurfaceDefault(e);
         }, {passive:false});
       }
@@ -6214,7 +6287,7 @@ window.RiftAI = class RiftAI {
       };
       $("help-open").onclick = () => this.toggleGuide();
       $("help-close").onclick = () => this.toggleGuide(false);
-      if ($("touch-pause")) $("touch-pause").onclick = () => this.togglePause();
+      if ($("combat-menu")) $("combat-menu").onclick = () => this.mode==='online'?this.toggleGuide():this.togglePause();
       $("sound-button").onclick = () => {
         // The initial "enable" tap must not toggle the still-locked game off.
         this.muted = this.audioNeedsActivation() ? false : !this.muted;
@@ -6597,10 +6670,31 @@ window.RiftAI = class RiftAI {
       }
       this.begin(p,key);
     }
+    tryStomp(p,enemy){
+      const gap=enemy.y-p.y,dx=enemy.x-p.x;
+      const sweep=enemy.move?.kind==='sweep'&&(['STARTUP','ACTIVE'].includes(enemy.state)||(enemy.state==='RECOVERY'&&enemy.st<=18));
+      if(p.ground||p.stomp||!(p.stompBuffer>0)||!sweep||!enemy.attackId||p.lastStompAttackId===enemy.attackId||
+        enemy.dead||Math.abs(dx)>170||gap<20||gap>240)return false;
+      if(!(RiftFSM.canAct(p)||(p.state==='RECOVERY'&&p.confirm>0)))return false;
+      // Assisted approach cannot teleport through a floor separating the fighters.
+      if(this.world.platforms.some(pl=>{
+        if(pl.y<=p.y+12||pl.y>=enemy.y-12)return false;
+        const x=p.x+dx*(pl.y-p.y)/gap;return x>=pl.x-12&&x<=pl.x+pl.w+12;
+      }))return false;
+      const attackId=enemy.attackId;
+      if(p.state==='RECOVERY')this.idle(p);
+      p.stomp=1;p.stompBuffer=0;p.lastStompAttackId=attackId;
+      p.x=clamp(p.x+clamp(dx,-140,140),24,3976);p.y=enemy.y-90;p.vy=-13;
+      this.counter(enemy,p,enemy.move,'STOMP',RiftVitals.maxPosture(enemy)*.30,35,`${attackId}:stomp`);
+      this.impact(8,9);this.ring(enemy.x,enemy.y-68);this.fx('bladeCounter',enemy.x,enemy.y);this.caption('蹬踏');this.stats.stomps++;
+      return true;
+    }
     tickPlayer(p,bits,enemy){
       const w=this.world,pressed=bits&~p.prevBits,released=p.prevBits&~bits;
       p.prevBits=bits;p.peace++;
       p.guardBuffer=Math.max(0,(p.guardBuffer||0)-1);
+      p.stompBuffer=Math.max(0,(p.stompBuffer||0)-1);
+      if(!['IDLE','MOVE','GUARD','DEFLECT'].includes(p.state)&&!(p.state==='RECOVERY'&&p.confirm>0))p.stompBuffer=0;
       if(pressed&B.GUARD&&['IDLE','MOVE','GUARD','DEFLECT','RECOVERY','HIT_STUN','RECOIL'].includes(p.state))p.guardBuffer=8;
       const mouseFacing = p.id === this.localId && (this.mouseFaceTick >= w.tick || this.mouseButtons.has(0) || this.mouseButtons.has(2) || !!(bits&B.ART) && this.mouseArtGesture);
       if(mouseFacing && RiftFSM.canAct(p)) p.facing = enemy.x >= p.x ? 1 : -1;
@@ -6636,6 +6730,11 @@ window.RiftAI = class RiftAI {
         if(!(bits&(B.LEFT|B.RIGHT))&&Math.abs(enemy.x-p.x)<600)p.facing=enemy.x>=p.x?1:-1;
       }
       if(p.state==='DEFLECT'){
+        // Jump is a defensive choice: drop the guard window before leaving the
+        // ground, so touch jump+guard never traps the player in a parry pose.
+        if(pressed&B.JUMP)this.idle(p);
+      }
+      if(p.state==='DEFLECT'){
         if(p.lockFrames>0){p.st++;p.lockFrames--;p.vx=0;this.physics(p,0);return;}
         this.transition(p,bits&B.GUARD?'GUARD':'IDLE',{complete:true});
       }
@@ -6661,11 +6760,11 @@ window.RiftAI = class RiftAI {
       }
       if(pressed&B.JUMP&&(free||canCancel)){
         if(p.ground){if(bits&B.DOWN){p.drop=18;p.y+=5;p.ground=false;}else{p.vy=-15.3;p.ground=false;p.stomp=0;this.fx('jump',p.x,p.y);}}
-        else if(Math.abs(p.x-enemy.x)<115&&p.y<enemy.y-25&&p.y>enemy.y-215&&!p.stomp&&enemy.move?.kind==='sweep'&&['STARTUP','ACTIVE'].includes(enemy.state)){
-          p.stomp=1;p.vy=-13;p.y=enemy.y-90;this.counter(enemy,p,enemy.move,'STOMP',RiftVitals.maxPosture(enemy)*.30,35,`${enemy.attackId}:stomp`);
-          this.impact(8,9);this.ring(enemy.x,enemy.y-68);this.fx('bladeCounter',enemy.x,enemy.y);this.caption('蹬踏');this.stats.stomps++;
-        }else if(p.grapple){this.idle(p);p.vy=-13;}
+        else if(p.grapple){this.idle(p);p.vy=-13;}
+        else if(!p.stomp)p.stompBuffer=12;
       }
+      if(pressed&(B.ATTACK|B.HEAL|B.DASH|B.GRAPPLE|B.TOOL1|B.TOOL2|B.ART|B.THRUST|B.SWEEP|B.LIGHTNING|B.TRIPLE))p.stompBuffer=0;
+      this.tryStomp(p,enemy);
       if(pressed&B.GRAPPLE&&(free||canCancel)){if(canCancel)this.idle(p);this.grapple(p);}
       if(pressed&B.ATTACK&&free&&RiftVitals.vulnerable(enemy)&&Math.abs(p.x-enemy.x)<135&&Math.abs(p.y-enemy.y)<115){this.execute(p,enemy);return;}
       if(pressed&B.ATTACK&&p.charged>0&&!p.ground&&(free||canCancel)){
@@ -6728,6 +6827,7 @@ window.RiftAI = class RiftAI {
             p.vy = 0;
             p.ground = true;
             p.stomp = 0;
+            p.stompBuffer = 0;
             break;
           }
         }

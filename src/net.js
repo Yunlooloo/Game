@@ -2,7 +2,7 @@
 /* Riftblade Echoes — transport only. Simulation and authority live in Game. */
 (() => {
   'use strict';
-  const VERSION = 4;
+  const VERSION = 5;
   const PREFIX = 'riftblade-';
   const MAX_PACKET = 196608;
   const MAX_HISTORY = 240;

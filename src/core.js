@@ -31,16 +31,15 @@
       kind: "slash",
     },
     charged: {
-      name: "蓄斬",
+      name: "蓄刺",
       windup: 36,
-      active: 14,
-      recovery: 27,
-      reach: 226,
-      damage: 13,
-      posture: 26,
-      kind: "slash",
-      waves: [0, 8],
-      breakGuard: true,
+      active: 6,
+      recovery: 24,
+      reach: 210,
+      damage: 18,
+      posture: 22,
+      kind: "pierce",
+      lunge: 6,
     },
     combo: {
       name: "追斬",
@@ -204,8 +203,7 @@
   // Phase pressure comes from patterns, never from shortening these tells.
   const BOSS_PROFILE=Object.freeze({maxHp:240,maxPosture:220,maxNodes:3,
     windup:Object.freeze({light:26,combo:22,chase:24,air:24,thrust:38,sweep:40,lightning:48,punish:30,triple:32,charged:44}),
-    moves:Object.freeze({charged:Object.freeze({waves:Object.freeze([0,18]),active:24}),
-      cleave:Object.freeze({waves:Object.freeze([0,20]),active:26})})});
+    moves:Object.freeze({cleave:Object.freeze({waves:Object.freeze([0,20]),active:26})})});
   const TOOL_NAMES = {
     disc: "飛輪",
     flame: "焰筒",
@@ -270,6 +268,7 @@
       moveSeq: 0,
       holdCharged: false,
       stomp: 0,
+      stompBuffer:0, lastStompAttackId:null,
       attackReleased: false,
       aegisAge: 0,
       parries: 0,
@@ -425,7 +424,7 @@
         states: STATES,
         snapshot: () => this.snapshot(),
         reset: () => this.start("local"),
-        version: "4.1.0", fsm:RiftFSM,vitals:RiftVitals,
+        version: "4.2.0", fsm:RiftFSM,vitals:RiftVitals,
       };
     }
     canReceiveInput() {
@@ -563,7 +562,7 @@
       for (const name of ['touchstart','touchmove']) {
         $("arena").addEventListener(name, preventSurfaceDefault, {passive:false});
         $("touch-controls").addEventListener(name, e => {
-          // Leave native clicks enabled for the separate Pause button.
+          // Leave native clicks enabled for the utility drawer and HUD menu.
           if (e.target.closest?.('[data-touch]')) preventSurfaceDefault(e);
         }, {passive:false});
       }
@@ -677,7 +676,7 @@
       };
       $("help-open").onclick = () => this.toggleGuide();
       $("help-close").onclick = () => this.toggleGuide(false);
-      if ($("touch-pause")) $("touch-pause").onclick = () => this.togglePause();
+      if ($("combat-menu")) $("combat-menu").onclick = () => this.mode==='online'?this.toggleGuide():this.togglePause();
       $("sound-button").onclick = () => {
         // The initial "enable" tap must not toggle the still-locked game off.
         this.muted = this.audioNeedsActivation() ? false : !this.muted;
@@ -1060,10 +1059,31 @@
       }
       this.begin(p,key);
     }
+    tryStomp(p,enemy){
+      const gap=enemy.y-p.y,dx=enemy.x-p.x;
+      const sweep=enemy.move?.kind==='sweep'&&(['STARTUP','ACTIVE'].includes(enemy.state)||(enemy.state==='RECOVERY'&&enemy.st<=18));
+      if(p.ground||p.stomp||!(p.stompBuffer>0)||!sweep||!enemy.attackId||p.lastStompAttackId===enemy.attackId||
+        enemy.dead||Math.abs(dx)>170||gap<20||gap>240)return false;
+      if(!(RiftFSM.canAct(p)||(p.state==='RECOVERY'&&p.confirm>0)))return false;
+      // Assisted approach cannot teleport through a floor separating the fighters.
+      if(this.world.platforms.some(pl=>{
+        if(pl.y<=p.y+12||pl.y>=enemy.y-12)return false;
+        const x=p.x+dx*(pl.y-p.y)/gap;return x>=pl.x-12&&x<=pl.x+pl.w+12;
+      }))return false;
+      const attackId=enemy.attackId;
+      if(p.state==='RECOVERY')this.idle(p);
+      p.stomp=1;p.stompBuffer=0;p.lastStompAttackId=attackId;
+      p.x=clamp(p.x+clamp(dx,-140,140),24,3976);p.y=enemy.y-90;p.vy=-13;
+      this.counter(enemy,p,enemy.move,'STOMP',RiftVitals.maxPosture(enemy)*.30,35,`${attackId}:stomp`);
+      this.impact(8,9);this.ring(enemy.x,enemy.y-68);this.fx('bladeCounter',enemy.x,enemy.y);this.caption('蹬踏');this.stats.stomps++;
+      return true;
+    }
     tickPlayer(p,bits,enemy){
       const w=this.world,pressed=bits&~p.prevBits,released=p.prevBits&~bits;
       p.prevBits=bits;p.peace++;
       p.guardBuffer=Math.max(0,(p.guardBuffer||0)-1);
+      p.stompBuffer=Math.max(0,(p.stompBuffer||0)-1);
+      if(!['IDLE','MOVE','GUARD','DEFLECT'].includes(p.state)&&!(p.state==='RECOVERY'&&p.confirm>0))p.stompBuffer=0;
       if(pressed&B.GUARD&&['IDLE','MOVE','GUARD','DEFLECT','RECOVERY','HIT_STUN','RECOIL'].includes(p.state))p.guardBuffer=8;
       const mouseFacing = p.id === this.localId && (this.mouseFaceTick >= w.tick || this.mouseButtons.has(0) || this.mouseButtons.has(2) || !!(bits&B.ART) && this.mouseArtGesture);
       if(mouseFacing && RiftFSM.canAct(p)) p.facing = enemy.x >= p.x ? 1 : -1;
@@ -1099,6 +1119,11 @@
         if(!(bits&(B.LEFT|B.RIGHT))&&Math.abs(enemy.x-p.x)<600)p.facing=enemy.x>=p.x?1:-1;
       }
       if(p.state==='DEFLECT'){
+        // Jump is a defensive choice: drop the guard window before leaving the
+        // ground, so touch jump+guard never traps the player in a parry pose.
+        if(pressed&B.JUMP)this.idle(p);
+      }
+      if(p.state==='DEFLECT'){
         if(p.lockFrames>0){p.st++;p.lockFrames--;p.vx=0;this.physics(p,0);return;}
         this.transition(p,bits&B.GUARD?'GUARD':'IDLE',{complete:true});
       }
@@ -1124,11 +1149,11 @@
       }
       if(pressed&B.JUMP&&(free||canCancel)){
         if(p.ground){if(bits&B.DOWN){p.drop=18;p.y+=5;p.ground=false;}else{p.vy=-15.3;p.ground=false;p.stomp=0;this.fx('jump',p.x,p.y);}}
-        else if(Math.abs(p.x-enemy.x)<115&&p.y<enemy.y-25&&p.y>enemy.y-215&&!p.stomp&&enemy.move?.kind==='sweep'&&['STARTUP','ACTIVE'].includes(enemy.state)){
-          p.stomp=1;p.vy=-13;p.y=enemy.y-90;this.counter(enemy,p,enemy.move,'STOMP',RiftVitals.maxPosture(enemy)*.30,35,`${enemy.attackId}:stomp`);
-          this.impact(8,9);this.ring(enemy.x,enemy.y-68);this.fx('bladeCounter',enemy.x,enemy.y);this.caption('蹬踏');this.stats.stomps++;
-        }else if(p.grapple){this.idle(p);p.vy=-13;}
+        else if(p.grapple){this.idle(p);p.vy=-13;}
+        else if(!p.stomp)p.stompBuffer=12;
       }
+      if(pressed&(B.ATTACK|B.HEAL|B.DASH|B.GRAPPLE|B.TOOL1|B.TOOL2|B.ART|B.THRUST|B.SWEEP|B.LIGHTNING|B.TRIPLE))p.stompBuffer=0;
+      this.tryStomp(p,enemy);
       if(pressed&B.GRAPPLE&&(free||canCancel)){if(canCancel)this.idle(p);this.grapple(p);}
       if(pressed&B.ATTACK&&free&&RiftVitals.vulnerable(enemy)&&Math.abs(p.x-enemy.x)<135&&Math.abs(p.y-enemy.y)<115){this.execute(p,enemy);return;}
       if(pressed&B.ATTACK&&p.charged>0&&!p.ground&&(free||canCancel)){
@@ -1191,6 +1216,7 @@
             p.vy = 0;
             p.ground = true;
             p.stomp = 0;
+            p.stompBuffer = 0;
             break;
           }
         }

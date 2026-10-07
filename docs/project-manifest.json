@@ -4,7 +4,7 @@
     "name": "斬境殘響",
     "englishName": "Riftblade Echoes",
     "repository": "https://github.com/Yunlooloo/Game",
-    "version": "4.1.0",
+    "version": "4.2.0",
     "language": "zh-Hant",
     "status": "early prototype"
   },
@@ -26,7 +26,7 @@
     "node": ">=22",
     "playwright": "1.62.0",
     "runtimePeerJS": "1.5.5",
-    "networkProtocol": 4
+    "networkProtocol": 5
   },
   "deployTarget": {
     "provider": "GitHub Pages",

@@ -10,13 +10,13 @@
     {id:'dash', title:'03 · 墊步取位', group:'起步', goal:'朝一個方向墊步，實際移動至少 80 像素。', keys:'A / D ＋ Shift 墊步', tip:'墊步消耗的是出手時機，不消耗共鳴。能閃普通斬擊，但危險招式需要相應反制。', distance:350},
     {id:'grapple', title:'04 · 掛索飛躍', group:'起步', goal:'抓住上方亮色錨點，沿掛索上升至少 80 像素。', keys:'F 掛索 · 空中左鍵可接跳斬', tip:'掛索自動挑選面前可達的高處錨點。飛到高台後，也能 S ＋ 空白鍵回到下層。', distance:330},
     {id:'light', title:'05 · 第一刀', group:'刀刃', goal:'用一次輕斬實際命中陪練。', keys:'點按滑鼠左鍵', tip:'靠近到一把劍的距離。18 幀起手 → 5 幀判定 → 14 幀收招；揮空也要付出收招時間。', distance:90},
-    {id:'charged', title:'06 · 延遲出刀', group:'刀刃', goal:'蓄力後釋放蓄斬，命中或擊破陪練的普通防禦。', keys:'按住左鍵至少 0.6 秒，再放開', tip:'陪練會一直普通防禦。雙重蓄斬能崩解普通格擋，但完美招架仍可化解；不要在蓄力中嘗試防禦。', distance:110, behavior:'guard'},
+    {id:'charged', title:'06 · 蓄刺', group:'刀刃', goal:'蓄力後放開，以單次長距離突刺命中陪練。', keys:'按住左鍵至少 0.6 秒，再放開', tip:'蓄刺可格擋、可招架，不是紅色危險突刺；不會破普通防禦。雙斷才是兩次重擊並回復架勢的奧義。', distance:170},
     {id:'combo', title:'07 · 命中才有追擊', group:'刀刃', goal:'輕斬命中後，在收招時再點左鍵，讓「追斬」命中。', keys:'左鍵 → 放開 → 命中後再點左鍵', tip:'第一刀命中或被格擋，才開放追斬／墊步取消。太早按第二次、一直按住或揮空，都不算連段。', distance:90},
     {id:'guard', title:'08 · 普通格擋的代價', group:'防守', goal:'提早按住右鍵，以普通格擋接下 2 刀。', keys:'持續按住滑鼠右鍵', tip:'陪練固定出輕斬。普通格擋不扣 HP，但累積自身架勢；不能永久靠擋來獲勝。', distance:90, behavior:'light', total:2},
     {id:'parry', title:'09 · 聽見完美招架', group:'防守', goal:'在刀鋒接觸前點右鍵，完成 2 次完美招架。', keys:'看到刀將落下時，點一下右鍵', tip:'窗口 16 幀。成功後放開再按，下一刀仍有完整窗口；只有快速空按會縮短至最低 12 幀。按住則繼續普通防禦。金色閃環與清亮刀鳴表示成功。', distance:90, behavior:'light', total:2},
     {id:'posture', title:'10 · HP 決定架勢恢復', group:'防守', goal:'先在安全距離按住右鍵，恢復 20 架勢；再觀察低血量時恢復停止。', keys:'按住右鍵，觀看上方架勢條', tip:'HP ≥ 75：35 / 秒；50–74：15 / 秒；低於 50：0。距離超過 350 時持續防禦，加速 2.5 倍，仍受 HP 限制。', distance:500, total:2},
     {id:'bladePin', title:'11 · 紅色「突」：踏刃', group:'反制', goal:'迎著突刺墊步，成功踏刃 2 次。', keys:'紅色「突」亮起後，接觸前朝對手按 Shift', tip:'突刺不能普通防禦。向後閃不算踏刃；反制成功會踩住刃身，重創敵方 35 架勢。', distance:130, behavior:'thrust', total:2},
-    {id:'stomp', title:'12 · 琥珀色「掃」：蹬踏', group:'反制', goal:'跳過下段橫掃，再在對手頭上按一次跳躍，成功蹬踏。', keys:'空白鍵 → 靠近頭頂 → 再按空白鍵', tip:'橫掃不能擋，也不能踏刃。必須跳起、放開跳躍鍵，再按一次；保持在對手上方一個身位。', distance:70, behavior:'sweep'},
+    {id:'stomp', title:'12 · 琥珀色「掃」：蹬踏', group:'反制', goal:'跳過下段橫掃，在空中靠近時再按一次跳躍，成功蹬踏。', keys:'空白鍵 → 空中靠近 → 再按空白鍵', tip:'橫掃不能擋，也不能踏刃。跳起、放開跳躍鍵，再按一次；距離 170 像素內會輔助踏入，不必對準頭頂。可提早 12 幀按下，橫掃收招前 18 幀仍可反制；隔著平台則無法蹬踏。', distance:70, behavior:'sweep'},
     {id:'reversal', title:'13 · 青色「電」：返雷', group:'反制', goal:'躍起接雷，落地前按攻擊，把電荷反擊命中陪練。', keys:'空白鍵接雷 → 空中點左鍵', tip:'等到青色「電」進入出手前再跳；太早跳可能已落地。接雷後身上會發亮；帶電落地會自傷。', distance:120, behavior:'lightning'},
     {id:'heal', title:'14 · 修復劑與安全距離', group:'資源', goal:'在安全距離完成一次修復劑治療，回復 40 HP。', keys:'R 使用修復劑', tip:'一般對局只有 3 次。喝藥鎖定 0.9 秒，受擊就中斷且不治療。先拉開超過 350 像素；訓練會免費補充藥劑。', distance:500},
     {id:'disc', title:'15 · 飛輪與疾斬', group:'裝備', goal:'飛輪實際命中，再用左鍵疾斬命中。', keys:'E 投飛輪 → 命中後左鍵', tip:'本課自動裝備飛輪。Q／滾輪可切換兩件裝備；投射物也能被招架。命中後的追斬有長距離突進。', distance:210, tool:'disc', total:2},
@@ -83,7 +83,7 @@
       this.index=Math.max(0,Math.min(LESSONS.length-1,index));this.completedCurrent=false;this.count=0;this.ticks=0;this.wait=100;this.flags={};this.lastDraw='';
       const game=this.game,w=game.world,l=this.lesson,[p,e]=w.players;
       w.phase='fighting';w.weather='dusk';w.projectiles=[];w.lightning=[];w.effects.hitstop=0;w.effects.execution=0;w.effects.revival=0;
-      const reset=(f,x,face)=>Object.assign(f,{x,y:810,vx:0,vy:0,ground:true,facing:face,hp:100,posture:0,spirit:20,nodes:2,phase:2,tonics:3,state:'IDLE',st:0,lockFrames:0,stun:0,move:null,moveName:'',attackId:null,cancelledAttackId:null,hits:[],wave:0,dead:false,guard:false,deflect:0,guardSpam:0,lastGuard:-999,lastParryTick:-999,guardBuffer:0,guardAge:0,aegis:false,aegisAge:0,prevBits:0,confirm:0,dash:0,dashDir:0,invuln:0,charged:0,burn:0,fireBlade:0,fireReady:0,blinkWindow:0,chase:0,grapple:null,drop:0,stomp:0,peace:0,healPending:0,attackReleased:true,holdCharged:false});
+      const reset=(f,x,face)=>Object.assign(f,{x,y:810,vx:0,vy:0,ground:true,facing:face,hp:100,posture:0,spirit:20,nodes:2,phase:2,tonics:3,state:'IDLE',st:0,lockFrames:0,stun:0,move:null,moveName:'',attackId:null,cancelledAttackId:null,hits:[],wave:0,dead:false,guard:false,deflect:0,guardSpam:0,lastGuard:-999,lastParryTick:-999,guardBuffer:0,guardAge:0,aegis:false,aegisAge:0,prevBits:0,confirm:0,dash:0,dashDir:0,invuln:0,charged:0,burn:0,fireBlade:0,fireReady:0,blinkWindow:0,chase:0,grapple:null,drop:0,stomp:0,stompBuffer:0,lastStompAttackId:null,peace:0,healPending:0,attackReleased:true,holdCharged:false});
       reset(p,1850,1);reset(e,1850+l.distance,-1);e.aiControlled=false;e.name='陪練・衡光';
       // Lessons only override the live fighter loadout, never saved lobby choices.
       p.loadout=[l.tool||'disc',l.tool==='flame'?'disc':'flame'];p.art=l.art||'cleave';

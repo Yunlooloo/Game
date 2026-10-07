@@ -37,7 +37,7 @@
 - `localStorage` 目前只存教學完成 lesson ID，不能視為可信身份、支付／成就證據或安全保管區。資料模型與未來 migration 見 [SAVE_SYSTEM](SAVE_SYSTEM.md)。
 - `?room=` 只預填 input，不自動加入；`RiftNet._normalizeCode` 驗證 6–12 位英數房碼。使用 `textContent` 顯示狀態，不能將對方資料拼成 `innerHTML` 或 executable code。
 - PeerJS 使用公用信令 `0.peerjs.com`。bundle 預設含 Google STUN 和 PeerJS eu/us TURN；本遊戲沒有自有、可承諾容量的中繼。那些是 vendor 公開預設設定，不是 repository 私有 credential。連線會與信令／ICE 服務及對手交換必要網路資訊，不能稱完全離線或匿名。
-- `RiftNet` cleanJSON 重新建立 JSON tree，限制封包結構、深度、長度、數值、敏感 prototype keys；每秒最多 300 收包，過度 bufferedAmount 中斷。入房 metadata 核對 `game='riftblade'`（遊戲識別）與 `v=4`（protocol version），封包也驗證協議版本；**不比對 runtime `4.1.0`、move 定義或 content hash**。
+- `RiftNet` cleanJSON 重新建立 JSON tree，限制封包結構、深度、長度、數值、敏感 prototype keys；每秒最多 300 收包，過度 bufferedAmount 中斷。入房 metadata 核對 `game='riftblade'`（遊戲識別）與 `v=5`（protocol version），封包也驗證協議版本；**不比對 runtime `4.2.0`、move 定義或 content hash**。
 - `src/authority.js` 再核對戰鬥行為。防守方裁決是手感／權限設計，**不是防作弊保障**：雙方均持有完整程式與 `game.debug`，可修改自己 runtime。適合信任型好友對局，沒有 authoritative server 或競技排名驗證。
 - 房號不是認證或密碼；目前不提供反觀戰／身份驗證／可靠秘密房間保證。不要放敏感資料進封包、房號、URL 或錯誤訊息。
 
@@ -49,6 +49,6 @@
 
 **PLANNED**：需要自有 TURN 時，長效私密金鑰不能內嵌在單檔。應由受控後端核發短效 TURN credential，定義速率限制、服務成本與私隱告知，再加環境變數範本（只有 key 名與安全例值）。
 
-**PLANNED**：新增 Boss／move 或調整判定資料時，先檢查雙端內容相容性。現有 `v=4` 相同不能保證兩個不同遊戲 revision 能正確對決；改變封包語義或不能相容的戰鬥契約時應提升 protocol version，或先導入明確的 content compatibility handshake，再做新舊版本互連拒絕測試。不能只提升 UI 顯示版本便宣稱舊客戶端會被擋下。
+**PLANNED**：新增 Boss／move 或調整判定資料時，先檢查雙端內容相容性。現有 `v=5` 相同不能保證兩個不同遊戲 revision 能正確對決；改變封包語義或不能相容的戰鬥契約時應提升 protocol version，或先導入明確的 content compatibility handshake，再做新舊版本互連拒絕測試。不能只提升 UI 顯示版本便宣稱舊客戶端會被擋下。
 
 **OPTIONAL**：正式競技／多人持久世界才評估伺服器裁決、身份驗證、反濫用。CSP 能降低未來注入風險，但目前單檔含 inline script/style、data audio、WebSocket/WebRTC；新增 CSP 必須明列允許來源並在真實瀏覽器測試，不能貼上通用 policy 導致遊戲失效。

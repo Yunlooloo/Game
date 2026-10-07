@@ -1,6 +1,6 @@
 # 平台、輸入、UI 與效能
 
-本文件以 runtime **4.1.0** 的 `src/core.js`、`src/render.js`、`src/audio.js`、`src/shell.html` 與教學 UI 為準。**IMPLEMENTED** 表示存在於程式，並不等於已通過所有裝置驗證。操作故障見 [TROUBLESHOOTING](TROUBLESHOOTING.md)，測試方法見 [TESTING](TESTING.md)。
+本文件以 runtime **4.2.0** 的 `src/core.js`、`src/render.js`、`src/audio.js`、`src/shell.html` 與教學 UI 為準。**IMPLEMENTED** 表示存在於程式，並不等於已通過所有裝置驗證。操作故障見 [TROUBLESHOOTING](TROUBLESHOOTING.md)，測試方法見 [TESTING](TESTING.md)。
 
 ## IMPLEMENTED：輸入介面
 
@@ -22,7 +22,7 @@ flowchart LR
 - 輸入先轉成 `B` bitmask，再由同一 `step`／FSM 執行；按鍵不直接造成傷害。AI 與教學也沿用相同動作路徑。
 - `canReceiveInput()` 限定戰鬥、未暫停且無阻擋面板。文字欄位不接收戰鬥快捷鍵；回合開始／恢復時 `focusArena()` 將焦點回到 Canvas。
 - `touchHeld` 保留長按；`touchPressed` 保留短按邊緣直到固定 tick 取用，正常 pointerup 不抹除待處理的短按。pointer cancel／非正常 lost capture 清理對應輸入；不同 `pointerId` 可同時移動與防禦。
-- `blur` 清空輸入，本機模式暫停；`visibilitychange` 清空輸入及 accumulator。線上模式不提供單方暫停，`Escape`／手機暫停按鈕顯示持續對局提示。
+- `blur` 清空輸入，本機模式暫停；`visibilitychange` 清空輸入及 accumulator。線上模式不提供單方暫停，`Escape` 顯示持續對局提示，手機HUD「選單」改開操作卷軸。
 - 戰鬥區的 `touch-action:none`、`user-select:none`、`-webkit-touch-callout:none` 配合範圍限定的事件抑制，避免長按選取。選單／教學仍可捲動，`#room-code` 可輸入及選取。不要改成整個 `body` 禁止觸控，也不能攔截全域 `touchend` 傳遞。
 
 **PLANNED**：需要可重綁按鍵時，抽取 `InputBindings` 與 keyboard/mouse/touch adapter，輸出既有 bits；不要建立第二個 gameplay resolver。輸入配置需同時更新 UI 提示與教學目標。
@@ -45,7 +45,9 @@ flowchart LR
 ## IMPLEMENTED：視窗、DPI 與手機版
 
 - `viewport-fit=cover` 搭配 safe-area insets；Canvas 撐滿戰場，DOM 依媒體查詢調整。粗略指標裝置在戰鬥時顯示觸控區。
-- 手機主要左右、攻防鍵為 **64 CSS px**；橫向 **72 px**；粗略指標且寬度至少 900 px 時 **76 px**。輔助鍵一般 **46 px**，上述寬螢幕為 **48 px**。這是 CSS 尺寸，不是物理螢幕像素。
+- 手機左右、跳躍、墊步、攻防六個主要鍵為 **64 CSS px**；橫向 **72 px**；粗略指標且寬度至少 900 px 時 **76 px**。輔助鍵一般 **46 px**，上述寬螢幕為 **48 px**。這是 CSS 尺寸，不是物理螢幕像素。
+- 4.2.0：跳躍放在左側移動鍵上方，右側只保留墊步／架／斬；中央「技具」為預設收合的原生details，展開可換／用裝具、補藥、奧義、掛索。拇指區沒有暫停，HUD `#combat-menu` 保留本機暫停／線上操作卷軸入口。所有data-touch仍走原bitmask，沒有第二份手機戰鬥規則。窄直向（<360px）抽屜入口移至兩側上排中間，窄橫向（<700px）展開列放在主鍵上排中央，避免與方向鍵／HUD重疊。
+- 長按斬放開為蓄刺，不是兩連擊；空中再按跳有緩衝與近距離蹬踏輔助。具體判定由 [COMBAT_SYSTEM](COMBAT_SYSTEM.md) 維護。
 - `RiftRenderer.resize()` 讀取 Canvas 的 CSS bounding box，將主 Canvas 和後製 buffer 依 `min(devicePixelRatio, 2)` 建立 bitmap；最小邏輯尺寸 320×240。DPR 上限限制手機 fill rate 和記憶體成本。
 - **已知缺口**：`resize()` 目前只在 constructor 呼叫，沒有 `resize` listener／`ResizeObserver`。CSS 橫直向會改，但 bitmap 和 renderer 的 `w/h` 不會自動更新。旋轉後的鏡頭與畫面比例不能稱已正確支援；暫時在選好方向後重新載入。此限制為 [TECH_DEBT](TECH_DEBT.md) TD-16。
 - 沒有 Fullscreen API 按鈕、orientation lock、PWA manifest 或 service worker。瀏覽器本身的全螢幕功能不等於遊戲已實作全螢幕生命週期。

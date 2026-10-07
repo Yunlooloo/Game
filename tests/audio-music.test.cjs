@@ -76,6 +76,39 @@ async function main() {
   check('Both embedded tracks loop and preload metadata only', () => { for (const m of f.elements) { assert.equal(m.loop, true); assert.equal(m.preload, 'metadata'); assert.equal(m.srcWrites, 1); } });
   check('Default music mix leaves headroom and space for bright parries', () => { assert.equal(a.musicVolume, 0.3); assert.equal(a.musicBus.gain.value, 0.156); assert.equal(a.musicPresence.type, 'highshelf'); assert.equal(a.musicPresence.gain.value, -5); });
   check('Music and synth share the master limiter', () => { assert.equal(a.musicDuck.connections[0], a.master); assert.equal(a.master.connections[0], a.limiter); assert.equal(a.limiter.connections[0], a.ceiling); });
+  check('Master ceiling preserves ordinary music samples without harmonic coloration', () => {
+    const curve = a.ceiling.curve;
+    for (let i = 0; i < curve.length; ++i) {
+      const sample = i * 2 / (curve.length - 1) - 1;
+      if (Math.abs(sample) < 0.79) assert(Math.abs(curve[i] - sample) < 1e-7);
+    }
+    assert.equal(curve[(curve.length - 1) / 2], 0);
+  });
+  check('Dense transient ceiling remains symmetric, monotonic and below digital clipping', () => {
+    const curve = a.ceiling.curve;
+    for (let i = 0; i < curve.length; ++i) {
+      assert(Math.abs(curve[i]) <= 0.920001);
+      assert(Math.abs(curve[i] + curve[curve.length - 1 - i]) < 1e-7);
+      if (i > 0) assert(curve[i] >= curve[i - 1]);
+    }
+    assert(Math.abs(curve.at(-1) - 0.92) < 1e-6);
+    // WaveShaper clamps out-of-range input to its end samples, including stacks
+    // of simultaneous effects before the compressor's attack has settled.
+    for (const input of [-8, -2, 2, 8]) {
+      assert(Math.abs(curve[input < 0 ? 0 : curve.length - 1]) < 1);
+    }
+  });
+  a.update(1, 'storm');
+  check('Valid BGM never overlays wind, rain or river white noise, even in storms', () => {
+    for (const layer of [a.wind, a.rain, a.river]) assert.equal(layer.level.gain.value, 0);
+    assert.equal(a.voices.size, 0);
+  });
+  a.setMusicVolume(0); f.advance(1000); a.update(1, 'storm');
+  check('Setting music volume to zero does not enable fallback hiss or drums', () => {
+    for (const layer of [a.wind, a.rain, a.river]) assert.equal(layer.level.gain.value, 0);
+    assert.equal(a.voices.size, 0);
+  });
+  a.setMusicVolume(0.3);
   a.setScene('battle'); await flush();
   check('Battle scene crossfades using gain automation', () => { assert.equal(battle.element.paused, false); assert.equal(battle.target, 1); assert.equal(ambient.target, 0); assert.equal(f.timers.size, 1); assert(ambient.level.gain.calls.some(c => c[0] === 'target' && c[1] === 0 && c[3] === 0.24)); });
   const timerId = ambient.pauseTimer, playCount = battle.element.plays;
@@ -121,6 +154,12 @@ async function main() {
 
   const slow = fixture({ playMode: 'defer' }); await slow.audio.start();
   const old = slow.audio.musicTracks.get('ambient').element;
+  old.paused = true; old.readyState = 0; slow.advance(1000); slow.audio.update(1, 'storm');
+  check('Loading or pending gesture playback stays free of substitute white noise', () => {
+    for (const layer of [slow.audio.wind, slow.audio.rain, slow.audio.river]) assert.equal(layer.level.gain.value, 0);
+    assert.equal(slow.audio.voices.size, 0);
+  });
+  old.paused = false;
   slow.audio.setScene('battle'); slow.advance(2000);
   old.paused = false; old.pending.shift().resolve(); await flush();
   check('A late play promise cannot revive a scene that already faded out', () => assert.equal(old.paused, true));
@@ -140,6 +179,31 @@ async function main() {
   check('Corrupt optional music cannot prevent combat audio', () => { assert.equal(bad.audio.musicError, 'invalid-embedded-music'); assert.equal(bad.audio.voices.size, 1); });
   const absent = fixture({ noDocument: true }); await absent.audio.start(); absent.audio.sfx('deflect');
   check('Existing headless environments and absent music remain supported', () => { assert.equal(absent.audio.voices.size, 1); assert.equal(absent.audio.musicTracks.size, 0); });
+  absent.advance(2000); absent.audio.update(1, 'storm', 0.1);
+  check('Absent optional music retains the synthesized ambience fallback', () => {
+    for (const layer of [absent.audio.wind, absent.audio.rain, absent.audio.river]) assert(layer.level.gain.value > 0);
+    assert.equal(absent.audio.voices.size, 1);
+  });
+  const corrupt = fixture(); await corrupt.audio.start(); await flush();
+  const brokenTrack = corrupt.audio.musicTracks.get('ambient');
+  brokenTrack.element.error = { code: 3 }; brokenTrack.element.events.get('error')();
+  corrupt.advance(2000); corrupt.audio.update(1, 'storm', 0.1);
+  check('A decoder error enables fallback without disabling combat sound', () => {
+    assert.equal(brokenTrack.error, 'media-error-3');
+    for (const layer of [corrupt.audio.wind, corrupt.audio.rain, corrupt.audio.river]) assert(layer.level.gain.value > 0);
+    corrupt.audio.sfx('deflect'); assert.equal(corrupt.audio.voices.size, 2);
+  });
+  brokenTrack.error = ''; corrupt.advance(3000); corrupt.audio.update(1, 'storm');
+  check('Recovering the music fades every fallback layer back to silence', () => {
+    for (const layer of [corrupt.audio.wind, corrupt.audio.rain, corrupt.audio.river]) assert.equal(layer.level.gain.value, 0);
+    assert.equal(corrupt.audio.voices.size, 0);
+  });
+  brokenTrack.error = 'media-error-3';
+  corrupt.audio.setMusicVolume(0); corrupt.advance(3000); corrupt.audio.update(1, 'storm');
+  check('Music volume zero also silences the missing-track ambience fallback', () => {
+    for (const layer of [corrupt.audio.wind, corrupt.audio.rain, corrupt.audio.river]) assert.equal(layer.level.gain.value, 0);
+    assert.equal(corrupt.audio.voices.size, 0);
+  });
   const unsupported = fixture({ noContext: true });
   const supported = await unsupported.audio.start();
   check('Missing Web Audio fails gracefully', () => { assert.equal(supported, false); assert.equal(unsupported.audio.available, false); });

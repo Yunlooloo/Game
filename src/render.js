@@ -680,7 +680,7 @@
       let handX = 23, handY = -48, swordAngle = -.48;
       if (windup || beat?.preparing) {
         const prog = beat?.progress ?? clamp(st / 18, 0, 1);
-        if (kind === 'thrust') { handX = -9; handY = -56; swordAngle = -.04; }
+        if (kind === 'thrust' || kind === 'pierce') { handX = -9; handY = -56; swordAngle = -.04; }
         else if (kind === 'sweep') { handX = -16; handY = -31; swordAngle = -2.78; }
         else { handX = lerp(18, -8, prog); handY = lerp(-49, -89, prog); swordAngle = lerp(-.5, -2.25, prog); }
       } else if (attacking) {
@@ -688,7 +688,7 @@
         // the second and third contacts even though the simulation emitted them.
         const prog = beat?.progress ?? clamp(st / 5, 0, 1);
         handX = 27; handY = -58 + prog * 25; swordAngle = -.8 + prog * 1.65;
-        if (kind === 'thrust') { handX = 43; handY = -55; swordAngle = -.02; }
+        if (kind === 'thrust' || kind === 'pierce') { handX = 43; handY = -55; swordAngle = -.02; }
         if (kind === 'sweep') { handX = 30; handY = -19; swordAngle = .04; }
       } else if (state === 'RECOVERY') { handX = 25; handY = -31; swordAngle = .7; }
       else if (state === 'GUARD' || state === 'DEFLECT' || p.guard) { handX = 19; handY = -51; swordAngle = -1.27; }
@@ -713,7 +713,7 @@
       if (drinking) this.tonic(handX + 6, handY - 7, clamp(st / 14, 0, 1));
       else if (kind === 'hammer' && (windup || attacking || state === 'RECOVERY')) this.hammer(handX, handY, swordAngle);
       else this.sword(handX, handY, swordAngle, p.fireBlade > 0, p.charged, kind === 'rift' && (windup || attacking));
-      if (beat?.until <= 8 && !p.hidden && ['slash', 'cleave', 'rift', 'hammer'].includes(kind)) {
+      if (beat?.until <= 8 && !p.hidden && ['slash', 'cleave', 'rift', 'hammer', 'pierce'].includes(kind)) {
         // Read the combat clock, never wall time: hitstop must freeze this cue
         // along with the approaching strike, including gaps between combo hits.
         const x = handX + Math.cos(swordAngle) * 65, y = handY + Math.sin(swordAngle) * 65;
@@ -868,7 +868,7 @@
           const color = s.color || '#fff3c7';
           const start = kind === 'sweep' ? -.17 : kind === 'thrust' ? -.12 : -1.08;
           const end = kind === 'sweep' ? .85 : kind === 'thrust' ? .12 : .83;
-          if (kind === 'thrust') {
+          if (kind === 'thrust' || kind === 'pierce') {
             this.path([[0, -4], [r + 8, 0], [0, 4]], color);
             this.line(r * .22, 0, r, 0, '#fff8db', 2);
           } else {

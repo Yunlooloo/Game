@@ -1,6 +1,6 @@
 # Game Core、Player 與執行狀態
 
-狀態：**IMPLEMENTED** 描述 runtime `4.1.0` 的實際行為；**PLANNED** 為後續演進接口；**OPTIONAL** 只有具體玩法需要時才加入。本文件是 loop、world、角色生命週期、暫停與事件邊界的真實來源。戰鬥公式由 [COMBAT_SYSTEM](COMBAT_SYSTEM.md) 維護；輸入裝置、UI、效能與無障礙見 [PLATFORM](PLATFORM.md)。
+狀態：**IMPLEMENTED** 描述 runtime `4.2.0` 的實際行為；**PLANNED** 為後續演進接口；**OPTIONAL** 只有具體玩法需要時才加入。本文件是 loop、world、角色生命週期、暫停與事件邊界的真實來源。戰鬥公式由 [COMBAT_SYSTEM](COMBAT_SYSTEM.md) 維護；輸入裝置、UI、效能與無障礙見 [PLATFORM](PLATFORM.md)。
 
 ## IMPLEMENTED：啟動與每局流程
 
@@ -49,11 +49,11 @@
 
 | 事件 | 實際暫停語意 |
 | --- | --- |
-| 本機 Escape／手機暫停 | `togglePause()` 設 `game.paused`、清輸入、顯示面板；frame 清 accumulator，不執行 step |
+| 本機 Escape／HUD選單 | `togglePause()` 設 `game.paused`、清輸入、顯示面板；frame 清 accumulator，不執行 step |
 | 本機開啟操作卷軸 | `toggleGuide()` 使戰鬥暫停；關閉會恢復 |
 | 本機 window blur | 清輸入並開啟暫停；回到畫面需繼續 |
 | visibility change | 清輸入、清 accumulator、同步音訊；這個 handler 本身不設定 gameplay paused |
-| 線上暫停鍵 | 顯示不可暫停提示，戰鬥繼續；開啟卷軸停止本端輸入，但不停止對局 |
+| 線上 Escape／HUD選單 | Escape顯示不可暫停提示；HUD選單開啟操作卷軸並清除本端輸入，兩者都不停止對局 |
 | 線上斷線 | `onDisconnect` 暫停並停用繼續按鈕，回大廳處理 |
 | hitstop | 保留輸入上升緣、特效倒數與網路 callback；與完整暫停不同 |
 
@@ -82,7 +82,7 @@
 | System／狀態 | 主要owner | 負責／不負責 |
 | --- | --- | --- |
 | Core／IMPLEMENTED | `Game.frame/step/start/lobby` | 時鐘、模式、世界生命週期；不讓render FPS決定招式 |
-| Player action／IMPLEMENTED | `Game.tickPlayer`＋`RiftFSM` | intent與合法轉移；Input adapter不直接扣血 |
+| Player action／IMPLEMENTED | `Game.tickPlayer / tryStomp`＋`RiftFSM` | intent與合法轉移；Input adapter不直接扣血 |
 | Combat／IMPLEMENTED | `Game.collisions/hit/counter`＋`RiftVitals` | 前者唯一防禦／命中裁決，後者生命規則；UI／AI不另算damage |
 | Online ownership／IMPLEMENTED | `RiftAuthority`；傳輸由`RiftNet` | 封包驗證／去重／owner；不代替server anti-cheat |
 | Boss／IMPLEMENTED | `RiftAI` | 可見狀態觀察、導航與input決策；不操作DOM或直接傷害 |
@@ -103,7 +103,7 @@
 | 群組 | 欄位／責任 |
 | --- | --- |
 | 身份與控制 | `id / name / aiControlled`；現在 id 恰為 0 或 1 |
-| 身體與移動 | `x/y/vx/vy/facing/ground/drop/grapple/dash/dashDir/hidden` |
+| 身體與移動 | `x/y/vx/vy/facing/ground/drop/grapple/dash/dashDir/hidden/stomp/stompBuffer/lastStompAttackId` |
 | 生命與資源 | `hp/maxHp/posture/maxPosture/spirit/nodes/maxNodes/phase/tonics/healPending/peace`；玩家/PvP/陪練100／100／2，AI赤衡240／220／3 |
 | FSM | `state/st/lockFrames/stun/revive`；`st` 為當前段經過 tick，不是全局時間 |
 | 攻擊實例 | `moveName/move/attackId/moveSeq/wave/hits/charge/attackReleased/holdCharged/confirm` |
@@ -119,8 +119,8 @@
 | `IDLE / MOVE / GUARD` | 中立可動狀態；`canAct` 還要求 HP >0、未死、lockFrames<=0 |
 | `STARTUP` | 起手；普通完成只進 ACTIVE，不能開始防禦 |
 | `ACTIVE` | 有效段；普通完成只進 RECOVERY |
-| `RECOVERY` | 收招；完成後回中立；命中確認允許追擊／墊步等取消；指定輕招經過6 tick另可防禦取消 |
-| `DEFLECT` | 點按防禦狀態鎖；進入時以16→12 tick窗口設鎖；成功後消耗窗口並縮鎖到最多2 tick，合法新按可重起招架 |
+| `RECOVERY` | 收招；完成後回中立；命中確認允許追擊／墊步取消及跳躍，成功蹬踏亦結束收招；指定輕招經過6 tick另可防禦取消 |
+| `DEFLECT` | 點按防禦狀態鎖；進入時以16→12 tick窗口設鎖；成功後消耗窗口並縮鎖到最多2 tick，合法新按可重起招架；新按跳躍可離開並放棄招架窗口 |
 | `RECOIL / BLADE_PINNED / HIT_STUN` | 反彈／踏刃被制／受創；倒數完成才能正常回中立 |
 | `STUNNED` | 失衡倒地，暫停所有主動操作、鎖住橫向位移；倒數完由 Vitals 恢復低 HP |
 | `GRAPPLING` | 沿掛索移動；落點或允許的攻擊／取消路徑結束 |
@@ -132,6 +132,8 @@
 受擊等特殊反應使用 `enter(...,{interrupt:true})`；正常進程使用經核准的 `complete`，不是 UI 可以任意傳入的開鎖許可。`enter()` 會清除取消攻擊、招架、掛索、治療等欄位；新增控制狀態必須同步轉移、更新、網路 allowlist、render、AI與教學。現有遠端副本 adapter 和教學 reset 有直接賦值特例，其他新功能不應複製為通用捷徑。
 
 移動為固定 tick 速度，重力與向下速度有上限；平台只有由上往下穿過頂面的站立判定，沒有完整剛體碰撞／牆滑動。墊步與跳躍是 actor 欄位，不各自占一個 FSM 狀態。未來新增動畫名稱需維持 gameplay state 與 visual pose 分離，詳見 [ASSET_PIPELINE](ASSET_PIPELINE.md)。
+
+空中新按跳躍保存12 combat tick的 `stompBuffer`，`tryStomp()` 沿用自由行動／已確認收招取消，經橫掃階段、範圍與平台遮擋判定才呼叫共用 `counter()`。`stomp` 記錄本次滯空已成功，`lastStompAttackId` 防同招重播；落地、受擊鎖定及競爭動作輸入清理緩衝，hitstop不扣緩衝時間。具體範圍與反制效果見 [COMBAT_SYSTEM](COMBAT_SYSTEM.md)，變更理由見 [ADR-005](adr/005-stomp-assist-and-charged-thrust.md)。
 
 ## IMPLEMENTED：教學與目前事件耦合
 
@@ -193,4 +195,4 @@ const event = {
 
 ## 修改後必查
 
-測試命令統一見 [TESTING](TESTING.md)。改 loop 時要比較60／144／240Hz的相同simulation結果、長stall上限、pause與hitstop差異、短tap緩衝；改actor／FSM時驗證中斷清除、防禦緩衝、玩家雙核／Boss三核、容量比例、重開與線上副本；改事件／教學時驗證沒有重複結果／重複listener且22課依真實接觸完成。完整清單見 [REGRESSION_CHECKLIST](REGRESSION_CHECKLIST.md)。
+測試命令統一見 [TESTING](TESTING.md)。改 loop 時要比較60／144／240Hz的相同simulation結果、長stall上限、pause與hitstop差異、短tap緩衝；改actor／FSM時驗證中斷清除、防禦緩衝、蹬踏緩衝／去重／平台遮擋與鎖定、玩家雙核／Boss三核、容量比例、重開與線上副本；改事件／教學時驗證沒有重複結果／重複listener且22課依真實接觸完成。完整清單見 [REGRESSION_CHECKLIST](REGRESSION_CHECKLIST.md)。

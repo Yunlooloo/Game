@@ -1,8 +1,8 @@
 # 戰鬥系統
 
-狀態：**IMPLEMENTED** 的內容依 `4.1.0` 程式；**PLANNED** 是演進接口，**OPTIONAL** 須有玩法需求才實作。幀均指 60 Hz 邏輯 tick，不能換算為 `requestAnimationFrame` 次數。
+狀態：**IMPLEMENTED** 的內容依 `4.2.0` 程式；**PLANNED** 是演進接口，**OPTIONAL** 須有玩法需求才實作。幀均指 60 Hz 邏輯 tick，不能換算為 `requestAnimationFrame` 次數。
 
-真實來源：[src/core.js](../src/core.js) 的 `MOVES`、`Game.begin / advanceAttack / collisions / hit / counter / execute`；[src/fsm.js](../src/fsm.js) 的 `RiftFSM`；[src/vitals.js](../src/vitals.js) 的 `RiftVitals`。招式定義與新增程序見 [ABILITY_SYSTEM.md](ABILITY_SYSTEM.md)，Boss 決策見 [BOSS_SYSTEM.md](BOSS_SYSTEM.md)。
+真實來源：[src/core.js](../src/core.js) 的 `MOVES`、`Game.begin / advanceAttack / tryStomp / collisions / hit / counter / execute`；[src/fsm.js](../src/fsm.js) 的 `RiftFSM`；[src/vitals.js](../src/vitals.js) 的 `RiftVitals`。招式定義與新增程序見 [ABILITY_SYSTEM.md](ABILITY_SYSTEM.md)，Boss 決策見 [BOSS_SYSTEM.md](BOSS_SYSTEM.md)。
 
 ## IMPLEMENTED：從輸入到結果
 
@@ -50,7 +50,7 @@ flowchart TD
 | 8 | 普通攻擊＋格擋＋正面或輪盾 | 普通格擋 |
 | 9 | 以上皆否 | `RiftVitals.hurt()`，再套用燃燒、擊退、命中回饋 |
 
-`thrust / sweep / lightning / reversal` 都屬危險招式：目前不可普通格擋，也不可完美招架。輪盾是全方向的普通防禦，**不是所有危險招式無條件無效化**。天雷另外在 `weatherTick()` 處理，輪盾可擋地面天雷；不能將此例外擴張成所有雷斬都能擋。
+`thrust / sweep / lightning / reversal` 都屬危險招式：目前不可普通格擋，也不可完美招架。長按攻擊的 `charged` 顯示為「蓄刺」，使用普通 `pierce` 判定：只有一次命中，可格擋／招架、可由一般墊步無敵閃避，不觸發踏刃或破普通格擋。專用突刺 `thrust` 仍保留危險判定與踏刃反制。輪盾是全方向的普通防禦，**不是所有危險招式無條件無效化**。天雷另外在 `weatherTick()` 處理，輪盾可擋地面天雷；不能將此例外擴張成所有雷斬都能擋。
 
 ### 招架與格擋
 
@@ -62,11 +62,15 @@ flowchart TD
 
 ### 蹬踏、返雷、取消
 
-蹬踏由 `tickPlayer()` 的第二次跳躍上升緣判斷：玩家已在空中、在對手上方 25–215 px 內、水平差 `< 115`、本次未踩過，且對手橫掃仍在 `STARTUP / ACTIVE`。成功反給對手架勢上限的30%與35 tick反彈，玩家再次向上彈跳。這個特殊反制也是防守者自身輸入循環提出。
+空中重新按下跳躍會建立 `stompBuffer=12`，由 `tickPlayer()` 每個combat tick呼叫 `tryStomp()` 判斷，hitstop不消耗緩衝。按住第一次跳躍不會自動蹬踏；12 tick內必須進入有效範圍：在對手上方20–240 px、水平差 `<=170`，且對手的 `sweep` 位於 `STARTUP / ACTIVE` 或 `RECOVERY` 的前18 tick。此處的前18 tick以判定時 `enemy.st <= 18` 為準。
 
-接雷後在空中攻擊會清掉電荷並發動 `reversal`；帶電落地則自身受 26 HP、25 架勢與 75 tick 硬直。`charged` 現在是帶電旗標數值，沒有一般逐 tick 的 180→0 倒數；只有釋放、落地、復燃等路徑清除。不要誤把它文件化為三秒自然到期。
+成功時向對手頭頂輔助靠近：水平位移最多140 px，腳位移至 `enemy.y-90`，再以 `vy=-13` 向上彈跳；不用精準對齊頭頂。`tryStomp()` 先檢查兩人腳位間的線段是否穿過平台，避免隔著平台吸附到對手。反制仍走共用 `counter()`，反給對手架勢上限的30%與35 tick反彈，由防守者自身輸入循環提出；線上裁決權限不變。
 
-命中後 `confirm` 開啟收招取消：本機命中 28 tick、普通格擋 22 tick、同時交鋒 25 tick；線上 `HIT / BLOCKED` 回覆給 28 tick。`RECOVERY && confirm > 0` 可接 `combo` 或墊步。完美招架通常把攻擊者改為 `RECOIL`（上述Boss非末波例外），不能當成一樣的連招確認。飛輪激活便建立 `chase = 95`，**不是只有飛輪命中才可疾斬**；教學額外要求兩者確實命中才算完成課程。
+`stomp` 限制每次滯空成功一次，`lastStompAttackId` 另阻止落地後重播同一橫掃再次獲得反制。落地清除 `stomp / stompBuffer`，新的橫掃才可再反制；緩衝逾時、受擊鎖定或新按攻擊／裝備／奧義／治療／墊步／掛索都會清除待執行蹬踏。蹬踏只允許自由行動或 `RECOVERY && confirm > 0` 的既有取消；跳躍可離開 `DEFLECT` 並放棄招架窗口，但不解除起手、有效段或飲藥承諾。設計理由見 [ADR-005](adr/005-stomp-assist-and-charged-thrust.md)。
+
+接雷後在空中攻擊會清掉電荷並發動 `reversal`；帶電落地則自身受 26 HP、25 架勢與 75 tick 硬直。actor的 `charged` 欄位是帶電旗標數值（與 `MOVES.charged` 招式ID不同），沒有一般逐 tick 的 180→0 倒數；只有釋放、落地、復燃等路徑清除。不要誤把它文件化為三秒自然到期。
+
+命中後 `confirm` 開啟收招取消：本機命中 28 tick、普通格擋 22 tick、同時交鋒 25 tick；線上 `HIT / BLOCKED` 回覆給 28 tick。`RECOVERY && confirm > 0` 可接 `combo` 或墊步，亦允許跳躍，空中成功蹬踏時會結束收招。完美招架通常把攻擊者改為 `RECOIL`（上述Boss非末波例外），不能當成一樣的連招確認。飛輪激活便建立 `chase = 95`，**不是只有飛輪命中才可疾斬**；教學額外要求兩者確實命中才算完成課程。
 
 另外 `light / combo / chase / air` 在收招經過6 tick後可防禦取消，不需命中確認。長按防禦只轉普通格擋；最近8 tick內的新按才取得招架窗。重招、起手、有效段與飲藥不走這條取消路徑。
 
@@ -109,7 +113,7 @@ actor持有 `maxHp / maxPosture / maxNodes`；`RiftVitals` 提供同名容量hel
 
 ## IMPLEMENTED：線上裁決與時序
 
-[src/authority.js](../src/authority.js) 的 `RiftAuthority` 驗證擁有者、回合、ID、型別與數值界限；[src/net.js](../src/net.js) 是可靠 JSON DataChannel transport，通訊版本 `4`，拒絕版本3的連線／封包（與遊戲版本無關）。
+[src/authority.js](../src/authority.js) 的 `RiftAuthority` 驗證擁有者、回合、ID、型別與數值界限；[src/net.js](../src/net.js) 是可靠 JSON DataChannel transport，通訊版本 `5`，拒絕版本4等舊版的連線／封包（與遊戲版本無關）。穩定ID `charged` 的語意已從雙波蓄斬改為單次普通蓄刺，不能讓兩種裁決規則互連；理由見 [ADR-005](adr/005-stomp-assist-and-charged-thrust.md)。
 
 ```mermaid
 sequenceDiagram
@@ -132,7 +136,7 @@ sequenceDiagram
 
 - `_elapsed()` 用 `Date.now() + clockOffsetMs - timestamp`，換成 60 Hz tick，截在 0–30 tick；不是單純把不同裝置時鐘直接相減。Ping/Pong 用 RTT 中點估計偏移，非完美時鐘同步。
 - `publishState()` 最多20 Hz；`receivePlayerState()` 預測最多12 tick，位置誤差較小時按0.65插值，大於170px時貼齊。只改遠端副本，不倒退已由意圖建立的攻擊時鐘。
-- 放開蓄力透過 `ATTACK_RELEASE`；`startTick` 用來避免較晚收到放開訊息而把輕斬誤認成蓄斬。
+- 放開蓄力透過 `ATTACK_RELEASE`；`startTick` 用來避免較晚收到放開訊息而把輕斬誤認成蓄刺。
 - 完美招架凍結雙端各自8 tick。`step()` 凍結時暫停角色／碰撞／`world.tick`，繼續收集輸入上升緣與處理表現。網路 callback 仍可到達；**沒有完整 rollback、歷史世界重播或延遲保證**。AI模式在hitstop期間沿用前次input bits，不呼叫 `RiftAI.input()`；視覺歷史與AI排程一同凍結。
 - `FINISHER_REQUEST` 由被處決者再次驗證脆弱與距離（160／120容許），只有其端 `takeNode()`；確認回覆才改另一端顯示與結局。
 - `attacks / remoteAttacks / results / controls` 去重與容量上限避免重送多扣血。這是互信 P2P，一個惡意防守端仍可謊報；不要宣稱具伺服器權威的競技防作弊。
@@ -150,4 +154,4 @@ sequenceDiagram
 
 ## 修改後必測
 
-以 [TESTING.md](TESTING.md) 的命令與 [REGRESSION_CHECKLIST.md](REGRESSION_CHECKLIST.md) 為準。針對本系統需驗證：起手／有效段／飲藥不可轉防禦；16→12 tick窗口及成功重置；8 tick緩衝與6 tick輕招收招取消；HP比例49%／50%／75%邊界；倒地不滑動且4秒後恢復；玩家雙核與Boss三核；飲藥第53/54tick及中斷；各波只命中一次且波間不命中；Boss非末波可連續招架、末波反彈；裂斬格擋無chip；霸體仍能崩解；100/200ms模擬兩端權限、重送與舊回合；60/144/240Hz下同樣邏輯步數。視覺／音效測試不能代替數值與權限測試。
+以 [TESTING.md](TESTING.md) 的命令與 [REGRESSION_CHECKLIST.md](REGRESSION_CHECKLIST.md) 為準。針對本系統需驗證：起手／有效段／飲藥不可轉防禦；16→12 tick窗口及成功重置；8 tick緩衝與6 tick輕招收招取消；HP比例49%／50%／75%邊界；倒地不滑動且4秒後恢復；玩家雙核與Boss三核；飲藥第53/54tick及中斷；各波只命中一次且波間不命中；Boss非末波可連續招架、末波反彈；裂斬格擋無chip；蓄刺單次命中且可擋／招架、專用突刺仍可踏刃；蹬踏12tick緩衝／18tick收招容許、範圍與平台遮擋、每次滯空與attack ID去重、行動鎖及防禦轉跳；霸體仍能崩解；100/200ms模擬兩端權限、重送與舊回合；60/144/240Hz下同樣邏輯步數。視覺／音效測試不能代替數值與權限測試。

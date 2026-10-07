@@ -74,7 +74,7 @@ print('Verified public HTML:', len(actual), hashlib.sha256(actual).hexdigest())
 PY
 ```
 
-6. 瀏覽器確認大廳、開聲音、移動、戰鬥、勝敗重開；UI 變更檢查手機橫直向。記錄 commit／瀏覽器／裝置／測試結果，明列未實測項目。網址加 `?v=4.1.0` 可避開既有 HTML cache，但不取代比對內容。
+6. 瀏覽器確認大廳、開聲音、移動、戰鬥、勝敗重開；UI 變更檢查手機橫直向。記錄 commit／瀏覽器／裝置／測試結果，明列未實測項目。網址加 `?v=4.2.0` 可避開既有 HTML cache，但不取代比對內容。
 
 CI 狀態、Pages build 和網頁實際內容是三個不同證據；不要只看到 push 成功就宣稱已上線。雲端執行環境設定的 Publish 與 GitHub Pages 發布也是不同操作。
 

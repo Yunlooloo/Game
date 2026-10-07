@@ -88,6 +88,7 @@
       player.stun = player.lockFrames;
       player.vx = 0; player.dash = 0; player.dashDir = 0;
       player.blinkWindow = 0; player.invuln = 0; player.drop = 0;
+      player.stompBuffer = 0;
     }
     if (next === STATE.REVIVING) player.revive = player.lockFrames;
     if (next === STATE.DEAD) {

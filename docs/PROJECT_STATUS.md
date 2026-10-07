@@ -1,10 +1,10 @@
 # Project Status
 
-Last Updated: **2026-10-06** · 現況快照；歷史理由見 [WORK_LOG](WORK_LOG.md)，最新交班見 [CURRENT_HANDOFF](CURRENT_HANDOFF.md)。
+Last Updated: **2026-10-07** · 現況快照；歷史理由見 [WORK_LOG](WORK_LOG.md)，最新交班見 [CURRENT_HANDOFF](CURRENT_HANDOFF.md)。
 
 ## Current Version
 
-**IMPLEMENTED：4.1.0**，通訊協議4。完整版本變化見 [CHANGELOG](../CHANGELOG.md)。
+**IMPLEMENTED：4.2.0**，通訊協議5。完整版本變化見 [CHANGELOG](../CHANGELOG.md)。
 
 ## Current Playable State
 
@@ -16,8 +16,9 @@ Last Updated: **2026-10-06** · 現況快照；歷史理由見 [WORK_LOG](WORK_L
 | IMPLEMENTED | 16tick招架、成功重置懲罰、逐刀重新點按、防禦緩衝、輕招收刀轉防禦 |
 | IMPLEMENTED | 赤衡三階段固定招式組合、可反擊空檔、延遲感知、導航、比例治療 |
 | IMPLEMENTED | 逐波6tick接觸窗、收刀／出刀提示、Boss連段中間招架保持節拍、末刀反彈 |
+| IMPLEMENTED | 空中蹬踏緩衝／踏入輔助、普通單次蓄刺、左側上跳下移的手機六主鍵與技具抽屜 |
 | IMPLEMENTED | Canvas場景／人物／VFX、合成SFX／兩首內嵌BGM、滑鼠／鍵盤／觸控 |
-| IMPLEMENTED | source版控、可重現單檔build、10組Node suites、Chromium smoke、品質CI與交接文件 |
+| IMPLEMENTED | source版控、可重現單檔build、11組Node suites、Chromium smoke、品質CI與交接文件 |
 | PARTIAL | P2P有實作／模擬測試，真實跨網連通仍未證實；iOS有模擬回歸，缺實機結果 |
 | PARTIAL | 響應式CSS有safe-area；Canvas旋轉resize listener仍缺；設定只存記憶體 |
 | PARTIAL | Boss容量與階段已支援3核，profile仍在core、單一AI；不是多Boss registry |
@@ -41,14 +42,14 @@ PARTIAL只表示已實作子集的完成度，不把未完成平台保證當作�
 
 ## Known Issues
 
-[TECH_DEBT](TECH_DEBT.md) 維護完整清單：實網、實體iPhone、Canvas旋轉、擴充邊界與素材權利仍未解決。本次修復AI成本門檻與hitstop時鐘，並修正招架／提示／波間碰撞問題。自動測試不能代替真實玩家對難度與手感的回饋。
+[TECH_DEBT](TECH_DEBT.md) 維護完整清單：實網、實體iPhone、Canvas旋轉、擴充邊界與素材權利仍未解決。4.1.0已修復AI成本門檻、hitstop時鐘與連續招架；4.2.0改善蹬踏容錯、長按招式分工及手機操作，去除BGM有效時額外合成底噪與正常音量的非線性染色。自動測試不能代替真實玩家對難度與手感的回饋。
 
 ## Current Development Focus / Next Recommended Tasks
 
-1. 實際遊玩4.1.0，分辨「看不清」「按了未生效」與「尚未掌握節拍」，以重現案例調整，不先增加速度。
+1. 實際遊玩4.2.0，分辨「看不清」「按了未生效」與「尚未掌握節拍」，以重現案例調整，不先增加速度；特別確認觸控蹬踏與蓄刺是否符合預期。
 2. iPhone實測聲音、背景恢復、雙指操作與本次逐拍招架。
 3. 修正Canvas旋轉尺寸同步並加resize／DPR回歸。
-4. 兩裝置不同網路驗證WebRTC協議4連通與斷線。
+4. 兩裝置不同網路驗證WebRTC協議5連通與斷線。
 5. 依 [BOSS_SYSTEM](BOSS_SYSTEM.md) 提取最小definition/factory加入第二Boss。
 6. 補齊素材權利與vendor來源；第一個永久解鎖需求再做Save migration。
 

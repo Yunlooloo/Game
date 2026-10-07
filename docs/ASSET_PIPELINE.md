@@ -46,13 +46,16 @@ flowchart LR
   Duck --> Master[master]
   SFX[Oscillator / Noise + filters] --> Voice[Voice Gain / Pan]
   Voice --> Master
-  Ambience[Wind / Rain / River] --> Master
-  Master --> Limiter[Compressor / optional WaveShaper]
+  Ambience["Music unavailable fallback: Wind / Rain / River"] --> Master
+  Master --> Limiter["Compressor / linear region + peak ceiling"]
   Limiter --> Output[AudioContext destination]
 ```
 
 - `setScene('ambient'|'battle')` 只在兩個場景間轉場，未使用「每 Boss 一首」的 registry。對局中是 battle，其他 phase 是 ambient。
 - 兩曲 `loop=true`，用 media element 避免一次解碼兩段完整 PCM；切走的曲目淡出後暫停，切回保留播放位置。
+- 4.2.0播放有效BGM時不再疊加風／雨／河流白噪聲；三層預設零音量，曲目載入中也保持安靜。只有選定曲目缺失／報錯且音樂音量大於零，才啟用合成氛圍／太鼓fallback；曲目恢復後淡出。音樂滑桿設零不會反而打開底噪。
+- master後的WaveShaper在正常振幅（±0.8內）為線性，只對較高峰值做連續soft knee、封頂±0.92，保留密集SFX保護，避免全天候atan對音樂染色。不是對MP3做降噪或重新編碼。
+- 原常駐曲metadata含Rain and Vinyl Crackle，可能本身包含雨聲／黑膠聲；保留原檔hash。調查未發現原檔數位削波，不能推論所有實體手機聽感正常。
 - `setVolume` 是總音量；`setMusicVolume` 獨立控制音樂並保留混音餘裕；`setMuted` 控制整體。尚無獨立 SFX、UI 或環境音量設定。
 - `setSuspended` 在背景／本機暫停時停止音樂並關閉 master 輸出；不是停止所有遊戲網路流程。
 - `sfx('deflect'|'danger'|'bladeCounter'|'finisher'|'lightning'|'lowHealth', …)` 暫時降低 music gain。其他效果沿用 `sfx` switch；目前沒有通用 UI click 音系統。

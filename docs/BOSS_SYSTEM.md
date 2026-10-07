@@ -1,6 +1,6 @@
 # Boss 架構與第二隻 Boss 的接手指南
 
-狀態：**IMPLEMENTED** 描述目前 `4.1.0`；**PLANNED** 提供下一次新增 Boss 時的最小改造；**OPTIONAL** 是尚未承諾的內容。現在沒有 `Boss` class、Boss registry、Boss selector、掉落或獨立 Boss 關卡。
+狀態：**IMPLEMENTED** 描述目前 `4.2.0`；**PLANNED** 提供下一次新增 Boss 時的最小改造；**OPTIONAL** 是尚未承諾的內容。現在沒有 `Boss` class、Boss registry、Boss selector、掉落或獨立 Boss 關卡。
 
 先讀 [GAME_SYSTEMS.md](GAME_SYSTEMS.md) 的世界與角色生命週期，再讀 [COMBAT_SYSTEM.md](COMBAT_SYSTEM.md) 的防守裁決與核心容量。所有招式的底層與玩家共用，見 [ABILITY_SYSTEM.md](ABILITY_SYSTEM.md)。
 
@@ -18,7 +18,7 @@
 
 只有 `Game.start('ai')` 的actor1套用 **240 HP／220架勢上限／3核**；玩家、PvP與陪練仍為100／100／2。赤衡初始架勢0、共鳴20、Phase1、修復劑3、起點 `(2150,810)`、面向左；裝備 `['aegis','hammer']`、奧義 `rift`。玩家與AI共用 `fighter()`、基礎移動5.4 px/tick、FSM與命中裁決。
 
-`BOSS_PROFILE` 是core中的已實作容量／攻擊覆寫常數，不是registry或controller factory。`Game.attackDefinition()` 為起手及輕斬轉蓄斬建立共用move複本，僅為AI角色套用以下起手、波次覆寫與 `armor=true`，不污染玩家的 `MOVES`。起手霸體仍受HP／架勢傷害，架勢崩解、踏刃與蹬踏可中斷；飲藥沒有霸體。
+`BOSS_PROFILE` 是core中的已實作容量／攻擊覆寫常數，不是registry或controller factory。`Game.attackDefinition()` 為起手及輕斬轉蓄刺建立共用move複本，僅為AI角色套用以下起手、波次覆寫與 `armor=true`，不污染玩家的 `MOVES`。起手霸體仍受HP／架勢傷害，架勢崩解、踏刃與蹬踏可中斷；飲藥沒有霸體。
 
 | 招式 | Boss起手tick |
 | --- | --- |
@@ -27,7 +27,7 @@
 | `charged / triple` | 44／32 |
 | 其餘招式 | 沿用 `MOVES`；裂斬52 |
 
-Boss另覆寫蓄斬為波次0／18、active24；雙斷為0／20、active26，使每波都有可重起的招架間隔。玩家的蓄斬0／8與雙斷0／12不變。這些起手與波次不隨Phase加速。理由與相容性見 [ADR-004](adr/004-readable-rhythm-and-boss-capacity.md)。
+Boss的 `charged` 蓄刺沿用單次普通 `pierce` 判定、active6／recovery24，僅起手改為44tick並套用既有Boss霸體；沒有蓄刺波次覆寫。雙斷仍覆寫為0／20、active26，玩家雙斷為0／12。這些起手與波次不隨Phase加速。原節奏與容量理由見 [ADR-004](adr/004-readable-rhythm-and-boss-capacity.md)，蓄刺新語意見 [ADR-005](adr/005-stomp-assist-and-charged-thrust.md)。
 
 ### 感知、策略與行動之間的界線
 
@@ -46,7 +46,7 @@ AI 並非完全不使用隨機數：固定 seed 的 xorshift 產生可重現的�
 7. 導航至不同平台、掛索途中攻擊、空中蹬踏，或恢復架勢與取位。
 8. 依距離、架勢、裝備與內部冷卻選工具，或循序執行當前Phase的固定招式組合。
 
-沒有正在執行的招式組合且延遲觀察到 `guardSpam >= 2` 時，AI用固定蓄斬回應；成功招架會清除該債務。AI的普通組合蓄斬與此回應皆長按30 tick，在第26 tick轉為蓄斬、44 tick起手完成前放開，保留出刀前8 tick的提示。長按未放開時renderer不顯示假的即將出刀閃光。反制與工具選擇仍可有機率失誤，這不是任意關卡的完整導航器或通用行為樹。
+沒有正在執行的招式組合且延遲觀察到 `guardSpam >= 2` 時，AI用固定蓄刺回應；成功招架會清除該債務。AI的普通組合蓄刺與此回應皆長按30 tick，在第26 tick轉為蓄刺、44 tick起手完成前放開，保留出刀前8 tick的提示。長按未放開時renderer不顯示假的即將出刀閃光。反制與工具選擇仍可有機率失誤，這不是任意關卡的完整導航器或通用行為樹。
 
 ### 三階段招式組合與可反擊空檔
 
@@ -54,11 +54,13 @@ AI 並非完全不使用隨機數：固定 seed 的 xorshift 產生可重現的�
 
 | Phase | 基本循環 |
 | --- | --- |
-| 1 | （輕→輕→突）、（輕→掃）、（蓄斬） |
-| 2 | （輕→輕→突）、（連斬）、（輕→掃）、（雷斬）、（蓄斬） |
-| 3 | （連斬）、（輕→突→掃）、（奧義裂斬）、（雷→輕）、（蓄→掃） |
+| 1 | （輕→輕→突）、（輕→掃）、（蓄刺） |
+| 2 | （輕→輕→突）、（連斬）、（輕→掃）、（雷斬）、（蓄刺） |
+| 3 | （連斬）、（輕→突→掃）、（奧義裂斬）、（雷→輕）、（蓄刺→掃） |
 
 AI觀察自身真實FSM的收招完成：同組下一招等8 tick，整組完成後提供30 tick原地空檔，期間不移動、防守或攻擊；延遲視覺已確認對手倒地時，優先接近斷決。被末波招架後的反擊空檔從解鎖後開始，不被反彈硬直或hitstop吃掉。`frame()` 在hitstop沿用AI前次bits、不呼叫 `input()`，AI觀察與排程一同凍結。
+
+AI組合仍使用穩定 `charged` ID，沒有為蓄刺新增另一套策略；專用 `thrust` 突刺仍是危險招式，可用踏刃反制。單次蓄刺可直接招架並使Boss反彈。
 
 Boss多波招式的非末波完美招架只增加架勢並保留攻擊，末波才反彈；崩解或特殊反制仍能中斷。裂斬52／30／38 tick、波次0／24；連斬32／42／32 tick、波次0／18／36。每波只開6 tick接觸，空檔可重新按下招架。renderer每波重新收刀／放刀；裂斬有紫色刀身、兩段提示與「可招架」標籤，普通格擋不扣HP。
 
@@ -150,6 +152,7 @@ const tidekeeper = {
 | 治療 | 至少一劑才喝，安全距離計畫、54tick可懲罰、中斷不回血、復燃不補劑 |
 | 核心容量 | 赤衡前兩次滿血復燃／第三次勝利，漏斷決36HP／77架勢起身；玩家／陪練維持雙核 |
 | 節奏／公平 | 各Phase起手不加速、完整收招、組末30tick空檔、末波招架後18tick空檔；hitstop不消耗AI時鐘 |
+| 蓄刺／蹬踏 | Boss蓄刺44tick起手、單次普通接觸；危險突刺保留；橫掃可由共用緩衝蹬踏反制並承受30%容量架勢 |
 | 全模式回歸 | 舊Boss、教學22課、本機雙人、線上既有權限與觸控／音效無回歸 |
 
 具體執行命令由 [TESTING.md](TESTING.md) 管理，不在此維護第二份測試清單命令。新 Boss 測試只需擴充有用的行為案例，不為每個靜態欄位重複寫一次實作鏡像測試。

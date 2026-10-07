@@ -48,14 +48,17 @@ window.RiftAudio = class RiftAudio {
           this.limiter.attack.value = 0.001;
           this.limiter.release.value = 0.12;
           this.master.connect(this.limiter);
-          // Bound dense clashes without relying on the compressor's attack time.
+          // Leave ordinary music/effects unchanged; only soften peaks which can
+          // outrun the compressor. An always-curved transfer adds harmonics even
+          // to quiet music and sounds like distortion on small phone speakers.
           if (c.createWaveShaper) {
             this.ceiling = c.createWaveShaper();
-            const curve = new Float32Array(2048);
-            const scale = 0.92 / Math.atan(1.3);
+            const curve = new Float32Array(4097);
             for (let i = 0; i < curve.length; i++) {
               const sample = i * 2 / (curve.length - 1) - 1;
-              curve[i] = Math.atan(sample * 1.3) * scale;
+              const amplitude = Math.abs(sample), peak = Math.max(0, (amplitude - 0.8) / 0.2);
+              curve[i] = amplitude <= 0.8 ? sample :
+                Math.sign(sample) * (0.8 + 0.2 * peak - 0.04 * peak * peak - 0.04 * peak * peak * peak);
             }
             this.ceiling.curve = curve;
             this.limiter.connect(this.ceiling);
@@ -303,9 +306,12 @@ window.RiftAudio = class RiftAudio {
       this.ambienceNodes.push(source, filter, level);
       return { source, filter, level };
     };
-    this.wind = layer('bandpass', 320, 0.35, 0.045);
-    this.rain = layer('highpass', 2400, 0.5, 0.0001);
-    this.river = layer('lowpass', 850, 0.3, 0.024);
+    // Music already contains its own atmosphere. Start silent, including while
+    // its media play() promise is pending; update enables fallback only if the
+    // selected embedded track is absent or reports an error.
+    this.wind = layer('bandpass', 320, 0.35, 0);
+    this.rain = layer('highpass', 2400, 0.5, 0);
+    this.river = layer('lowpass', 850, 0.3, 0);
     const sway = c.createOscillator(), depth = c.createGain();
     sway.frequency.value = 0.115; depth.gain.value = 115;
     sway.connect(depth); depth.connect(this.wind.filter.frequency); sway.start();
@@ -514,11 +520,14 @@ window.RiftAudio = class RiftAudio {
     const c = this.context, now = c.currentTime;
     dt = Math.min(0.1, Math.max(0, Number(dt) || 0));
     this.tension += (Math.max(0, Math.min(1, Number(tension) || 0)) - this.tension) * (1 - Math.exp(-dt * 2.5));
-    const musicPlaying = this.musicVolume > 0 && [...this.musicTracks.values()].some(track => !track.element.paused && !track.error);
-    const atmosphere = musicPlaying ? 0.45 : 1;
-    this.wind.level.gain.setTargetAtTime((0.035 + this.tension * 0.025 + (weather === 'storm' ? 0.025 : 0)) * atmosphere, now, 1.2);
-    this.rain.level.gain.setTargetAtTime((weather === 'storm' ? 0.078 : 0.0001) * atmosphere, now, 1.8);
-    if (!this.muted && !musicPlaying && this.tension > 0.075 && now >= this.nextBeat) {
+    const selectedMusic = this.musicTracks.get(this.musicScene);
+    const synthFallback = this.musicVolume > 0 && (!selectedMusic || !!selectedMusic.error);
+    // Do not mistake a muted/loading track for missing music: turning the music
+    // slider to zero must not replace it with an unsolicited hiss/drum track.
+    this.wind.level.gain.setTargetAtTime(synthFallback ? 0.035 + this.tension * 0.025 + (weather === 'storm' ? 0.025 : 0) : 0, now, 0.18);
+    this.rain.level.gain.setTargetAtTime(synthFallback && weather === 'storm' ? 0.078 : 0, now, 0.18);
+    this.river.level.gain.setTargetAtTime(synthFallback ? 0.024 : 0, now, 0.18);
+    if (!this.muted && synthFallback && this.tension > 0.075 && now >= this.nextBeat) {
       const accent = this.beat++ % 4 === 0;
       this.sfx('pulse', accent ? -0.3 : 0.3, (accent ? 0.42 : 0.22) + this.tension * 0.18);
       this.nextBeat = now + 60 / (48 + this.tension * 80) * (this.tension > 0.8 && !accent ? 0.5 : 1);

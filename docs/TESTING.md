@@ -42,10 +42,11 @@ RIFT_BROWSER_EXECUTABLE=/usr/bin/chromium python3 scripts/test.py --browser-only
 | [engine.test.cjs](../tests/engine.test.cjs) | 真正 `Game.step`、攻防與裝備、倒地／finisher、固定時間步、22 課與隔離、實際兩斬連段 | VM 中執行 production core；DOM、render、audio 為 adapter mock；多數 case 以 debug 設定初始狀態 |
 | [ai-navigation.test.cjs](../tests/ai-navigation.test.cjs) | 上下平台追蹤、遠近導航、藥品、安全距離與中斷 | 確定性場景，不等於所有任意地形已驗證 |
 | [audio-ai.test.cjs](../tests/audio-ai.test.cjs) | AI 延遲視野、階段／鎖定與計時；合成 SFX 清理與 voice cap | 模擬 AI 與 Web Audio nodes，不證明真實喇叭出聲 |
-| [audio-music.test.cjs](../tests/audio-music.test.cjs) | 音樂切換、loop、fade、duck、音量、mute、pause、media failure | Mock media／AudioContext |
+| [audio-music.test.cjs](../tests/audio-music.test.cjs) | 音樂切換、loop、fade、duck、音量、mute、pause、media failure、底噪fallback及peak ceiling | Mock media／AudioContext |
 | [ios-audio.test.cjs](../tests/ios-audio.test.cjs) | `interrupted`、手勢重試、未完成 resume、舊 promise 順序、audioSession 相容 | 模擬 iOS 授權狀態；不是 iPhone／WebKit 測試 |
 | [authority.test.cjs](../tests/authority.test.cjs) | 防守方結算、ID 去重、資料驗證、100／200 ms 模擬延遲、pose 權限與 transport lifecycle | Mock Peer／計時；不證明真實 NAT、TURN 或跨網路 DataChannel |
-| [combat-rhythm.test.cjs](../tests/combat-rhythm.test.cjs) | 真實多波碰撞／連續招架、空按懲罰、按住格擋、收刀與受擊緩衝、Boss三核及AI蓄斬真實視覺提示 | 正式simulation；提示測試讀正式renderer計時方法 |
+| [combat-rhythm.test.cjs](../tests/combat-rhythm.test.cjs) | 真實多波碰撞／連續招架、空按懲罰、按住格擋、收刀與受擊緩衝、Boss三核及AI蓄刺真實視覺提示 | 正式simulation；提示測試讀正式renderer計時方法 |
+| [mobility-counter.test.cjs](../tests/mobility-counter.test.cjs) | 蓄刺單次接觸／格擋／招架、蹬踏緩衝／範圍／平台阻隔／去重／承諾動作、雙端防守權限 | 正式輸入與simulation，27項情境 |
 | [boss-vitals.test.cjs](../tests/boss-vitals.test.cjs) | 240/220/3容量、恢復門檻、治療中斷與三核生命週期 | 共用FSM/Vitals |
 | [ai-rhythm.test.cjs](../tests/ai-rhythm.test.cjs) | 三階段固定招式組合、反擊空檔、成本及HP比例 | AI輸入接正式simulation，部分資源隔離fixture |
 | [browser_smoke.py](../tests/browser_smoke.py) | 真 DOM／Canvas、滑鼠鍵盤、音樂解碼與 graph samples、pause、Boss三核心到勝利／重開、觸控尺寸／長按／雙指／取消、房號可編輯 | Chromium，包含明確初始狀態注入；headless samples 不證明硬體輸出 |
